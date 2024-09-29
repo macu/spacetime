@@ -1,34 +1,49 @@
 -- Clean up previous instance
 
-DROP TRIGGER IF EXISTS on_category_delete ON category;
-DROP TRIGGER IF EXISTS on_post_delete ON post;
-DROP TRIGGER IF EXISTS on_comment_delete ON comment;
-DROP TRIGGER IF EXISTS on_tag_delete ON tag;
+DROP TRIGGER IF EXISTS on_tree_node_delete ON tree_node;
 
-DROP FUNCTION IF EXISTS delete_user_content;
+DROP FUNCTION IF EXISTS delete_tree_node;
 
 DROP INDEX IF EXISTS tag_vote_idx;
-DROP INDEX IF EXISTS category_merge_vote_idx;
-DROP INDEX IF EXISTS category_post_vote_idx;
-DROP INDEX IF EXISTS category_title_vote_idx;
-DROP INDEX IF EXISTS category_location_vote_idx;
-DROP INDEX IF EXISTS category_title_idx;
+DROP INDEX IF EXISTS tag_vote_user_idx;
+DROP INDEX IF EXISTS tag_title_idx;
+DROP INDEX IF EXISTS tree_node_content_vote_idx;
+DROP INDEX IF EXISTS tree_node_content_vote_user_idx;
+DROP INDEX IF EXISTS tree_node_content_idx;
+DROP INDEX IF EXISTS tree_node_vote_idx;
+DROP INDEX IF EXISTS tree_node_vote_user_idx;
+DROP INDEX IF EXISTS tree_node_parent_idx;
+DROP INDEX IF EXISTS tree_node_link_action_vote_idx;
+DROP INDEX IF EXISTS tree_node_link_action_vote_user_idx;
+DROP INDEX IF EXISTS tag_title_vote_idx;
+DROP INDEX IF EXISTS tag_title_vote_user_idx;
+DROP INDEX IF EXISTS tag_idx;
+DROP INDEX IF EXISTS tree_node_type_vote_idx;
+DROP INDEX IF EXISTS tree_node_type_vote_user_idx;
 
-DROP TABLE IF EXISTS category_merge_vote;
 DROP TABLE IF EXISTS tag_vote;
-DROP TABLE IF EXISTS comment;
-DROP TABLE IF EXISTS category_post_vote;
-DROP TABLE IF EXISTS category_title_vote;
-DROP TABLE IF EXISTS category_location_vote;
+DROP TABLE IF EXISTS tag_title_vote;
+DROP TABLE IF EXISTS tag_title;
 DROP TABLE IF EXISTS tag;
-DROP TABLE IF EXISTS post;
-DROP TABLE IF EXISTS category_title;
-DROP TABLE IF EXISTS category;
+DROP TABLE IF EXISTS tree_node_content_vote;
+DROP TABLE IF EXISTS tree_node_content;
+DROP TABLE IF EXISTS tree_node_vote;
+DROP TABLE IF EXISTS tree_node_link_action_vote;
+DROP TABLE IF EXISTS tree_node_type_vote;
+DROP TABLE IF EXISTS tree_node;
 
 DROP TABLE IF EXISTS user_signup_request;
 DROP TABLE IF EXISTS password_reset_request;
 DROP TABLE IF EXISTS user_session;
 DROP TABLE IF EXISTS user_account;
+
+DROP TYPE IF EXISTS user_role_type;
+DROP TYPE IF EXISTS tree_node_class;
+DROP TYPE IF EXISTS vote_type;
+DROP TYPE IF EXISTS tree_node_content_type;
+DROP TYPE IF EXISTS tree_node_link_action_type;
+DROP TYPE IF EXISTS tag_class_type;
+DROP TYPE IF EXISTS tag_target_type;
 
 DROP COLLATION IF EXISTS case_insensitive;
 
@@ -91,38 +106,13 @@ CREATE COLLATION case_insensitive (
 --------------------------------------------------
 -- Create content tables
 
-CREATE TABLE category (
-	id SERIAL PRIMARY KEY,
-);
-
-CREATE TABLE category_title (
-	id SERIAL PRIMARY KEY,
-	category_id INTEGER NOT NULL REFERENCES category (id) ON DELETE CASCADE,
-	local_parent_id INTEGER REFERENCES category (id) ON DELETE CASCADE,
-	lang VARCHAR(5) NOT NULL,
-	title VARCHAR(128) NOT NULL COLLATE case_insensitive,
-	created_at TIMESTAMPTZ NOT NULL,
-	created_by INTEGER REFERENCES user_account (id) ON DELETE SET NULL
-);
-
-CREATE INDEX category_title_idx ON category_title (category_id, local_parent_id, lang, title);
-
-CREATE TABLE post (
-	id SERIAL PRIMARY KEY,
-	lang VARCHAR(5) NOT NULL,
-	title VARCHAR(128), -- optional
-	body TEXT NOT NULL, -- required
-	created_at TIMESTAMPTZ NOT NULL,
-	created_by INTEGER REFERENCES user_account (id) ON DELETE SET NULL,
-	updated_at TIMESTAMPTZ,
-	updated_by INTEGER REFERENCES user_account (id) ON DELETE SET NULL
-);
-
-CREATE TABLE tag (
-	id SERIAL PRIMARY KEY,
-	title VARCHAR(64) UNIQUE NOT NULL COLLATE case_insensitive,
-	created_at TIMESTAMPTZ NOT NULL,
-	created_by INTEGER REFERENCES user_account (id) ON DELETE SET NULL
+CREATE TYPE tree_node_class AS ENUM (
+	'category',
+	'post',
+	'link',
+	'type',
+	'field',
+	'comment'
 );
 
 CREATE TYPE vote_type AS ENUM (
@@ -130,60 +120,124 @@ CREATE TYPE vote_type AS ENUM (
 	'disagree'
 );
 
-CREATE TABLE category_location_vote (
+CREATE TABLE tree_node (
 	id SERIAL PRIMARY KEY,
-	parent_id INTEGER REFERENCES category (id) ON DELETE CASCADE,
-	child_id INTEGER REFERENCES category (id) ON DELETE CASCADE,
+	parent_id INTEGER REFERENCES tree_node (id) ON DELETE CASCADE, -- allow null for root
+	node_class tree_node_class NOT NULL,
+	created_at TIMESTAMPTZ NOT NULL,
+	created_by INTEGER REFERENCES user_account (id) ON DELETE SET NULL
+);
+
+CREATE INDEX tree_node_parent_idx ON tree_node (parent_id);
+
+CREATE TABLE tree_node_vote (
+	id SERIAL PRIMARY KEY,
+	node_id INTEGER REFERENCES tree_node (id) ON DELETE CASCADE,
 	vote vote_type NOT NULL,
 	created_at TIMESTAMPTZ NOT NULL,
 	created_by INTEGER REFERENCES user_account (id) ON DELETE SET NULL
 );
 
-CREATE INDEX category_location_vote_idx ON category_location_vote (parent_id, child_id, vote);
+CREATE INDEX tree_node_vote_idx ON tree_node_vote (node_id, vote);
+CREATE UNIQUE INDEX tree_node_vote_user_idx ON tree_node_vote (created_by, node_id);
 
-CREATE TABLE category_title_vote (
+CREATE TYPE tree_node_content_type AS ENUM (
+	'title',
+	'body'
+);
+
+CREATE TABLE tree_node_content (
 	id SERIAL PRIMARY KEY,
-	category_id INTEGER REFERENCES category (id) ON DELETE CASCADE,
-	category_title_id INTEGER REFERENCES category_title (id) ON DELETE CASCADE,
+	node_id INTEGER REFERENCES tree_node (id) ON DELETE CASCADE,
+	content_type tree_node_content_type NOT NULL,
+	text_content VARCHAR(128) NOT NULL COLLATE case_insensitive,
+	created_at TIMESTAMPTZ NOT NULL,
+	created_by INTEGER REFERENCES user_account (id) ON DELETE SET NULL
+);
+
+CREATE INDEX tree_node_content_idx ON tree_node_content (node_id, content_type);
+
+CREATE TABLE tree_node_content_vote (
+	id SERIAL PRIMARY KEY,
+	content_id INTEGER REFERENCES tree_node_content (id) ON DELETE CASCADE,
 	vote vote_type NOT NULL,
 	created_at TIMESTAMPTZ NOT NULL,
 	created_by INTEGER REFERENCES user_account (id) ON DELETE SET NULL
 );
 
-CREATE INDEX category_title_vote_idx ON category_title_vote (category_id, category_title_id, vote);
+CREATE INDEX tree_node_content_vote_idx ON tree_node_content_vote (content_id, vote);
+CREATE UNIQUE INDEX tree_node_content_vote_user_idx ON tree_node_content_vote (created_by, content_id);
 
-CREATE TABLE category_post_vote (
+CREATE TABLE tree_node_type_vote (
 	id SERIAL PRIMARY KEY,
-	category_id INTEGER REFERENCES category (id) ON DELETE CASCADE,
-	post_id INTEGER REFERENCES post (id) ON DELETE CASCADE,
+	node_id INTEGER REFERENCES tree_node (id) ON DELETE CASCADE,
+	type_id INTEGER REFERENCES tree_node (id) ON DELETE CASCADE,
 	vote vote_type NOT NULL,
 	created_at TIMESTAMPTZ NOT NULL,
 	created_by INTEGER REFERENCES user_account (id) ON DELETE SET NULL
 );
 
-CREATE INDEX category_post_vote_idx ON category_post_vote (category_id, post_id, vote);
+CREATE INDEX tree_node_type_vote_idx ON tree_node_type_vote (type_id, vote);
+CREATE UNIQUE INDEX tree_node_type_vote_user_idx ON tree_node_type_vote (created_by, node_id, type_id);
 
-CREATE TYPE comment_target_type AS ENUM (
-	'category',
-	'post'
+CREATE TYPE tree_node_link_action_type AS ENUM (
+	'move',
+	'merge'
 );
 
-CREATE TABLE comment (
+CREATE TABLE tree_node_link_action_vote (
 	id SERIAL PRIMARY KEY,
-	target_type comment_target_type NOT NULL,
-	target_id INTEGER NOT NULL,
-	body TEXT NOT NULL,
+	link_node_id INTEGER REFERENCES tree_node (id) ON DELETE CASCADE,
+	request_action tree_node_link_action_type NOT NULL,
+	vote vote_type NOT NULL,
 	created_at TIMESTAMPTZ NOT NULL,
-	created_by INTEGER REFERENCES user_account (id) ON DELETE SET NULL,
-	updated_at TIMESTAMPTZ,
-	updated_by INTEGER REFERENCES user_account (id) ON DELETE SET NULL
+	created_by INTEGER REFERENCES user_account (id) ON DELETE SET NULL
 );
+
+CREATE INDEX tree_node_link_action_vote_idx ON tree_node_link_action_vote (link_node_id, request_action, vote);
+CREATE UNIQUE INDEX tree_node_link_action_vote_user_idx ON tree_node_link_action_vote (created_by, link_node_id, request_action);
+
+CREATE TYPE tag_class_type AS ENUM (
+	'system',
+	'lang',
+	'user'
+);
+
+CREATE TABLE tag (
+	id SERIAL PRIMARY KEY,
+	tag_class tag_class_type NOT NULL DEFAULT 'user',
+	meta VARCHAR(10), -- optional, used for lang codes and special identifiers
+	created_at TIMESTAMPTZ NOT NULL,
+	created_by INTEGER REFERENCES user_account (id) ON DELETE SET NULL
+);
+
+CREATE INDEX tag_idx ON tag (tag_class, meta);
+
+CREATE TABLE tag_title (
+	id SERIAL PRIMARY KEY,
+	tag_id INTEGER REFERENCES tag (id) ON DELETE CASCADE,
+	title VARCHAR(64) NOT NULL COLLATE case_insensitive,
+	created_at TIMESTAMPTZ NOT NULL,
+	created_by INTEGER REFERENCES user_account (id) ON DELETE SET NULL
+);
+
+CREATE INDEX tag_title_idx ON tag_title (tag_id);
+
+CREATE TABLE tag_title_vote (
+	id SERIAL PRIMARY KEY,
+	tag_title_id INTEGER REFERENCES tag_title (id) ON DELETE CASCADE,
+	vote vote_type NOT NULL,
+	created_at TIMESTAMPTZ NOT NULL,
+	created_by INTEGER REFERENCES user_account (id) ON DELETE SET NULL
+);
+
+CREATE INDEX tag_title_vote_idx ON tag_title_vote (tag_title_id, vote);
+CREATE UNIQUE INDEX tag_title_vote_user_idx ON tag_title_vote (created_by, tag_title_id);
 
 CREATE TYPE tag_target_type AS ENUM (
-	'category',
-	'category_title',
-	'post',
-	'comment'
+	'tree_node',
+	'tree_node_content',
+	'tag_title'
 );
 
 CREATE TABLE tag_vote (
@@ -196,71 +250,23 @@ CREATE TABLE tag_vote (
 	created_by INTEGER REFERENCES user_account (id) ON DELETE SET NULL
 );
 
-CREATE INDEX tag_vote_idx ON tag_vote (target_type, target_id, tag_id, vote);
-
-CREATE TABLE category_merge_vote (
-	id SERIAL PRIMARY KEY,
-	source_id INTEGER REFERENCES category (id) ON DELETE CASCADE,
-	target_id INTEGER REFERENCES category (id) ON DELETE CASCADE,
-	vote vote_type NOT NULL,
-	created_at TIMESTAMPTZ NOT NULL,
-	created_by INTEGER REFERENCES user_account (id) ON DELETE SET NULL
-);
-
-CREATE INDEX category_merge_vote_idx ON category_merge_vote (target_id, source_id, vote);
+CREATE INDEX tag_vote_idx ON tag_vote (target_type, target_id, vote, tag_id);
+CREATE UNIQUE INDEX tag_vote_user_idx ON tag_vote (created_by, target_type, target_id, tag_id);
 
 --------------------------------------------------
 -- create triggers
 
-CREATE FUNCTION delete_category ()
+CREATE FUNCTION delete_tree_node ()
 RETURNS TRIGGER
 LANGUAGE PLPGSQL
 AS $$
 BEGIN
-	DELETE FROM tag_vote WHERE target_type = 'category' AND target_id = OLD.id;
-	DELETE FROM comment WHERE target_type = 'category' AND target_id = OLD.id;
+	DELETE FROM tag_vote WHERE target_type = 'tree_node' AND target_id = OLD.id;
 	RETURN NULL;
 END $$;
 
-CREATE TRIGGER on_category_delete AFTER DELETE ON category
-	FOR EACH ROW EXECUTE PROCEDURE delete_category();
-
-CREATE FUNCTION delete_post ()
-RETURNS TRIGGER
-LANGUAGE PLPGSQL
-AS $$
-BEGIN
-	DELETE FROM tag_vote WHERE target_type = 'post' AND target_id = OLD.id;
-	DELETE FROM comment WHERE target_type = 'post' AND target_id = OLD.id;
-	RETURN NULL;
-END $$;
-
-CREATE TRIGGER on_post_delete AFTER DELETE ON post
-	FOR EACH ROW EXECUTE PROCEDURE delete_post();
-
-CREATE FUNCTION delete_comment ()
-RETURNS TRIGGER
-LANGUAGE PLPGSQL
-AS $$
-BEGIN
-	DELETE FROM tag_vote WHERE target_type = 'comment' AND target_id = OLD.id;
-	RETURN NULL;
-END $$;
-
-CREATE TRIGGER on_comment_delete AFTER DELETE ON comment
-	FOR EACH ROW EXECUTE PROCEDURE delete_comment();
-
-CREATE FUNCTION delete_tag ()
-RETURNS TRIGGER
-LANGUAGE PLPGSQL
-AS $$
-BEGIN
-	DELETE FROM tag_vote WHERE tag_id = OLD.id;
-	RETURN NULL;
-END $$;
-
-CREATE TRIGGER on_tag_delete AFTER DELETE ON tag
-	FOR EACH ROW EXECUTE PROCEDURE delete_tag();
+CREATE TRIGGER on_tree_node_delete AFTER DELETE ON tree_node
+	FOR EACH ROW EXECUTE PROCEDURE delete_tree_node();
 
 --------------------------------------------------
 -- create functions
@@ -274,11 +280,5 @@ BEGIN
 	DELETE FROM user_account WHERE id = user_id;
 	DELETE FROM user_signup_request WHERE user_id = user_id;
 	DELETE FROM password_reset_request WHERE user_id = user_id;
-	DELETE FROM category_location_vote WHERE created_by = user_id;
-	DELETE FROM category_title_vote WHERE created_by = user_id;
-	DELETE FROM category_post_vote WHERE created_by = user_id;
-	DELETE FROM post WHERE created_by = user_id;
-	DELETE FROM comment WHERE created_by = user_id;
-	DELETE FROM tag_vote WHERE created_by = user_id;
-	DELETE FROM category_merge_vote WHERE created_by = user_id;
+	-- delete content across tree
 END;
