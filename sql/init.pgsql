@@ -2,8 +2,8 @@
 
 DROP TRIGGER IF EXISTS on_tree_node_delete ON tree_node;
 DROP TRIGGER IF EXISTS on_tree_node_content_delete ON tree_node_content;
-DROP TRIGGER IF EXISTS on_user_account_insert;
-DROP TRIGGER IF EXISTS tree_node_content_tsvector_update;
+DROP TRIGGER IF EXISTS on_user_account_insert ON user_account;
+DROP TRIGGER IF EXISTS tree_node_content_tsvector_update ON tree_node_content;
 
 DROP FUNCTION IF EXISTS delete_tree_node;
 DROP FUNCTION IF EXISTS delete_tree_node_content;
@@ -49,8 +49,8 @@ DROP TYPE IF EXISTS user_role_type;
 DROP TYPE IF EXISTS tree_node_class;
 DROP TYPE IF EXISTS vote_type;
 DROP TYPE IF EXISTS tree_node_content_type;
-DROP TYPE IF EXISTS tag_class_type;
 DROP TYPE IF EXISTS tag_target_type;
+DROP TYPE IF EXISTS tree_node_body_type;
 
 DROP COLLATION IF EXISTS case_insensitive;
 
@@ -68,7 +68,7 @@ CREATE TABLE user_account (
 	id SERIAL PRIMARY KEY,
 	email VARCHAR(50) UNIQUE NOT NULL,
 	user_role user_role_type NOT NULL DEFAULT 'contributor',
-	handle VARCHAR(25) UNIQUE COLLATE case_insensitive, -- optional handle
+	handle VARCHAR(25) UNIQUE, -- optional handle
 	display_name VARCHAR(50) NOT NULL, -- required
 	auth_hash VARCHAR(60) NOT NULL,
 	user_settings JSON,
@@ -86,7 +86,6 @@ CREATE TABLE user_session (
 
 CREATE TABLE user_signup_request (
 	id SERIAL PRIMARY KEY,
-	username VARCHAR(25) UNIQUE NOT NULL COLLATE case_insensitive,
 	email VARCHAR(50) UNIQUE NOT NULL,
 	created_at TIMESTAMPTZ NOT NULL,
 	token VARCHAR(15) UNIQUE,
@@ -155,7 +154,7 @@ CREATE TABLE tree_node_internal_key (
 CREATE UNIQUE INDEX tree_node_internal_key_node_idx ON tree_node_internal_key (node_id);
 CREATE UNIQUE INDEX tree_node_internal_key_idx ON tree_node_internal_key (internal_key);
 
-CREATE tree_node_lang_code (
+CREATE TABLE tree_node_lang_code (
 	-- table for associating lang codes with specific system nodes
 	id SERIAL PRIMARY KEY,
 	node_id INTEGER REFERENCES tree_node (id) ON DELETE CASCADE,
@@ -188,6 +187,7 @@ CREATE TYPE tree_node_body_type AS ENUM (
 
 CREATE TABLE tree_node_content (
 	id SERIAL PRIMARY KEY,
+	tree_node_id INTEGER REFERENCES tree_node (id) ON DELETE CASCADE,
 	content_type tree_node_content_type NOT NULL,
 	body_type tree_node_body_type, -- only for body content
 	text_content VARCHAR(2048) NOT NULL COLLATE case_insensitive,
@@ -197,8 +197,7 @@ CREATE TABLE tree_node_content (
 	created_by INTEGER REFERENCES user_account (id) ON DELETE SET NULL
 );
 
--- keep the unique index to ensure uniqueness, but also include a composite GIN index
-CREATE UNIQUE INDEX tree_node_content_idx ON tree_node_content (content_type, text_content);
+CREATE UNIQUE INDEX tree_node_content_idx ON tree_node_content (tree_node_id, content_type, text_content);
 CREATE INDEX tree_node_content_search_idx ON tree_node_content USING GIN (text_search);
 CREATE INDEX tree_node_content_search_composite_idx ON tree_node_content (content_type, text_search);
 
@@ -227,7 +226,7 @@ CREATE TYPE tag_target_type AS ENUM (
 
 CREATE TABLE tag_vote (
 	id SERIAL PRIMARY KEY,
-	tag_node_id INTEGER REFERENCES tag (id) ON DELETE CASCADE,
+	tag_node_id INTEGER REFERENCES tree_node (id) ON DELETE CASCADE,
 	target_type tag_target_type NOT NULL,
 	target_id INTEGER,
 	vote vote_type NOT NULL,
@@ -272,7 +271,8 @@ AS $$
 BEGIN
 	DELETE FROM tag_vote WHERE target_type = 'tree_node' AND target_id = OLD.id;
 	RETURN NULL;
-END $$;
+END;
+$$;
 
 CREATE TRIGGER on_tree_node_delete AFTER DELETE ON tree_node
 	FOR EACH ROW EXECUTE PROCEDURE delete_tree_node();
@@ -284,7 +284,8 @@ AS $$
 BEGIN
 	DELETE FROM tag_vote WHERE target_type = 'tree_node_content' AND target_id = OLD.id;
 	RETURN NULL;
-END $$;
+END;
+$$;
 
 CREATE TRIGGER on_tree_node_content_delete AFTER DELETE ON tree_node_content
 	FOR EACH ROW EXECUTE PROCEDURE delete_tree_node_content();
@@ -294,25 +295,40 @@ CREATE TRIGGER on_tree_node_content_delete AFTER DELETE ON tree_node_content
 
 -- delete everything assocaited with the user, except categories and tags
 CREATE FUNCTION delete_user_content (
-	user_id INTEGER
-) RETURNS VOID AS $$
+	user_id_param INTEGER
+)
+RETURNS VOID
+LANGUAGE PLPGSQL
+AS $$
 BEGIN
-	DELETE FROM user_session WHERE user_id = user_id;
+	DELETE FROM user_session WHERE user_id = user_id_param;
 	DELETE FROM user_account WHERE id = user_id;
-	DELETE FROM user_signup_request WHERE user_id = user_id;
-	DELETE FROM password_reset_request WHERE user_id = user_id;
+	DELETE FROM user_signup_request WHERE user_id = user_id_param;
+	DELETE FROM password_reset_request WHERE user_id = user_id_param;
+	DELETE FROM tag_vote WHERE created_by = user_id_param;
 	-- delete content across tree
 END;
+$$;
 
 --------------------------------------------------
 -- create db init function
 
 CREATE FUNCTION init_db_content (
 	user_id INTEGER
-) RETURNS VOID AS $$
+)
+RETURNS VOID
+LANGUAGE PLPGSQL
+AS $$
+DECLARE
+	root_node_id INTEGER;
+	langs_node_id INTEGER;
+	lang_en_node_id INTEGER;
+	tag_node_id INTEGER;
+	types_node_id INTEGER;
 BEGIN
 	-- exit if any tree node exists
-	IF EXISTS (SELECT 1 FROM tree_node) THEN
+	PERFORM 1 FROM tree_node LIMIT 1;
+	IF FOUND THEN
 		RETURN;
 	END IF;
 
@@ -321,7 +337,7 @@ BEGIN
 	VALUES ('category', NOW(), user_id)
 	RETURNING id INTO root_node_id;
 
-	INSERT INTO tree_node_content (node_id, content_type, text_content, created_at, created_by)
+	INSERT INTO tree_node_content (tree_node_id, content_type, text_content, created_at, created_by)
 	VALUES (root_node_id, 'title', 'TreeTime', NOW(), user_id);
 
 	INSERT INTO tree_node_internal_key (node_id, internal_key)
@@ -332,7 +348,7 @@ BEGIN
 	VALUES ('category', NOW(), user_id)
 	RETURNING id INTO langs_node_id;
 
-	INSERT INTO tree_node_content (node_id, content_type, text_content, created_at, created_by)
+	INSERT INTO tree_node_content (tree_node_id, content_type, text_content, created_at, created_by)
 	VALUES (langs_node_id, 'title', 'Languages', NOW(), user_id);
 
 	INSERT INTO tree_node_internal_key (node_id, internal_key)
@@ -343,7 +359,7 @@ BEGIN
 	VALUES ('lang', langs_node_id, NOW(), user_id)
 	RETURNING id INTO lang_en_node_id;
 
-	INSERT INTO tree_node_content (node_id, content_type, text_content, created_at, created_by)
+	INSERT INTO tree_node_content (tree_node_id, content_type, text_content, created_at, created_by)
 	VALUES (lang_en_node_id, 'title', 'English', NOW(), user_id);
 
 	INSERT INTO tree_node_lang_code (node_id, lang_code)
@@ -354,7 +370,7 @@ BEGIN
 	VALUES ('category', NOW(), user_id)
 	RETURNING id INTO tag_node_id;
 
-	INSERT INTO tree_node_content (node_id, content_type, text_content, created_at, created_by)
+	INSERT INTO tree_node_content (tree_node_id, content_type, text_content, created_at, created_by)
 	VALUES (tag_node_id, 'title', 'Tags', NOW(), user_id);
 
 	INSERT INTO tree_node_internal_key (node_id, internal_key)
@@ -365,27 +381,28 @@ BEGIN
 	VALUES ('category', NOW(), user_id)
 	RETURNING id INTO types_node_id;
 
-	INSERT INTO tree_node_content (node_id, content_type, text_content, created_at, created_by)
+	INSERT INTO tree_node_content (tree_node_id, content_type, text_content, created_at, created_by)
 	VALUES (types_node_id, 'title', 'Types', NOW(), user_id);
 
 	INSERT INTO tree_node_internal_key (node_id, internal_key)
 	VALUES (types_node_id, 'types');
 END;
+$$;
 
 --------------------------------------------------
 -- set first user to admin
 
-CREATE FUNCTION set_first_user_to_admin (
-	user_id INTEGER
-) RETURNS VOID AS $$
+CREATE FUNCTION set_first_user_to_admin ()
+RETURNS TRIGGER
+LANGUAGE PLPGSQL
+AS $$
 BEGIN
-	IF EXISTS (SELECT 1 FROM user_account WHERE user_role = 'admin') THEN
-		RETURN;
+	PERFORM 1 FROM user_account WHERE user_role = 'admin' LIMIT 1;
+	IF FOUND THEN
+		RETURN NULL;
 	END IF;
 
-	UPDATE user_account
-	SET user_role = 'admin'
-	WHERE id = user_id;
+	NEW.user_role := 'admin';
 
 	PERFORM init_db_content(user_id);
 
@@ -393,7 +410,10 @@ BEGIN
 	DROP TRIGGER on_user_account_insert ON user_account;
 	DROP FUNCTION set_first_user_to_admin;
 	DROP FUNCTION init_db_content;
+
+	RETURN NULL;
 END;
+$$;
 
 CREATE TRIGGER on_user_account_insert AFTER INSERT ON user_account
-	FOR EACH ROW EXECUTE PROCEDURE set_first_user_to_admin(NEW.id);
+	FOR EACH ROW EXECUTE PROCEDURE set_first_user_to_admin();
