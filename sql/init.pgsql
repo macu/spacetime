@@ -112,8 +112,8 @@ CREATE COLLATION case_insensitive (
 -- Create content tables
 
 CREATE TYPE tree_node_class AS ENUM (
-	'tag',
 	'lang',
+	'tag',
 	'type',
 	'field',
 	'category',
@@ -313,6 +313,9 @@ BEGIN
 	VALUES ('category', NOW(), user_id)
 	RETURNING id INTO langs_node_id;
 
+	INSERT INTO tree_node_content (node_id, content_type, text_content, created_at, created_by)
+	VALUES (langs_node_id, 'title', 'Languages', NOW(), user_id);
+
 	INSERT INTO tree_node_internal_key (node_id, internal_key)
 	VALUES (langs_node_id, 'langs');
 
@@ -335,10 +338,16 @@ BEGIN
 	INSERT INTO tree_node_content (node_id, content_type, text_content, created_at, created_by)
 	VALUES (tag_node_id, 'title', 'Tags', NOW(), user_id);
 
+	INSERT INTO tree_node_internal_key (node_id, internal_key)
+	VALUES (tag_node_id, 'tags');
+
 	-- create types category
 	INSERT INTO tree_node (node_class, created_at, created_by)
 	VALUES ('category', NOW(), user_id)
 	RETURNING id INTO types_node_id;
+
+	INSERT INTO tree_node_content (node_id, content_type, text_content, created_at, created_by)
+	VALUES (types_node_id, 'title', 'Types', NOW(), user_id);
 
 	INSERT INTO tree_node_internal_key (node_id, internal_key)
 	VALUES (types_node_id, 'types');
