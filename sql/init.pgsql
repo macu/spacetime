@@ -27,6 +27,8 @@ DROP INDEX IF EXISTS tree_node_merge_vote_idx;
 DROP INDEX IF EXISTS tree_node_merge_vote_user_idx;
 DROP INDEX IF EXISTS tree_node_move_vote_idx;
 DROP INDEX IF EXISTS tree_node_move_vote_user_idx;
+DROP INDEX IF EXISTS tree_node_content_search_idx;
+DROP INDEX IF EXISTS tree_node_content_search_composite_idx;
 
 DROP TABLE IF EXISTS tag_vote;
 DROP TABLE IF EXISTS tree_node_content_vote;
@@ -195,8 +197,10 @@ CREATE TABLE tree_node_content (
 	created_by INTEGER REFERENCES user_account (id) ON DELETE SET NULL
 );
 
+-- keep the unique index to ensure uniqueness, but also include a composite GIN index
 CREATE UNIQUE INDEX tree_node_content_idx ON tree_node_content (content_type, text_content);
 CREATE INDEX tree_node_content_search_idx ON tree_node_content USING GIN (text_search);
+CREATE INDEX tree_node_content_search_composite_idx ON tree_node_content (content_type, text_search);
 
 -- automatically keep text_search up to date
 CREATE TRIGGER tree_node_content_tsvector_update BEFORE INSERT OR UPDATE
