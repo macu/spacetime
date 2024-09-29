@@ -18,23 +18,26 @@ DROP INDEX IF EXISTS tree_node_content_idx;
 DROP INDEX IF EXISTS tree_node_vote_idx;
 DROP INDEX IF EXISTS tree_node_vote_user_idx;
 DROP INDEX IF EXISTS tree_node_parent_idx;
-DROP INDEX IF EXISTS tree_node_link_action_vote_idx;
-DROP INDEX IF EXISTS tree_node_link_action_vote_user_idx;
 DROP INDEX IF EXISTS tree_node_type_vote_idx;
 DROP INDEX IF EXISTS tree_node_type_vote_user_idx;
 DROP INDEX IF EXISTS tree_node_lang_code_node_idx;
 DROP INDEX IF EXISTS tree_node_lang_code_idx;
 DROP INDEX IF EXISTS tree_node_internal_key_node_idx;
 DROP INDEX IF EXISTS tree_node_internal_key_idx;
+DROP INDEX IF EXISTS tree_node_merge_vote_idx;
+DROP INDEX IF EXISTS tree_node_merge_vote_user_idx;
+DROP INDEX IF EXISTS tree_node_move_vote_idx;
+DROP INDEX IF EXISTS tree_node_move_vote_user_idx;
 
 DROP TABLE IF EXISTS tag_vote;
 DROP TABLE IF EXISTS tree_node_content_vote;
 DROP TABLE IF EXISTS tree_node_content;
 DROP TABLE IF EXISTS tree_node_vote;
-DROP TABLE IF EXISTS tree_node_link_action_vote;
 DROP TABLE IF EXISTS tree_node_type_vote;
 DROP TABLE IF EXISTS tree_node_lang_code;
 DROP TABLE IF EXISTS tree_node_internal_key;
+DROP TABLE IF EXISTS tree_node_merge_vote;
+DROP TABLE IF EXISTS tree_node_move_vote;
 DROP TABLE IF EXISTS tree_node;
 
 DROP TABLE IF EXISTS user_signup_request;
@@ -46,7 +49,6 @@ DROP TYPE IF EXISTS user_role_type;
 DROP TYPE IF EXISTS tree_node_class;
 DROP TYPE IF EXISTS vote_type;
 DROP TYPE IF EXISTS tree_node_content_type;
-DROP TYPE IF EXISTS tree_node_link_action_type;
 DROP TYPE IF EXISTS tag_class_type;
 DROP TYPE IF EXISTS tag_target_type;
 
@@ -58,7 +60,8 @@ DROP COLLATION IF EXISTS case_insensitive;
 CREATE TYPE user_role_type AS ENUM (
 	'admin', -- can do anything
 	'moderator', -- can delete and edit stuff
-	'contributor' -- can create categories, posts, comments, and votes
+	'contributor', -- can create categories, posts, comments, and votes
+	'banned' -- can't do anything
 );
 
 CREATE TABLE user_account (
@@ -71,6 +74,9 @@ CREATE TABLE user_account (
 	user_settings JSON,
 	created_at TIMESTAMPTZ NOT NULL
 );
+
+CREATE UNIQUE INDEX user_account_handle_idx ON user_account (handle);
+CREATE UNIQUE INDEX user_account_email_idx ON user_account (email);
 
 CREATE TABLE user_session (
 	token VARCHAR(30) PRIMARY KEY,
@@ -174,27 +180,36 @@ CREATE TYPE tree_node_content_type AS ENUM (
 	'body'
 );
 
+CREATE TYPE tree_node_body_type AS ENUM (
+	'plaintext',
+	'markdown'
+);
+
 CREATE TABLE tree_node_content (
 	id SERIAL PRIMARY KEY,
-	node_id INTEGER REFERENCES tree_node (id) ON DELETE CASCADE,
+	tree_node_id INTEGER REFERENCES tree_node (id) ON DELETE CASCADE,
 	content_type tree_node_content_type NOT NULL,
-	text_content TEXT NOT NULL COLLATE case_insensitive,
+	body_type tree_node_body_type, -- only for body content
+	text_content VARCHAR(2048) NOT NULL COLLATE case_insensitive,
+	html_content TEXT, -- only for body content
 	created_at TIMESTAMPTZ NOT NULL,
 	created_by INTEGER REFERENCES user_account (id) ON DELETE SET NULL
 );
 
-CREATE UNIQUE INDEX tree_node_content_idx ON tree_node_content (node_id, content_type, text_content);
+CREATE UNIQUE INDEX tree_node_content_idx ON tree_node_content (tree_node_id, content_type, text_content);
 
 CREATE TABLE tree_node_content_vote (
 	id SERIAL PRIMARY KEY,
+	tree_node_id INTEGER REFERENCES tree_node (id) ON DELETE CASCADE,
+	tree_node_content_type tree_node_content_type NOT NULL,
 	tree_node_content_id INTEGER REFERENCES tree_node_content (id) ON DELETE CASCADE,
 	vote vote_type NOT NULL,
 	created_at TIMESTAMPTZ NOT NULL,
 	created_by INTEGER REFERENCES user_account (id) ON DELETE CASCADE
 );
 
-CREATE INDEX tree_node_content_vote_idx ON tree_node_content_vote (tree_node_content_id, vote);
-CREATE UNIQUE INDEX tree_node_content_vote_user_idx ON tree_node_content_vote (created_by, tree_node_content_id);
+CREATE INDEX tree_node_content_vote_idx ON tree_node_content_vote (tree_node_id, tree_node_content_type, vote);
+CREATE UNIQUE INDEX tree_node_content_vote_user_idx ON tree_node_content_vote (created_by, tree_node_id, tree_node_content_id);
 
 CREATE TABLE tree_node_type_vote (
 	id SERIAL PRIMARY KEY,
@@ -226,22 +241,29 @@ CREATE TABLE tag_vote (
 CREATE INDEX tag_vote_idx ON tag_vote (target_type, target_id, vote, tag_id);
 CREATE UNIQUE INDEX tag_vote_user_idx ON tag_vote (created_by, target_type, target_id, tag_id);
 
-CREATE TYPE tree_node_link_action_type AS ENUM (
-	'move',
-	'merge'
-);
-
-CREATE TABLE tree_node_link_action_vote (
+CREATE TABLE tree_node_merge_vote (
 	id SERIAL PRIMARY KEY,
-	link_node_id INTEGER REFERENCES tree_node (id) ON DELETE CASCADE,
-	request_action tree_node_link_action_type NOT NULL,
+	source_node_id INTEGER REFERENCES tree_node (id) ON DELETE CASCADE,
+	target_node_id INTEGER REFERENCES tree_node (id) ON DELETE CASCADE,
 	vote vote_type NOT NULL,
 	created_at TIMESTAMPTZ NOT NULL,
 	created_by INTEGER REFERENCES user_account (id) ON DELETE CASCADE
 );
 
-CREATE INDEX tree_node_link_action_vote_idx ON tree_node_link_action_vote (link_node_id, request_action, vote);
-CREATE UNIQUE INDEX tree_node_link_action_vote_user_idx ON tree_node_link_action_vote (created_by, link_node_id, request_action);
+CREATE INDEX tree_node_merge_vote_idx ON tree_node_merge_vote (source_node_id, target_node_id, vote);
+CREATE UNIQUE INDEX tree_node_merge_vote_user_idx ON tree_node_merge_vote (created_by, source_node_id, target_node_id);
+
+CREATE TABLE tree_node_move_vote (
+	id SERIAL PRIMARY KEY,
+	source_node_id INTEGER REFERENCES tree_node (id) ON DELETE CASCADE,
+	target_node_id INTEGER REFERENCES tree_node (id) ON DELETE CASCADE,
+	vote vote_type NOT NULL,
+	created_at TIMESTAMPTZ NOT NULL,
+	created_by INTEGER REFERENCES user_account (id) ON DELETE CASCADE
+);
+
+CREATE INDEX tree_node_move_vote_idx ON tree_node_move_vote (source_node_id, target_node_id, vote);
+CREATE UNIQUE INDEX tree_node_move_vote_user_idx ON tree_node_move_vote (created_by, source_node_id, target_node_id);
 
 --------------------------------------------------
 -- create triggers
