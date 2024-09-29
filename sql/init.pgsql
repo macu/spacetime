@@ -2,9 +2,13 @@
 
 DROP TRIGGER IF EXISTS on_tree_node_delete ON tree_node;
 DROP TRIGGER IF EXISTS on_tree_node_content_delete ON tree_node_content;
+DROP TRIGGER IF EXISTS on_user_account_insert;
 
 DROP FUNCTION IF EXISTS delete_tree_node;
 DROP FUNCTION IF EXISTS delete_tree_node_content;
+DROP FUNCTION IF EXISTS delete_user_content;
+DROP FUNCTION IF EXISTS set_first_user_to_admin;
+DROP FUNCTION IF EXISTS init_db_content;
 
 DROP INDEX IF EXISTS tag_vote_idx;
 DROP INDEX IF EXISTS tag_vote_user_idx;
@@ -280,3 +284,88 @@ BEGIN
 	DELETE FROM password_reset_request WHERE user_id = user_id;
 	-- delete content across tree
 END;
+
+--------------------------------------------------
+-- create db init function
+
+CREATE FUNCTION init_db_content (
+	user_id INTEGER
+) RETURNS VOID AS $$
+BEGIN
+	-- exit if any tree node exists
+	IF EXISTS (SELECT 1 FROM tree_node) THEN
+		RETURN;
+	END IF;
+
+	-- create root node
+	INSERT INTO tree_node (node_class, created_at, created_by)
+	VALUES ('category', NOW(), user_id)
+	RETURNING id INTO root_node_id;
+
+	INSERT INTO tree_node_content (node_id, content_type, text_content, created_at, created_by)
+	VALUES (root_node_id, 'title', 'TreeTime', NOW(), user_id);
+
+	INSERT INTO tree_node_internal_key (node_id, internal_key)
+	VALUES (root_node_id, 'treetime');
+
+	-- create languages category
+	INSERT INTO tree_node (node_class, created_at, created_by)
+	VALUES ('category', NOW(), user_id)
+	RETURNING id INTO langs_node_id;
+
+	INSERT INTO tree_node_internal_key (node_id, internal_key)
+	VALUES (langs_node_id, 'langs');
+
+	-- create English lang
+	INSERT INTO tree_node (node_class, parent_id, created_at, created_by)
+	VALUES ('lang', langs_node_id, NOW(), user_id)
+	RETURNING id INTO lang_en_node_id;
+
+	INSERT INTO tree_node_content (node_id, content_type, text_content, created_at, created_by)
+	VALUES (lang_en_node_id, 'title', 'English', NOW(), user_id);
+
+	INSERT INTO tree_node_lang_code (node_id, lang_code)
+	VALUES (lang_en_node_id, 'en');
+
+	-- create tags category
+	INSERT INTO tree_node (node_class, created_at, created_by)
+	VALUES ('category', NOW(), user_id)
+	RETURNING id INTO tag_node_id;
+
+	INSERT INTO tree_node_content (node_id, content_type, text_content, created_at, created_by)
+	VALUES (tag_node_id, 'title', 'Tags', NOW(), user_id);
+
+	-- create types category
+	INSERT INTO tree_node (node_class, created_at, created_by)
+	VALUES ('category', NOW(), user_id)
+	RETURNING id INTO types_node_id;
+
+	INSERT INTO tree_node_internal_key (node_id, internal_key)
+	VALUES (types_node_id, 'types');
+END;
+
+--------------------------------------------------
+-- set first user to admin
+
+CREATE FUNCTION set_first_user_to_admin (
+	user_id INTEGER
+) RETURNS VOID AS $$
+BEGIN
+	IF EXISTS (SELECT 1 FROM user_account WHERE user_role = 'admin') THEN
+		RETURN;
+	END IF;
+
+	UPDATE user_account
+	SET user_role = 'admin'
+	WHERE id = user_id;
+
+	PERFORM init_db_content(user_id);
+
+	-- delete trigger and function
+	DROP TRIGGER on_user_account_insert ON user_account;
+	DROP FUNCTION set_first_user_to_admin;
+	DROP FUNCTION init_db_content;
+END;
+
+CREATE TRIGGER on_user_account_insert AFTER INSERT ON user_account
+	FOR EACH ROW EXECUTE PROCEDURE set_first_user_to_admin(NEW.id);
