@@ -1,12 +1,13 @@
 -- Clean up previous instance
 
 DROP TRIGGER IF EXISTS on_tree_node_delete ON tree_node;
+DROP TRIGGER IF EXISTS on_tree_node_content_delete ON tree_node_content;
 
 DROP FUNCTION IF EXISTS delete_tree_node;
+DROP FUNCTION IF EXISTS delete_tree_node_content;
 
 DROP INDEX IF EXISTS tag_vote_idx;
 DROP INDEX IF EXISTS tag_vote_user_idx;
-DROP INDEX IF EXISTS tag_title_idx;
 DROP INDEX IF EXISTS tree_node_content_vote_idx;
 DROP INDEX IF EXISTS tree_node_content_vote_user_idx;
 DROP INDEX IF EXISTS tree_node_content_idx;
@@ -15,21 +16,21 @@ DROP INDEX IF EXISTS tree_node_vote_user_idx;
 DROP INDEX IF EXISTS tree_node_parent_idx;
 DROP INDEX IF EXISTS tree_node_link_action_vote_idx;
 DROP INDEX IF EXISTS tree_node_link_action_vote_user_idx;
-DROP INDEX IF EXISTS tag_title_vote_idx;
-DROP INDEX IF EXISTS tag_title_vote_user_idx;
-DROP INDEX IF EXISTS tag_idx;
 DROP INDEX IF EXISTS tree_node_type_vote_idx;
 DROP INDEX IF EXISTS tree_node_type_vote_user_idx;
+DROP INDEX IF EXISTS tree_node_lang_code_node_idx;
+DROP INDEX IF EXISTS tree_node_lang_code_idx;
+DROP INDEX IF EXISTS tree_node_internal_key_node_idx;
+DROP INDEX IF EXISTS tree_node_internal_key_idx;
 
 DROP TABLE IF EXISTS tag_vote;
-DROP TABLE IF EXISTS tag_title_vote;
-DROP TABLE IF EXISTS tag_title;
-DROP TABLE IF EXISTS tag;
 DROP TABLE IF EXISTS tree_node_content_vote;
 DROP TABLE IF EXISTS tree_node_content;
 DROP TABLE IF EXISTS tree_node_vote;
 DROP TABLE IF EXISTS tree_node_link_action_vote;
 DROP TABLE IF EXISTS tree_node_type_vote;
+DROP TABLE IF EXISTS tree_node_lang_code;
+DROP TABLE IF EXISTS tree_node_internal_key;
 DROP TABLE IF EXISTS tree_node;
 
 DROP TABLE IF EXISTS user_signup_request;
@@ -107,11 +108,13 @@ CREATE COLLATION case_insensitive (
 -- Create content tables
 
 CREATE TYPE tree_node_class AS ENUM (
+	'tag',
+	'lang',
+	'type',
+	'field',
 	'category',
 	'post',
 	'link',
-	'type',
-	'field',
 	'comment'
 );
 
@@ -124,18 +127,39 @@ CREATE TABLE tree_node (
 	id SERIAL PRIMARY KEY,
 	parent_id INTEGER REFERENCES tree_node (id) ON DELETE CASCADE, -- allow null for root
 	node_class tree_node_class NOT NULL,
+	link_node_id INTEGER REFERENCES tree_node (id) ON DELETE CASCADE, -- only for link nodes
 	created_at TIMESTAMPTZ NOT NULL,
 	created_by INTEGER REFERENCES user_account (id) ON DELETE SET NULL
 );
 
 CREATE INDEX tree_node_parent_idx ON tree_node (parent_id);
 
+CREATE TABLE tree_node_internal_key (
+	-- table for associating internal keys with specific system nodes
+	id SERIAL PRIMARY KEY,
+	node_id INTEGER REFERENCES tree_node (id) ON DELETE CASCADE,
+	internal_key VARCHAR(10) NOT NULL
+);
+
+CREATE UNIQUE INDEX tree_node_internal_key_node_idx ON tree_node_internal_key (node_id);
+CREATE UNIQUE INDEX tree_node_internal_key_idx ON tree_node_internal_key (internal_key);
+
+CREATE tree_node_lang_code (
+	-- table for associating lang codes with specific system nodes
+	id SERIAL PRIMARY KEY,
+	node_id INTEGER REFERENCES tree_node (id) ON DELETE CASCADE,
+	lang_code VARCHAR(10) NOT NULL
+);
+
+CREATE INDEX tree_node_lang_code_node_idx ON tree_node_lang_code (node_id);
+CREATE INDEX tree_node_lang_code_idx ON tree_node_lang_code (lang_code);
+
 CREATE TABLE tree_node_vote (
 	id SERIAL PRIMARY KEY,
 	node_id INTEGER REFERENCES tree_node (id) ON DELETE CASCADE,
 	vote vote_type NOT NULL,
 	created_at TIMESTAMPTZ NOT NULL,
-	created_by INTEGER REFERENCES user_account (id) ON DELETE SET NULL
+	created_by INTEGER REFERENCES user_account (id) ON DELETE CASCADE
 );
 
 CREATE INDEX tree_node_vote_idx ON tree_node_vote (node_id, vote);
@@ -150,23 +174,23 @@ CREATE TABLE tree_node_content (
 	id SERIAL PRIMARY KEY,
 	node_id INTEGER REFERENCES tree_node (id) ON DELETE CASCADE,
 	content_type tree_node_content_type NOT NULL,
-	text_content VARCHAR(128) NOT NULL COLLATE case_insensitive,
+	text_content TEXT NOT NULL COLLATE case_insensitive,
 	created_at TIMESTAMPTZ NOT NULL,
 	created_by INTEGER REFERENCES user_account (id) ON DELETE SET NULL
 );
 
-CREATE INDEX tree_node_content_idx ON tree_node_content (node_id, content_type);
+CREATE UNIQUE INDEX tree_node_content_idx ON tree_node_content (node_id, content_type, text_content);
 
 CREATE TABLE tree_node_content_vote (
 	id SERIAL PRIMARY KEY,
-	content_id INTEGER REFERENCES tree_node_content (id) ON DELETE CASCADE,
+	tree_node_content_id INTEGER REFERENCES tree_node_content (id) ON DELETE CASCADE,
 	vote vote_type NOT NULL,
 	created_at TIMESTAMPTZ NOT NULL,
-	created_by INTEGER REFERENCES user_account (id) ON DELETE SET NULL
+	created_by INTEGER REFERENCES user_account (id) ON DELETE CASCADE
 );
 
-CREATE INDEX tree_node_content_vote_idx ON tree_node_content_vote (content_id, vote);
-CREATE UNIQUE INDEX tree_node_content_vote_user_idx ON tree_node_content_vote (created_by, content_id);
+CREATE INDEX tree_node_content_vote_idx ON tree_node_content_vote (tree_node_content_id, vote);
+CREATE UNIQUE INDEX tree_node_content_vote_user_idx ON tree_node_content_vote (created_by, tree_node_content_id);
 
 CREATE TABLE tree_node_type_vote (
 	id SERIAL PRIMARY KEY,
@@ -174,11 +198,29 @@ CREATE TABLE tree_node_type_vote (
 	type_id INTEGER REFERENCES tree_node (id) ON DELETE CASCADE,
 	vote vote_type NOT NULL,
 	created_at TIMESTAMPTZ NOT NULL,
-	created_by INTEGER REFERENCES user_account (id) ON DELETE SET NULL
+	created_by INTEGER REFERENCES user_account (id) ON DELETE CASCADE
 );
 
-CREATE INDEX tree_node_type_vote_idx ON tree_node_type_vote (type_id, vote);
+CREATE INDEX tree_node_type_vote_idx ON tree_node_type_vote (node_id, type_id, vote);
 CREATE UNIQUE INDEX tree_node_type_vote_user_idx ON tree_node_type_vote (created_by, node_id, type_id);
+
+CREATE TYPE tag_target_type AS ENUM (
+	'tree_node',
+	'tree_node_content'
+);
+
+CREATE TABLE tag_vote (
+	id SERIAL PRIMARY KEY,
+	tag_id INTEGER REFERENCES tag (id) ON DELETE CASCADE,
+	target_type tag_target_type NOT NULL,
+	target_id INTEGER,
+	vote vote_type NOT NULL,
+	created_at TIMESTAMPTZ NOT NULL,
+	created_by INTEGER REFERENCES user_account (id) ON DELETE CASCADE
+);
+
+CREATE INDEX tag_vote_idx ON tag_vote (target_type, target_id, vote, tag_id);
+CREATE UNIQUE INDEX tag_vote_user_idx ON tag_vote (created_by, target_type, target_id, tag_id);
 
 CREATE TYPE tree_node_link_action_type AS ENUM (
 	'move',
@@ -191,67 +233,11 @@ CREATE TABLE tree_node_link_action_vote (
 	request_action tree_node_link_action_type NOT NULL,
 	vote vote_type NOT NULL,
 	created_at TIMESTAMPTZ NOT NULL,
-	created_by INTEGER REFERENCES user_account (id) ON DELETE SET NULL
+	created_by INTEGER REFERENCES user_account (id) ON DELETE CASCADE
 );
 
 CREATE INDEX tree_node_link_action_vote_idx ON tree_node_link_action_vote (link_node_id, request_action, vote);
 CREATE UNIQUE INDEX tree_node_link_action_vote_user_idx ON tree_node_link_action_vote (created_by, link_node_id, request_action);
-
-CREATE TYPE tag_class_type AS ENUM (
-	'system',
-	'lang',
-	'user'
-);
-
-CREATE TABLE tag (
-	id SERIAL PRIMARY KEY,
-	tag_class tag_class_type NOT NULL DEFAULT 'user',
-	meta VARCHAR(10), -- optional, used for lang codes and special identifiers
-	created_at TIMESTAMPTZ NOT NULL,
-	created_by INTEGER REFERENCES user_account (id) ON DELETE SET NULL
-);
-
-CREATE INDEX tag_idx ON tag (tag_class, meta);
-
-CREATE TABLE tag_title (
-	id SERIAL PRIMARY KEY,
-	tag_id INTEGER REFERENCES tag (id) ON DELETE CASCADE,
-	title VARCHAR(64) NOT NULL COLLATE case_insensitive,
-	created_at TIMESTAMPTZ NOT NULL,
-	created_by INTEGER REFERENCES user_account (id) ON DELETE SET NULL
-);
-
-CREATE INDEX tag_title_idx ON tag_title (tag_id);
-
-CREATE TABLE tag_title_vote (
-	id SERIAL PRIMARY KEY,
-	tag_title_id INTEGER REFERENCES tag_title (id) ON DELETE CASCADE,
-	vote vote_type NOT NULL,
-	created_at TIMESTAMPTZ NOT NULL,
-	created_by INTEGER REFERENCES user_account (id) ON DELETE SET NULL
-);
-
-CREATE INDEX tag_title_vote_idx ON tag_title_vote (tag_title_id, vote);
-CREATE UNIQUE INDEX tag_title_vote_user_idx ON tag_title_vote (created_by, tag_title_id);
-
-CREATE TYPE tag_target_type AS ENUM (
-	'tree_node',
-	'tree_node_content',
-	'tag_title'
-);
-
-CREATE TABLE tag_vote (
-	id SERIAL PRIMARY KEY,
-	tag_id INTEGER REFERENCES tag (id) ON DELETE CASCADE,
-	target_type tag_target_type NOT NULL,
-	target_id INTEGER,
-	vote vote_type NOT NULL,
-	created_at TIMESTAMPTZ NOT NULL,
-	created_by INTEGER REFERENCES user_account (id) ON DELETE SET NULL
-);
-
-CREATE INDEX tag_vote_idx ON tag_vote (target_type, target_id, vote, tag_id);
-CREATE UNIQUE INDEX tag_vote_user_idx ON tag_vote (created_by, target_type, target_id, tag_id);
 
 --------------------------------------------------
 -- create triggers
@@ -267,6 +253,18 @@ END $$;
 
 CREATE TRIGGER on_tree_node_delete AFTER DELETE ON tree_node
 	FOR EACH ROW EXECUTE PROCEDURE delete_tree_node();
+
+CREATE FUNCTION delete_tree_node_content ()
+RETURNS TRIGGER
+LANGUAGE PLPGSQL
+AS $$
+BEGIN
+	DELETE FROM tag_vote WHERE target_type = 'tree_node_content' AND target_id = OLD.id;
+	RETURN NULL;
+END $$;
+
+CREATE TRIGGER on_tree_node_content_delete AFTER DELETE ON tree_node_content
+	FOR EACH ROW EXECUTE PROCEDURE delete_tree_node_content();
 
 --------------------------------------------------
 -- create functions
