@@ -1,22 +1,20 @@
 -- Clean up previous instance
 
-DROP TRIGGER IF EXISTS on_tree_node_delete ON tree_node;
-DROP TRIGGER IF EXISTS on_tree_node_content_delete ON tree_node_content;
 DROP TRIGGER IF EXISTS on_user_account_insert ON user_account;
 DROP TRIGGER IF EXISTS tree_node_content_tsvector_update ON tree_node_content;
 
-DROP FUNCTION IF EXISTS delete_tree_node;
-DROP FUNCTION IF EXISTS delete_tree_node_content;
 DROP FUNCTION IF EXISTS delete_user_content;
 DROP FUNCTION IF EXISTS set_first_user_to_admin;
 DROP FUNCTION IF EXISTS init_db_content;
 
 DROP INDEX IF EXISTS tree_node_tag_vote_idx;
+DROP INDEX IF EXISTS tree_node_tag_class_idx;
 DROP INDEX IF EXISTS tree_node_tag_vote_user_idx;
 DROP INDEX IF EXISTS tree_node_content_vote_idx;
 DROP INDEX IF EXISTS tree_node_content_vote_user_idx;
 DROP INDEX IF EXISTS tree_node_content_idx;
 DROP INDEX IF EXISTS tree_node_content_tag_vote_idx;
+DROP INDEX IF EXISTS tree_node_content_tag_class_idx;
 DROP INDEX IF EXISTS tree_node_content_tag_vote_user_idx;
 DROP INDEX IF EXISTS tree_node_vote_idx;
 DROP INDEX IF EXISTS tree_node_vote_user_idx;
@@ -225,25 +223,29 @@ CREATE TABLE tree_node_tag_vote (
 	id SERIAL PRIMARY KEY,
 	node_id INTEGER NOT NULL REFERENCES tree_node (id) ON DELETE CASCADE,
 	tag_node_id INTEGER NOT NULL REFERENCES tree_node (id) ON DELETE CASCADE,
+	tag_class tree_node_class NOT NULL,
 	vote vote_type NOT NULL,
 	created_at TIMESTAMPTZ NOT NULL,
 	created_by INTEGER NOT NULL REFERENCES user_account (id) ON DELETE CASCADE
 );
 
-CREATE INDEX tree_node_tag_vote_idx ON tag_vote (node_id, tag_node_id, vote);
-CREATE UNIQUE INDEX tag_vote_user_idx ON tag_vote (created_by, node_id, tag_node_id);
+CREATE INDEX tree_node_tag_vote_idx ON tree_node_tag_vote (node_id, tag_node_id, vote);
+CREATE INDEX tree_node_tag_class_idx ON tree_node_tag_vote (node_id, tag_class, tag_node_id, vote);
+CREATE UNIQUE INDEX tree_node_tag_vote_user_idx ON tree_node_tag_vote (created_by, node_id, tag_node_id);
 
 -- create table for tagging node content
 CREATE TABLE tree_node_content_tag_vote (
 	id SERIAL PRIMARY KEY,
 	content_id INTEGER NOT NULL REFERENCES tree_node_content (id) ON DELETE CASCADE,
 	tag_node_id INTEGER NOT NULL REFERENCES tree_node (id) ON DELETE CASCADE,
+	tag_class tree_node_class NOT NULL,
 	vote vote_type NOT NULL,
 	created_at TIMESTAMPTZ NOT NULL,
 	created_by INTEGER NOT NULL REFERENCES user_account (id) ON DELETE CASCADE
 );
 
 CREATE INDEX tree_node_content_tag_vote_idx ON tree_node_content_tag_vote (content_id, tag_node_id, vote);
+CREATE INDEX tree_node_content_tag_class_idx ON tree_node_content_tag_vote (content_id, tag_class, tag_node_id, vote);
 CREATE INDEX tree_node_content_tag_vote_user_idx ON tree_node_content_tag_vote (created_by, content_id, tag_node_id);
 
 -- create table for soft merging nodes
