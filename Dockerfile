@@ -8,6 +8,9 @@ RUN go mod download
 # ensure source directories are copied to target directories individually
 COPY cmd/ cmd/
 COPY pkg/ pkg/
+COPY html/ html/
+COPY js/ js/
+COPY css/ css/
 RUN CGO_ENABLED=0 GOOS=linux go build -o bin/server ./cmd/
 
 CMD ["/app/bin/server"]
