@@ -221,6 +221,7 @@ CREATE UNIQUE INDEX tree_node_content_vote_user_idx ON tree_node_content_vote (c
 -- create table for tagging notes
 CREATE TABLE tree_node_tag_vote (
 	id SERIAL PRIMARY KEY,
+	parent_id INTEGER REFERENCES tree_node (id) ON DELETE CASCADE, -- null for root
 	node_id INTEGER NOT NULL REFERENCES tree_node (id) ON DELETE CASCADE,
 	tag_node_id INTEGER NOT NULL REFERENCES tree_node (id) ON DELETE CASCADE,
 	tag_class tree_node_class NOT NULL,
@@ -229,9 +230,9 @@ CREATE TABLE tree_node_tag_vote (
 	created_by INTEGER NOT NULL REFERENCES user_account (id) ON DELETE CASCADE
 );
 
-CREATE INDEX tree_node_tag_vote_idx ON tree_node_tag_vote (node_id, tag_node_id, vote);
-CREATE INDEX tree_node_tag_class_idx ON tree_node_tag_vote (node_id, tag_class, tag_node_id, vote);
-CREATE UNIQUE INDEX tree_node_tag_vote_user_idx ON tree_node_tag_vote (created_by, node_id, tag_node_id);
+CREATE INDEX tree_node_tag_vote_idx ON tree_node_tag_vote (parent_id, node_id, tag_node_id, vote);
+CREATE INDEX tree_node_tag_class_idx ON tree_node_tag_vote (parent_id, node_id, tag_class, tag_node_id, vote);
+CREATE UNIQUE INDEX tree_node_tag_vote_user_idx ON tree_node_tag_vote (created_by, parent_id, node_id, tag_node_id);
 
 -- create table for tagging node content
 CREATE TABLE tree_node_content_tag_vote (

@@ -1,25 +1,27 @@
 # Config file for air
+root = "."
+tmp_dir = "tmp"
+
 [build]
   cmd = "go build -o bin/server ./cmd/"
   bin = "bin/server"
   full_bin = "APP_ENV=dev bin/server"
   include_ext = ["go", "mod", "sum", "html"]
   exclude_dir = ["node_modules", "sql", "bin", "src"]
-  exclude_file = ["air.toml"]
+  exclude_file = []
+  exclude_regex = ["_test\\.go"]
   follow_symlink = true
   delay = 1000
+  stop_on_error = true
+  send_interrupt = false
+  kill_delay = 500 # nanosecond
+  rerun = false
+  rerun_delay = 500
 
 [log]
   level = "debug"
   color = "true"
   timestamp = "true"
 
-[serve]
-  watch_dir = ["."]
-  watch_ext = ["go", "mod", "sum", "html"]
-  watch_delay = 200
-  grace_period = 1000
-  full_bin = "APP_ENV=dev bin/server"
-  check_interval = 500
-  kill_signal = "SIGTERM"
-  kill_timeout = 1000
+[misc]
+  clean_on_exit = true

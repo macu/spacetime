@@ -15,9 +15,13 @@ func maintenanceMode() {
 	var port = os.Getenv("PORT")
 
 	var maintenancePageTemplate *template.Template
+
 	http.HandleFunc("/", func(w http.ResponseWriter, r *http.Request) {
 		w.WriteHeader(http.StatusServiceUnavailable)
-		if !net.IsAjax(r) {
+		if net.IsAjax(r) {
+			w.Header().Set("Content-Type", "application/json")
+			w.Write([]byte(`{"error": true, "maintenanceMode": true}`))
+		} else {
 			if maintenancePageTemplate == nil {
 				maintenancePageTemplate = template.Must(template.ParseFiles("html/maintenance.html"))
 			}
