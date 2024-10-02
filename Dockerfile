@@ -1,16 +1,13 @@
 FROM golang:latest
 
+# Install air for live reloading
+RUN go install github.com/air-verse/air@latest
+
 WORKDIR /app
 
 COPY go.mod go.sum .
 RUN go mod download
 
-# ensure source directories are copied to target directories individually
-COPY cmd/ cmd/
-COPY pkg/ pkg/
-COPY html/ html/
-COPY js/ js/
-COPY css/ css/
-RUN CGO_ENABLED=0 GOOS=linux go build -o bin/server ./cmd/
+EXPOSE 2024
 
-CMD ["/app/bin/server"]
+CMD ["air", "-c", ".air.toml"]

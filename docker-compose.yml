@@ -12,6 +12,8 @@ services:
       - db
     environment:
       - DB_HOST=db
+    volumes:
+      - .:/app
 
   db:
     image: postgres:latest

@@ -7,3 +7,9 @@
 
 </div>
 </template>
+
+<style lang="scss">
+.treetime-app {
+	padding: 40px;
+}
+</style>
