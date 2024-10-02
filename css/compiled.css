@@ -17,5 +17,5 @@ html, body {
   !*** css ./node_modules/css-loader/dist/cjs.js??clonedRuleSet-2.use[1]!./node_modules/vue-loader/dist/stylePostLoader.js!./node_modules/sass-loader/dist/cjs.js??clonedRuleSet-2.use[2]!./node_modules/vue-loader/dist/index.js??ruleSet[1].rules[5].use[0]!./src/app.vue?vue&type=style&index=0&id=5ef48958&lang=scss ***!
   \*************************************************************************************************************************************************************************************************************************************************************************************************************************/
 .treetime-app {
-  padding: 60px;
+  padding: 40px;
 }

@@ -3,7 +3,7 @@
   cmd = "go build -o bin/server ./cmd/"
   bin = "bin/server"
   full_bin = "APP_ENV=dev bin/server"
-  include_ext = ["go", "mod", "sum", "html", "js", "css"]
+  include_ext = ["go", "mod", "sum", "html"]
   exclude_dir = ["node_modules", "sql", "bin", "src"]
   exclude_file = ["air.toml"]
   follow_symlink = true
@@ -16,7 +16,7 @@
 
 [serve]
   watch_dir = ["."]
-  watch_ext = ["go", "mod", "sum", "html", "js", "css"]
+  watch_ext = ["go", "mod", "sum", "html"]
   watch_delay = 200
   grace_period = 1000
   full_bin = "APP_ENV=dev bin/server"
