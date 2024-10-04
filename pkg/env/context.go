@@ -22,6 +22,9 @@ func SetIsAppEngine(val bool) {
 }
 
 func GetCacheControlVersionStamp() string {
+	if IsLocal() {
+		return ""
+	}
 	return cacheControlVersionStamp
 }
 

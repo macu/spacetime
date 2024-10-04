@@ -1,0 +1,91 @@
+<template>
+<div class="signup-page form-layout form-width-md">
+
+	<h2>Sign up</h2>
+
+	<template v-if="submitted">
+
+		<p>Your request has been submitted. Please check your email for a verification link, to finish creating your account.</p>
+
+	</template>
+
+	<template v-else>
+
+		<p>Please provide a valid email address to create your account.</p>
+
+		<div class="field">
+			<label>Email address</label>
+			<el-input v-model="email" type="email"
+				:maxlength="50" show-word-limit
+				autocapitalize="none" autocomplete="email"/>
+		</div>
+
+		<div class="flex-row-md">
+			<el-button @click="register()" :disabled="registerDisabled">Register</el-button>
+			<router-link :to="{name: 'login'}">Log in</router-link>
+		</div>
+
+		<loading-message v-if="loading" message="Submitting..."/>
+
+	</template>
+
+</div>
+</template>
+
+<script>
+import store from '@/store.js';
+
+import {
+	ajaxPost,
+} from '@/utils/ajax.js';
+
+export default {
+	data() {
+		return {
+			email: '',
+			loading: false,
+			submitted: false,
+		};
+	},
+	computed: {
+		registerDisabled() {
+			return this.loading || this.submitted || !this.email.trim();
+		},
+	},
+	beforeRouteEnter(to, from, next) {
+		if (store.getters.userIsAuthenticated) {
+			next('/');
+		} else {
+			next();
+		}
+	},
+	methods: {
+		register() {
+			if (this.registerDisabled) {
+				return;
+			}
+			this.loading = true;
+			ajaxPost('/ajax/signup', {
+				email: this.email.trim(),
+			}, {
+				'invalid-email': 'The given email address is invalid.',
+				'email-exists': 'An account with this email address already exists.',
+			}).then(response => {
+				if (typeof response === 'object' && response.token) {
+					this.$router.replace({
+						name: 'signup-verify',
+						query: {
+							token: response.token,
+						},
+					});
+				} else {
+					this.submitted = true;
+					this.loading = false;
+				}
+			}).catch(() => {
+				this.loading = false;
+			});
+		},
+	},
+};
+</script>

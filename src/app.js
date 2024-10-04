@@ -9,6 +9,9 @@ import store from "./store.js";
 
 import ElementPlus from 'element-plus';
 
+import MaterialIcon from '@/widgets/material-icon.vue';
+import LoadingMessage from '@/widgets/loading-message.vue';
+
 const app = createApp(App);
 
 app.use(router);
@@ -17,5 +20,8 @@ app.use(store);
 app.use(ElementPlus, {
 	locale: window.ElementPlusLocaleEn,
 });
+
+app.component('material-icon', MaterialIcon);
+app.component('loading-message', LoadingMessage);
 
 app.mount("#app");

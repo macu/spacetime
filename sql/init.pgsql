@@ -58,14 +58,15 @@ DROP COLLATION IF EXISTS case_insensitive;
 CREATE TYPE user_role_type AS ENUM (
 	'admin', -- can do anything
 	'moderator', -- can delete and edit stuff
-	'contributor', -- can create categories, posts, comments, and votes
+	'user', -- can create categories, posts, comments, and votes
+	'inactive', -- can't do anything
 	'banned' -- can't do anything
 );
 
 CREATE TABLE user_account (
 	id SERIAL PRIMARY KEY,
 	email VARCHAR(50) UNIQUE NOT NULL,
-	user_role user_role_type NOT NULL DEFAULT 'contributor',
+	user_role user_role_type NOT NULL DEFAULT 'user',
 	handle VARCHAR(25) UNIQUE, -- optional handle
 	display_name VARCHAR(50) NOT NULL, -- required
 	auth_hash VARCHAR(60) NOT NULL,
@@ -84,10 +85,9 @@ CREATE TABLE user_session (
 
 CREATE TABLE user_signup_request (
 	id SERIAL PRIMARY KEY,
-	email VARCHAR(50) UNIQUE NOT NULL,
+	email VARCHAR(50) NOT NULL,
 	created_at TIMESTAMPTZ NOT NULL,
-	token VARCHAR(15) UNIQUE,
-	user_id INTEGER -- set after email verification
+	token VARCHAR(15) UNIQUE NOT NULL
 );
 
 CREATE TABLE password_reset_request (
@@ -202,7 +202,7 @@ CREATE INDEX tree_node_content_search_composite_idx ON tree_node_content (conten
 -- automatically keep text_search up to date
 CREATE TRIGGER tree_node_content_tsvector_update BEFORE INSERT OR UPDATE
 ON tree_node_content FOR EACH ROW EXECUTE FUNCTION
-tsvector_update_trigger(text_search, text_content);
+tsvector_update_trigger(text_search, 'pg_catalog.simple', text_content);
 
 -- create table for voting on node title/body content
 CREATE TABLE tree_node_content_vote (
@@ -221,7 +221,6 @@ CREATE UNIQUE INDEX tree_node_content_vote_user_idx ON tree_node_content_vote (c
 -- create table for tagging notes
 CREATE TABLE tree_node_tag_vote (
 	id SERIAL PRIMARY KEY,
-	parent_id INTEGER REFERENCES tree_node (id) ON DELETE CASCADE, -- null for root
 	node_id INTEGER NOT NULL REFERENCES tree_node (id) ON DELETE CASCADE,
 	tag_node_id INTEGER NOT NULL REFERENCES tree_node (id) ON DELETE CASCADE,
 	tag_class tree_node_class NOT NULL,
@@ -230,9 +229,9 @@ CREATE TABLE tree_node_tag_vote (
 	created_by INTEGER NOT NULL REFERENCES user_account (id) ON DELETE CASCADE
 );
 
-CREATE INDEX tree_node_tag_vote_idx ON tree_node_tag_vote (parent_id, node_id, tag_node_id, vote);
-CREATE INDEX tree_node_tag_class_idx ON tree_node_tag_vote (parent_id, node_id, tag_class, tag_node_id, vote);
-CREATE UNIQUE INDEX tree_node_tag_vote_user_idx ON tree_node_tag_vote (created_by, parent_id, node_id, tag_node_id);
+CREATE INDEX tree_node_tag_vote_idx ON tree_node_tag_vote (node_id, tag_node_id, vote);
+CREATE INDEX tree_node_tag_class_idx ON tree_node_tag_vote (node_id, tag_class, tag_node_id, vote);
+CREATE UNIQUE INDEX tree_node_tag_vote_user_idx ON tree_node_tag_vote (created_by, node_id, tag_node_id);
 
 -- create table for tagging node content
 CREATE TABLE tree_node_content_tag_vote (
@@ -278,7 +277,6 @@ AS $$
 BEGIN
 	DELETE FROM user_session WHERE user_id = user_id_param;
 	DELETE FROM user_account WHERE id = user_id;
-	DELETE FROM user_signup_request WHERE user_id = user_id_param;
 	DELETE FROM password_reset_request WHERE user_id = user_id_param;
 	-- TODO delete content across tree
 END;
@@ -311,7 +309,7 @@ BEGIN
 	VALUES ('category', NOW(), user_id)
 	RETURNING id INTO root_node_id;
 
-	INSERT INTO tree_node_content (tree_node_id, content_type, text_content, created_at, created_by)
+	INSERT INTO tree_node_content (node_id, content_type, text_content, created_at, created_by)
 	VALUES (root_node_id, 'title', 'TreeTime', NOW(), user_id);
 
 	INSERT INTO tree_node_internal_key (node_id, internal_key)
@@ -322,7 +320,7 @@ BEGIN
 	VALUES ('category', NOW(), user_id)
 	RETURNING id INTO langs_node_id;
 
-	INSERT INTO tree_node_content (tree_node_id, content_type, text_content, created_at, created_by)
+	INSERT INTO tree_node_content (node_id, content_type, text_content, created_at, created_by)
 	VALUES (langs_node_id, 'title', 'Languages', NOW(), user_id);
 
 	INSERT INTO tree_node_internal_key (node_id, internal_key)
@@ -333,7 +331,7 @@ BEGIN
 	VALUES ('lang', langs_node_id, NOW(), user_id)
 	RETURNING id INTO lang_en_node_id;
 
-	INSERT INTO tree_node_content (tree_node_id, content_type, text_content, created_at, created_by)
+	INSERT INTO tree_node_content (node_id, content_type, text_content, created_at, created_by)
 	VALUES (lang_en_node_id, 'title', 'English', NOW(), user_id);
 
 	INSERT INTO tree_node_lang_code (node_id, lang_code)
@@ -344,7 +342,7 @@ BEGIN
 	VALUES ('category', NOW(), user_id)
 	RETURNING id INTO tag_node_id;
 
-	INSERT INTO tree_node_content (tree_node_id, content_type, text_content, created_at, created_by)
+	INSERT INTO tree_node_content (node_id, content_type, text_content, created_at, created_by)
 	VALUES (tag_node_id, 'title', 'Tags', NOW(), user_id);
 
 	INSERT INTO tree_node_internal_key (node_id, internal_key)
@@ -355,7 +353,7 @@ BEGIN
 	VALUES ('category', NOW(), user_id)
 	RETURNING id INTO types_node_id;
 
-	INSERT INTO tree_node_content (tree_node_id, content_type, text_content, created_at, created_by)
+	INSERT INTO tree_node_content (node_id, content_type, text_content, created_at, created_by)
 	VALUES (types_node_id, 'title', 'Types', NOW(), user_id);
 
 	INSERT INTO tree_node_internal_key (node_id, internal_key)
@@ -378,7 +376,7 @@ BEGIN
 
 	NEW.user_role := 'admin';
 
-	PERFORM init_db_content(user_id);
+	PERFORM init_db_content(NEW.id);
 
 	-- delete trigger and function
 	DROP TRIGGER on_user_account_insert ON user_account;

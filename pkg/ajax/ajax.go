@@ -8,7 +8,6 @@ import (
 	"strings"
 
 	"treetime/pkg/auth"
-	"treetime/pkg/env"
 	"treetime/pkg/user"
 	"treetime/pkg/utils/ajax"
 	"treetime/pkg/utils/logging"
@@ -16,26 +15,19 @@ import (
 
 var ajaxHandlersAuthOptional = map[string]map[string]ajax.AjaxRouteAuthOptional{
 	http.MethodGet: {
-		// "/ajax/test": ajaxTest,
+		"/ajax/load-login":  auth.AjaxLoadLogin,
+		"/ajax/load-signup": auth.AjaxLoadSignup,
 	},
 	http.MethodPost: {
-		"/ajax/login": auth.AjaxLogin,
+		"/ajax/login":         auth.AjaxLogin,
+		"/ajax/signup":        auth.AjaxSignup,
+		"/ajax/signup-verify": auth.AjaxSignupVerify,
 	},
 }
 
 var ajaxHandlersAuthRequired = map[string]map[string]ajax.AjaxRouteAuthRequired{
-	http.MethodGet: {
-		// "/ajax/auth":     ajaxLoadAuthenticatedUser,
-		// "/ajax/settings": ajaxUserSettings,
-		// "/ajax/logout": ajaxLogoutHandler,
-	},
+	http.MethodGet: {},
 	http.MethodPost: {
-		// "/ajax/user/change-password": ajaxUserChangePassword,
-		// "/ajax/user/save-settings":   ajaxUserSaveSettings,
-
-		// util
-		// "/ajax/render-markdown": ajaxRenderMarkdown,
-
 		"/ajax/logout": auth.AjaxLogout,
 	},
 }
@@ -51,12 +43,6 @@ func AjaxHandler(db *sql.DB, userID *uint, w http.ResponseWriter, r *http.Reques
 			return
 		}
 		response, statusCode := handler()
-		if statusCode >= 400 {
-			w.WriteHeader(statusCode)
-			// Send current version stamp
-			w.Write([]byte("VersionStamp: " + env.GetCacheControlVersionStamp()))
-			return
-		}
 		if response != nil {
 			js, err := json.Marshal(response)
 			if err != nil {

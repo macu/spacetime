@@ -27,6 +27,7 @@ module.exports = {
 		'vue-router': 'VueRouter',
 		'element-plus': 'ElementPlus',
 		'element-en': 'ElementPlusLocaleEn',
+		'axios': 'axios',
 		'moment': 'moment',
 	},
 	resolve: {

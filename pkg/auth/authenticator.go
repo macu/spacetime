@@ -56,7 +56,7 @@ func MakeAuthenticator(db *sql.DB) func(handler AuthOptionalHandler) func(http.R
 				}
 
 				if userID != nil {
-					if user.CheckBanned(userRole) {
+					if !user.CheckRoleActive(userRole) {
 
 						// Don't allow authentication
 						userID = nil

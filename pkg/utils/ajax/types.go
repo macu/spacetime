@@ -22,3 +22,7 @@ type AjaxRouteAuthRequired func(
 	w http.ResponseWriter,
 	r *http.Request,
 ) (interface{}, int)
+
+type AjaxErrorPayload struct {
+	ErrorCode string `json:"errorCode"`
+}

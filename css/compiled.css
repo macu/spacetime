@@ -9,13 +9,138 @@ html, body {
 * {
   box-sizing: border-box;
 }
+
+.spin {
+  animation-name: spin;
+  animation-duration: 2000ms;
+  animation-iteration-count: infinite;
+  animation-timing-function: linear;
+}
+
+@keyframes spin {
+  from {
+    transform: rotate(0deg);
+  }
+  to {
+    transform: rotate(360deg);
+  }
+}
 /*!******************************************************************************************************************************************************************!*\
   !*** css ./node_modules/css-loader/dist/cjs.js??clonedRuleSet-2.use[1]!./node_modules/sass-loader/dist/cjs.js??clonedRuleSet-2.use[2]!./src/styles/layouts.scss ***!
   \******************************************************************************************************************************************************************/
+.flex-row, .flex-row-md, .flex-row-lg {
+  display: flex;
+  flex-direction: row;
+  align-items: center;
+}
+.flex-row.nowrap, .flex-row-md.nowrap, .flex-row-lg.nowrap {
+  flex-wrap: nowrap;
+}
+.flex-row > .flex-1, .flex-row-md > .flex-1, .flex-row-lg > .flex-1 {
+  flex: 1;
+}
+.flex-row > *, .flex-row > .el-button + .el-button, .flex-row-md > *, .flex-row-md > .el-button + .el-button, .flex-row-lg > *, .flex-row-lg > .el-button + .el-button {
+  margin: 0;
+}
 
+.flex-row {
+  row-gap: 5px;
+  column-gap: 10px;
+}
+
+.flex-row-md {
+  row-gap: 10px;
+  column-gap: 20px;
+}
+
+.flex-row-lg {
+  row-gap: 20px;
+  column-gap: 40px;
+}
+
+.flex-column, .flex-column-md, .flex-column-lg, .flex-column-xl, .form-layout, .field {
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+}
+.flex-column > *, .flex-column-md > *, .flex-column-lg > *, .flex-column-xl > *, .form-layout > *, .field > * {
+  margin: 0;
+}
+
+.flex-column, .field {
+  row-gap: 10px;
+}
+
+.flex-column-md {
+  row-gap: 20px;
+}
+
+.flex-column-lg, .form-layout {
+  row-gap: 40px;
+}
+
+.flex-column-xl {
+  row-gap: 60px;
+}
+
+.form-layout {
+  align-items: flex-start;
+}
+.form-layout > .field {
+  width: 100%;
+  align-items: flex-start;
+}
+.form-layout > .field > label:first-child:not([class]) {
+  display: block;
+  font-weight: bold;
+}
+.form-layout > .field > .value {
+  font-size: larger;
+}
+.form-layout > .field > .el-input, .form-layout > .field > .el-select {
+  width: 100%;
+}
+.form-layout.form-width-md {
+  max-width: 600px;
+  margin: 0 auto;
+}
 /*!*************************************************************************************************************************************************************************************************************************************************************************************************************************!*\
   !*** css ./node_modules/css-loader/dist/cjs.js??clonedRuleSet-2.use[1]!./node_modules/vue-loader/dist/stylePostLoader.js!./node_modules/sass-loader/dist/cjs.js??clonedRuleSet-2.use[2]!./node_modules/vue-loader/dist/index.js??ruleSet[1].rules[5].use[0]!./src/app.vue?vue&type=style&index=0&id=5ef48958&lang=scss ***!
   \*************************************************************************************************************************************************************************************************************************************************************************************************************************/
-.treetime-app {
+.treetime-app > header {
+  margin: 0;
+  padding: 20px;
+  background-color: #f0f0f0;
+  border-bottom: 1px solid #ccc;
+}
+.treetime-app > header > h1 {
+  font-size: 2em;
+}
+.treetime-app > .body {
   padding: 40px;
+}
+/*!*******************************************************************************************************************************************************************************************************************************************************************************************************************************************!*\
+  !*** css ./node_modules/css-loader/dist/cjs.js??clonedRuleSet-2.use[1]!./node_modules/vue-loader/dist/stylePostLoader.js!./node_modules/sass-loader/dist/cjs.js??clonedRuleSet-2.use[2]!./node_modules/vue-loader/dist/index.js??ruleSet[1].rules[5].use[0]!./src/widgets/material-icon.vue?vue&type=style&index=0&id=55e49714&lang=scss ***!
+  \*******************************************************************************************************************************************************************************************************************************************************************************************************************************************/
+.material-icon {
+  font-family: "Material Icons";
+  font-size: 24px;
+}
+.material-icon.large {
+  font-size: 48px;
+}
+/*!*********************************************************************************************************************************************************************************************************************************************************************************************************************************************!*\
+  !*** css ./node_modules/css-loader/dist/cjs.js??clonedRuleSet-2.use[1]!./node_modules/vue-loader/dist/stylePostLoader.js!./node_modules/sass-loader/dist/cjs.js??clonedRuleSet-2.use[2]!./node_modules/vue-loader/dist/index.js??ruleSet[1].rules[5].use[0]!./src/widgets/loading-message.vue?vue&type=style&index=0&id=68380766&lang=scss ***!
+  \*********************************************************************************************************************************************************************************************************************************************************************************************************************************************/
+.loading-message {
+  font-size: larger;
+}
+.loading-message.left {
+  justify-content: flex-start;
+}
+.loading-message.center {
+  justify-content: center;
+}
+.loading-message.right {
+  justify-content: flex-end;
 }

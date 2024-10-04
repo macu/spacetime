@@ -3,12 +3,13 @@ package user
 type UserRole string
 
 const (
-	RoleAdmin       UserRole = "admin"
-	RoleModerator   UserRole = "moderator"
-	RoleContributor UserRole = "contributor"
-	RoleBanned      UserRole = "banned"
+	RoleAdmin     UserRole = "admin"
+	RoleModerator UserRole = "moderator"
+	RoleUser      UserRole = "user"
+	RoleInactive  UserRole = "inactive"
+	RoleBanned    UserRole = "banned"
 )
 
-func CheckBanned(role string) bool {
-	return role == string(RoleBanned)
+func CheckRoleActive(role string) bool {
+	return role != string(RoleBanned) && role != string(RoleInactive)
 }
