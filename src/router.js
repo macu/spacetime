@@ -8,6 +8,8 @@ import LoginPage from './pages/user-account/login.vue';
 import SignupPage from './pages/user-account/signup.vue';
 import SignupVerifyPage from './pages/user-account/signup-verify.vue';
 
+import CategoryView from './pages/category/view.vue';
+
 export default createRouter({
 	history: createWebHistory(),
 	routes: [
@@ -30,6 +32,11 @@ export default createRouter({
 			path: '/verify-signup',
 			name: 'signup-verify',
 			component: SignupVerifyPage,
+		},
+		{
+			path: '/cat/:id',
+			name: 'category-view',
+			component: CategoryView,
 		},
 	],
 });

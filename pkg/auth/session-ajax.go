@@ -103,6 +103,7 @@ func AjaxLoadLogin(db *sql.DB, userID *uint, w http.ResponseWriter, r *http.Requ
 
 	var user = struct {
 		IsAuthenticated bool   `json:"isAuthenticated"`
+		ID              uint   `json:"id"`
 		Role            string `json:"role"`
 		Handle          string `json:"handle"`
 		DisplayName     string `json:"displayName"`
@@ -111,9 +112,9 @@ func AjaxLoadLogin(db *sql.DB, userID *uint, w http.ResponseWriter, r *http.Requ
 
 	if userID != nil {
 		err := db.QueryRow(
-			`SELECT user_role, handle, display_name, email FROM user_account WHERE id=$1`,
+			`SELECT id, user_role, handle, display_name, email FROM user_account WHERE id=$1`,
 			*userID,
-		).Scan(&user.Role, &user.Handle, &user.DisplayName, &user.Email)
+		).Scan(&user.ID, &user.Role, &user.Handle, &user.DisplayName, &user.Email)
 		if err != nil {
 			logging.LogError(r, userID, fmt.Errorf("loading user: %w", err))
 			return nil, http.StatusInternalServerError

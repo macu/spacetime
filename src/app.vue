@@ -1,8 +1,11 @@
 <template>
-<div class="treetime-app">
+<div class="treetime-app" :class="{'is-mobile': isMobile}">
 
 	<header class="flex-row-md">
-		<h1 class="flex-1">TreeTime</h1>
+		<h1 class="flex-1">
+			<span v-if="onDashboard">TreeTime</span>
+			<router-link v-else :to="{name: 'dashboard'}">TreeTime</router-link>
+		</h1>
 		<template v-if="showUser">
 			<span class="flex-row nowrap">
 				<material-icon icon="account_circle"/>
@@ -27,7 +30,10 @@
 export default {
 	computed: {
 		loginLoaded() {
-			return this.$store.state.user !== null;
+			return this.$store.getters.loginLoaded;
+		},
+		isMobile() {
+			return this.$store.getters.isMobile;
 		},
 		showUser() {
 			return this.loginLoaded && this.$store.getters.userIsAuthenticated;
@@ -37,6 +43,9 @@ export default {
 		},
 		currentUserDisplayName() {
 			return this.$store.getters.currentUserDisplayName;
+		},
+		onDashboard() {
+			return this.$route.name === 'dashboard';
 		},
 	},
 	mounted() {
@@ -61,6 +70,7 @@ export default {
 
 <style lang="scss">
 .treetime-app {
+
 	>header {
 		margin: 0;
 		padding: 20px;
@@ -70,8 +80,22 @@ export default {
 			font-size: 2em;
 		}
 	}
+
 	>.body {
-		padding: 40px;
+		padding: 40px 40px 60px;
 	}
+
+	&.is-mobile {
+		>header {
+			padding: 10px;
+			>h1 {
+				font-size: 1.5em;
+			}
+		}
+		>.body {
+			padding: 20px 20px 40px;
+		}
+	}
+
 }
 </style>

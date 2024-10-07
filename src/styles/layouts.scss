@@ -31,10 +31,11 @@
 	column-gap: 40px;
 }
 
-.flex-column, .flex-column-md, .flex-column-lg, .flex-column-xl, .form-layout, .field {
+.flex-column, .flex-column-md, .flex-column-lg, .flex-column-xl,
+.form-layout, .field {
 	display: flex;
 	flex-direction: column;
-	align-items: center;
+	align-items: stretch;
 
 	>* {
 		margin: 0;
@@ -58,23 +59,28 @@
 }
 
 .form-layout {
-	align-items: flex-start;
-	>.field {
-		width: 100%;
-		align-items: flex-start;
-		>label:first-child:not([class]) {
-			display: block;
-			font-weight: bold;
-		}
-		>.value {
-			font-size: larger;
-		}
-		>.el-input, >.el-select {
-			width: 100%;
-		}
-	}
 	&.form-width-md {
 		max-width: 600px;
 		margin: 0 auto;
 	}
+}
+
+.field {
+	align-items: flex-start;
+	>label:first-child:not([class]) {
+		align-items: flex-start;
+		display: block;
+		font-weight: bold;
+	}
+	>.value {
+		font-size: larger;
+	}
+	>.el-input, >.el-select {
+		width: 100%;
+	}
+}
+
+.page-width-md {
+	max-width: 800px;
+	margin: 0 auto;
 }

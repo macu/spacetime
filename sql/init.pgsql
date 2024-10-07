@@ -316,8 +316,8 @@ BEGIN
 	VALUES (root_node_id, 'treetime');
 
 	-- create languages category
-	INSERT INTO tree_node (node_class, created_at, created_by)
-	VALUES ('category', NOW(), user_id)
+	INSERT INTO tree_node (parent_id, node_class, created_at, created_by)
+	VALUES (root_node_id, 'category', NOW(), user_id)
 	RETURNING id INTO langs_node_id;
 
 	INSERT INTO tree_node_content (node_id, content_type, text_content, created_at, created_by)
@@ -327,8 +327,8 @@ BEGIN
 	VALUES (langs_node_id, 'langs');
 
 	-- create English lang
-	INSERT INTO tree_node (node_class, parent_id, created_at, created_by)
-	VALUES ('lang', langs_node_id, NOW(), user_id)
+	INSERT INTO tree_node (parent_id, node_class, created_at, created_by)
+	VALUES (langs_node_id, 'lang', NOW(), user_id)
 	RETURNING id INTO lang_en_node_id;
 
 	INSERT INTO tree_node_content (node_id, content_type, text_content, created_at, created_by)
@@ -338,8 +338,8 @@ BEGIN
 	VALUES (lang_en_node_id, 'en');
 
 	-- create tags category
-	INSERT INTO tree_node (node_class, created_at, created_by)
-	VALUES ('category', NOW(), user_id)
+	INSERT INTO tree_node (parent_id, node_class, created_at, created_by)
+	VALUES (root_node_id, 'category', NOW(), user_id)
 	RETURNING id INTO tag_node_id;
 
 	INSERT INTO tree_node_content (node_id, content_type, text_content, created_at, created_by)
@@ -349,8 +349,8 @@ BEGIN
 	VALUES (tag_node_id, 'tags');
 
 	-- create types category
-	INSERT INTO tree_node (node_class, created_at, created_by)
-	VALUES ('category', NOW(), user_id)
+	INSERT INTO tree_node (parent_id, node_class, created_at, created_by)
+	VALUES (root_node_id, 'category', NOW(), user_id)
 	RETURNING id INTO types_node_id;
 
 	INSERT INTO tree_node_content (node_id, content_type, text_content, created_at, created_by)

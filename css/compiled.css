@@ -25,6 +25,12 @@ html, body {
     transform: rotate(360deg);
   }
 }
+.tree-node-border {
+  padding: 20px;
+  border: thin solid gray;
+  border-radius: 10px;
+  box-shadow: 0 0 10px rgba(0, 0, 0, 0.1);
+}
 /*!******************************************************************************************************************************************************************!*\
   !*** css ./node_modules/css-loader/dist/cjs.js??clonedRuleSet-2.use[1]!./node_modules/sass-loader/dist/cjs.js??clonedRuleSet-2.use[2]!./src/styles/layouts.scss ***!
   \******************************************************************************************************************************************************************/
@@ -58,12 +64,14 @@ html, body {
   column-gap: 40px;
 }
 
-.flex-column, .flex-column-md, .flex-column-lg, .flex-column-xl, .form-layout, .field {
+.flex-column, .flex-column-md, .flex-column-lg, .flex-column-xl,
+.form-layout, .field {
   display: flex;
   flex-direction: column;
-  align-items: center;
+  align-items: stretch;
 }
-.flex-column > *, .flex-column-md > *, .flex-column-lg > *, .flex-column-xl > *, .form-layout > *, .field > * {
+.flex-column > *, .flex-column-md > *, .flex-column-lg > *, .flex-column-xl > *,
+.form-layout > *, .field > * {
   margin: 0;
 }
 
@@ -83,25 +91,28 @@ html, body {
   row-gap: 60px;
 }
 
-.form-layout {
+.form-layout.form-width-md {
+  max-width: 600px;
+  margin: 0 auto;
+}
+
+.field {
   align-items: flex-start;
 }
-.form-layout > .field {
-  width: 100%;
+.field > label:first-child:not([class]) {
   align-items: flex-start;
-}
-.form-layout > .field > label:first-child:not([class]) {
   display: block;
   font-weight: bold;
 }
-.form-layout > .field > .value {
+.field > .value {
   font-size: larger;
 }
-.form-layout > .field > .el-input, .form-layout > .field > .el-select {
+.field > .el-input, .field > .el-select {
   width: 100%;
 }
-.form-layout.form-width-md {
-  max-width: 600px;
+
+.page-width-md {
+  max-width: 800px;
   margin: 0 auto;
 }
 /*!*************************************************************************************************************************************************************************************************************************************************************************************************************************!*\
@@ -117,7 +128,41 @@ html, body {
   font-size: 2em;
 }
 .treetime-app > .body {
-  padding: 40px;
+  padding: 40px 40px 60px;
+}
+.treetime-app.is-mobile > header {
+  padding: 10px;
+}
+.treetime-app.is-mobile > header > h1 {
+  font-size: 1.5em;
+}
+.treetime-app.is-mobile > .body {
+  padding: 20px 20px 40px;
+}
+/*!*****************************************************************************************************************************************************************************************************************************************************************************************************************************************!*\
+  !*** css ./node_modules/css-loader/dist/cjs.js??clonedRuleSet-2.use[1]!./node_modules/vue-loader/dist/stylePostLoader.js!./node_modules/sass-loader/dist/cjs.js??clonedRuleSet-2.use[2]!./node_modules/vue-loader/dist/index.js??ruleSet[1].rules[5].use[0]!./src/widgets/parent-path.vue?vue&type=style&index=0&id=51488c82&lang=scss ***!
+  \*****************************************************************************************************************************************************************************************************************************************************************************************************************************************/
+.parent-path {
+  display: flex;
+  flex-direction: column;
+  border: thin solid gray;
+  border-radius: 10px;
+  box-shadow: 0 0 10px rgba(0, 0, 0, 0.1);
+}
+.parent-path > div {
+  padding: 20px;
+  font-size: 120%;
+}
+.parent-path > div:first-child {
+  border-top-left-radius: 10px;
+  border-top-right-radius: 10px;
+}
+.parent-path > div:last-child {
+  border-bottom-left-radius: 10px;
+  border-bottom-right-radius: 10px;
+}
+.parent-path > div:not(:first-child) {
+  border-top: thin solid gray;
 }
 /*!*******************************************************************************************************************************************************************************************************************************************************************************************************************************************!*\
   !*** css ./node_modules/css-loader/dist/cjs.js??clonedRuleSet-2.use[1]!./node_modules/vue-loader/dist/stylePostLoader.js!./node_modules/sass-loader/dist/cjs.js??clonedRuleSet-2.use[2]!./node_modules/vue-loader/dist/index.js??ruleSet[1].rules[5].use[0]!./src/widgets/material-icon.vue?vue&type=style&index=0&id=55e49714&lang=scss ***!

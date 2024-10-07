@@ -23,14 +23,35 @@ export const store = createStore({
 		passwordMinLength() {
 			return window.appConstants.passwordMinLength;
 		},
+		loginLoaded(state) {
+			return state.user !== null;
+		},
 		userIsAuthenticated(state) {
 			return !!state.user;
+		},
+		currentUserId(state) {
+			if (state.user) {
+				return state.user.id;
+			}
+			return null;
+		},
+		currentUserHandle(state) {
+			if (state.user && state.user.handle) {
+				return state.user.handle;
+			}
+			return null;
 		},
 		currentUserDisplayName(state) {
 			if (state.user) {
 				return state.user.displayName;
 			}
 			return '';
+		},
+		currentUserRole(state) {
+			if (state.user) {
+				return state.user.role;
+			}
+			return null;
 		},
 	},
 	mutations: {

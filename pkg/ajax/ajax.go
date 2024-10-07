@@ -15,7 +15,12 @@ import (
 
 var ajaxHandlersAuthOptional = map[string]map[string]ajax.AjaxRouteAuthOptional{
 	http.MethodGet: {
-		"/ajax/load-login":  auth.AjaxLoadLogin,
+		"/ajax/load-login": auth.AjaxLoadLogin,
+
+		"/ajax/dashboard":     AjaxDashboard,
+		"/ajax/node/view":     AjaxLoadNodeViewPage,
+		"/ajax/node/children": AjaxLoadNodeChildren,
+
 		"/ajax/load-signup": auth.AjaxLoadSignup,
 	},
 	http.MethodPost: {
@@ -37,8 +42,9 @@ func AjaxHandler(db *sql.DB, userID *uint, w http.ResponseWriter, r *http.Reques
 
 	var handle = func(handler func() (interface{}, int)) {
 		// Verify access to admin routes
-		if strings.HasPrefix(r.URL.Path, "/ajax/admin") && (userID == nil || !user.CheckAdmin(*userID)) {
-			logging.LogError(r, userID, fmt.Errorf("forbidden admin access"))
+		if strings.HasPrefix(r.URL.Path, "/ajax/admin") &&
+			(userID == nil || !user.CheckAdmin(db, *userID)) {
+			logging.LogError(r, userID, fmt.Errorf("forbidden admin access on %s", r.URL.Path))
 			w.WriteHeader(http.StatusForbidden)
 			return
 		}
@@ -83,6 +89,11 @@ func AjaxHandler(db *sql.DB, userID *uint, w http.ResponseWriter, r *http.Reques
 			return
 		}
 	}
+
+	logging.LogNotice(r, struct {
+		Method string
+		Path   string
+	}{r.Method, r.URL.Path})
 
 	w.WriteHeader(http.StatusNotFound)
 }
