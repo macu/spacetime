@@ -5,13 +5,13 @@
 
 	<loading-message v-if="loading"/>
 
-	<category-link v-else-if="treetimeNode" :node="treetimeNode"/>
+	<node-header v-else-if="treetimeNode" :node="treetimeNode" link-to/>
 
 </div>
 </template>
 
 <script>
-import CategoryLink from '@/widgets/category-link.vue';
+import NodeHeader from '@/widgets/node-header.vue';
 
 import {
 	ajaxGet,
@@ -19,7 +19,7 @@ import {
 
 export default {
 	components: {
-		CategoryLink,
+		NodeHeader,
 	},
 	data() {
 		return {

@@ -8,7 +8,7 @@ import LoginPage from './pages/user-account/login.vue';
 import SignupPage from './pages/user-account/signup.vue';
 import SignupVerifyPage from './pages/user-account/signup-verify.vue';
 
-import CategoryView from './pages/category/view.vue';
+import NodeView from './pages/node-view/index.vue';
 
 export default createRouter({
 	history: createWebHistory(),
@@ -34,9 +34,9 @@ export default createRouter({
 			component: SignupVerifyPage,
 		},
 		{
-			path: '/cat/:id',
-			name: 'category-view',
-			component: CategoryView,
+			path: '/node/:id',
+			name: 'node-view',
+			component: NodeView,
 		},
 	],
 });

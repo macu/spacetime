@@ -7,6 +7,7 @@ import (
 	"time"
 
 	"treetime/pkg/user"
+	"treetime/pkg/utils/ajax"
 	"treetime/pkg/utils/logging"
 )
 
@@ -19,7 +20,7 @@ func MakeAuthenticator(db *sql.DB) func(handler AuthOptionalHandler) func(http.R
 		`SELECT user_session.user_id, user_session.expires, user_account.user_role
 		FROM user_session
 		INNER JOIN user_account ON user_session.user_id=user_account.id
-		WHERE user_session.token=$1 AND user_session.expires>$2`,
+		WHERE user_session.token=$1`,
 	)
 	if err != nil {
 		panic(err)
@@ -31,63 +32,80 @@ func MakeAuthenticator(db *sql.DB) func(handler AuthOptionalHandler) func(http.R
 		// Return standard http.Handler which calls the authenticated handler passing db and userID
 		return func(w http.ResponseWriter, r *http.Request) {
 
-			var userID *uint
-			var userRole string
+			var auth = ajax.Auth{}
 
 			// Read auth cookie
 			sessionTokenCookie, err := r.Cookie(sessionTokenCookieName)
 
-			if err == nil {
+			if err == http.ErrNoCookie {
+				// No cookie, no authentication
+				handler(db, nil, w, r)
+				return
+			} else if err != nil {
+				logging.LogError(r, nil, fmt.Errorf("reading session token cookie: %w", err))
+				w.WriteHeader(http.StatusInternalServerError)
+				return
+			}
 
-				// Look up session and read authenticated userID
-				now := time.Now()
-				var expires time.Time
+			// Look up session and read authenticated userID
+			now := time.Now()
+			var expires time.Time
 
-				err = selectUserStmt.QueryRow(
-					sessionTokenCookie.Value, now,
-				).Scan(&userID, &expires, &userRole)
+			err = selectUserStmt.QueryRow(
+				sessionTokenCookie.Value,
+			).Scan(&auth.UserID, &expires, &auth.Role)
 
-				if err == sql.ErrNoRows {
-					userID = nil
-				} else if err != nil {
-					logging.LogError(r, nil, fmt.Errorf("loading user from session token: %w", err))
+			if err == sql.ErrNoRows {
+				handler(db, nil, w, r)
+				return
+			} else if err != nil {
+				logging.LogError(r, nil, fmt.Errorf("loading user from session token: %w", err))
+				w.WriteHeader(http.StatusInternalServerError)
+				return
+			}
+
+			if expires.Before(now) {
+				// Session expired
+				_ = deleteSession(db, sessionTokenCookie.Value) // ignore error
+				clearCookie(w)
+				handler(db, nil, w, r)
+				return
+			}
+
+			if !user.CheckRoleActive(auth.Role) {
+
+				_ = deleteSession(db, sessionTokenCookie.Value) // ignore error
+
+				// Delete cookie
+				clearCookie(w)
+
+				handler(db, nil, w, r)
+				return
+
+			}
+
+			if expires.Before(now.Add(sessionTokenCookieRenewIfExpiresIn)) {
+				// Refresh session and cookie if old
+
+				// Update session expires time
+				expires := now.Add(sessionTokenCookieExpiry)
+				_, err = db.Exec(
+					`UPDATE user_session SET expires=$1 WHERE token=$2`,
+					expires, sessionTokenCookie.Value)
+				if err != nil {
+					logging.LogError(r, &auth, fmt.Errorf("updating session expiry: %w", err))
 					w.WriteHeader(http.StatusInternalServerError)
 					return
 				}
 
-				if userID != nil {
-					if !user.CheckRoleActive(userRole) {
-
-						// Don't allow authentication
-						userID = nil
-
-						// Delete cookie
-						clearCookie(w)
-
-					} else if expires.Before(now.Add(sessionTokenCookieRenewIfExpiresIn)) {
-						// Refresh session and cookie if old
-
-						// Update session expires time
-						expires := now.Add(sessionTokenCookieExpiry)
-						_, err = db.Exec(
-							`UPDATE user_session SET expires=$1 WHERE token=$2`,
-							expires, sessionTokenCookie.Value)
-						if err != nil {
-							logging.LogError(r, userID, fmt.Errorf("updating session expiry: %w", err))
-							w.WriteHeader(http.StatusInternalServerError)
-							return
-						}
-
-						// Update cookie expires time
-						createCookie(w, expires, sessionTokenCookie.Value)
-
-					}
-				}
+				// Update cookie expires time
+				createCookie(w, expires, sessionTokenCookie.Value)
 
 			}
 
 			// Invoke route with authenticated user info
-			handler(db, userID, w, r)
+			handler(db, &auth, w, r)
+
 		}
 	}
 }

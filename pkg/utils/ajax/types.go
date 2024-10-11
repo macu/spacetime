@@ -5,11 +5,20 @@ import (
 	"net/http"
 )
 
+type Auth struct {
+	UserID uint
+	Role   string
+}
+
+type AjaxErrorPayload struct {
+	ErrorCode string `json:"errorCode"`
+}
+
 // AjaxRouteAuthOptional represents an AJAX handler where authentication is optional,
 // that returns a response object to be sent as JSON, and a status code.
 type AjaxRouteAuthOptional func(
 	db *sql.DB,
-	userID *uint,
+	auth *Auth,
 	w http.ResponseWriter,
 	r *http.Request,
 ) (interface{}, int)
@@ -18,11 +27,7 @@ type AjaxRouteAuthOptional func(
 // that returns a response object to be sent as JSON, and a status code.
 type AjaxRouteAuthRequired func(
 	db *sql.DB,
-	userID uint,
+	auth Auth,
 	w http.ResponseWriter,
 	r *http.Request,
 ) (interface{}, int)
-
-type AjaxErrorPayload struct {
-	ErrorCode string `json:"errorCode"`
-}

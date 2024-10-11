@@ -1,5 +1,5 @@
 <template>
-<div class="signup-verify-page form-layout form-width-md">
+<div class="signup-verify-page form-layout page-width-sm">
 
 	<h2>Verify sign up</h2>
 

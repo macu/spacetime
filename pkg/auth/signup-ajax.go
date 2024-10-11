@@ -17,9 +17,9 @@ import (
 	"golang.org/x/crypto/bcrypt"
 )
 
-func AjaxLoadSignup(db *sql.DB, userID *uint, w http.ResponseWriter, r *http.Request) (interface{}, int) {
+func AjaxLoadSignup(db *sql.DB, auth *ajax.Auth, w http.ResponseWriter, r *http.Request) (interface{}, int) {
 
-	if userID != nil {
+	if auth != nil {
 		// Already authenticated
 		return nil, http.StatusForbidden
 	}
@@ -66,9 +66,9 @@ func AjaxLoadSignup(db *sql.DB, userID *uint, w http.ResponseWriter, r *http.Req
 
 }
 
-func AjaxSignup(db *sql.DB, userID *uint, w http.ResponseWriter, r *http.Request) (interface{}, int) {
+func AjaxSignup(db *sql.DB, auth *ajax.Auth, w http.ResponseWriter, r *http.Request) (interface{}, int) {
 
-	if userID != nil {
+	if auth != nil {
 		// Already authenticated
 		return nil, http.StatusForbidden
 	}
@@ -139,9 +139,9 @@ func AjaxSignup(db *sql.DB, userID *uint, w http.ResponseWriter, r *http.Request
 
 }
 
-func AjaxSignupVerify(db *sql.DB, userID *uint, w http.ResponseWriter, r *http.Request) (interface{}, int) {
+func AjaxSignupVerify(db *sql.DB, auth *ajax.Auth, w http.ResponseWriter, r *http.Request) (interface{}, int) {
 
-	if userID != nil {
+	if auth != nil {
 		// Already authenticated
 		return nil, http.StatusForbidden
 	}
@@ -249,6 +249,7 @@ func AjaxSignupVerify(db *sql.DB, userID *uint, w http.ResponseWriter, r *http.R
 	}
 
 	// create user account
+	var userID *uint
 	err = db.QueryRow(
 		`INSERT INTO user_account (email, handle, display_name, auth_hash, created_at)
 		VALUES ($1, $2, $3, $4, $5)

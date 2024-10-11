@@ -6,6 +6,7 @@ import (
 	"net/http"
 	"strconv"
 
+	"treetime/pkg/utils/ajax"
 	"treetime/pkg/utils/logging"
 	"treetime/pkg/utils/types"
 )
@@ -129,7 +130,7 @@ func InTransaction(r *http.Request, db *sql.DB, f func(*sql.Tx) error) error {
 	return nil
 }
 
-func HandleInTransaction(r *http.Request, db *sql.DB, userID *uint,
+func HandleInTransaction(r *http.Request, db *sql.DB, auth *ajax.Auth,
 	f func(*sql.Tx) (interface{}, int, error)) (interface{}, int) {
 
 	c := r.Context()
@@ -137,10 +138,10 @@ func HandleInTransaction(r *http.Request, db *sql.DB, userID *uint,
 	if err != nil {
 		rbErr := tx.Rollback()
 		if rbErr != nil {
-			logging.LogError(r, userID, fmt.Errorf("rollback: %v; on begin transaction: %w", rbErr, err))
+			logging.LogError(r, auth, fmt.Errorf("rollback: %v; on begin transaction: %w", rbErr, err))
 			return nil, http.StatusInternalServerError
 		}
-		logging.LogError(r, userID, fmt.Errorf("begin transaction: %w", err))
+		logging.LogError(r, auth, fmt.Errorf("begin transaction: %w", err))
 		return nil, http.StatusInternalServerError
 	}
 
@@ -148,10 +149,10 @@ func HandleInTransaction(r *http.Request, db *sql.DB, userID *uint,
 	if err != nil {
 		rbErr := tx.Rollback()
 		if rbErr != nil {
-			logging.LogError(r, userID, fmt.Errorf("rollback: %v; on run function: %w", rbErr, err))
+			logging.LogError(r, auth, fmt.Errorf("rollback: %v; on run function: %w", rbErr, err))
 			return nil, http.StatusInternalServerError
 		}
-		logging.LogError(r, userID, fmt.Errorf("run function: %w", err))
+		logging.LogError(r, auth, fmt.Errorf("run function: %w", err))
 		return nil, statusCode
 	}
 
@@ -159,10 +160,10 @@ func HandleInTransaction(r *http.Request, db *sql.DB, userID *uint,
 	if err != nil {
 		rbErr := tx.Rollback()
 		if rbErr != nil {
-			logging.LogError(r, userID, fmt.Errorf("rollback: %v; on commit: %w", rbErr, err))
+			logging.LogError(r, auth, fmt.Errorf("rollback: %v; on commit: %w", rbErr, err))
 			return nil, http.StatusInternalServerError
 		}
-		logging.LogError(r, userID, fmt.Errorf("commit: %w", err))
+		logging.LogError(r, auth, fmt.Errorf("commit: %w", err))
 		return nil, http.StatusInternalServerError
 	}
 

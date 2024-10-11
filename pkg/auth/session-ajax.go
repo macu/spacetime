@@ -9,12 +9,13 @@ import (
 	"golang.org/x/crypto/bcrypt"
 
 	"treetime/pkg/user"
+	"treetime/pkg/utils/ajax"
 	"treetime/pkg/utils/logging"
 )
 
-func AjaxLogin(db *sql.DB, userID *uint, w http.ResponseWriter, r *http.Request) (interface{}, int) {
+func AjaxLogin(db *sql.DB, auth *ajax.Auth, w http.ResponseWriter, r *http.Request) (interface{}, int) {
 
-	if userID != nil {
+	if auth != nil {
 		// Already authenticated
 		return nil, http.StatusForbidden
 	}
@@ -27,6 +28,7 @@ func AjaxLogin(db *sql.DB, userID *uint, w http.ResponseWriter, r *http.Request)
 	}
 
 	var authHash string
+	var userID *uint
 	var userRole string
 
 	err := db.QueryRow(
@@ -47,7 +49,7 @@ func AjaxLogin(db *sql.DB, userID *uint, w http.ResponseWriter, r *http.Request)
 			})
 			return false, http.StatusForbidden
 		}
-		logging.LogError(r, userID, fmt.Errorf("loading user: %w", err))
+		logging.LogError(r, auth, fmt.Errorf("loading user: %w", err))
 		return false, http.StatusInternalServerError
 	}
 
@@ -81,7 +83,7 @@ func AjaxLogin(db *sql.DB, userID *uint, w http.ResponseWriter, r *http.Request)
 
 	err = authUser(w, db, *userID)
 	if err != nil {
-		logging.LogError(r, userID, fmt.Errorf("authenticating user: %w", err))
+		logging.LogError(r, auth, fmt.Errorf("authenticating user: %w", err))
 		return false, http.StatusInternalServerError
 	}
 
@@ -99,7 +101,11 @@ func AjaxLogin(db *sql.DB, userID *uint, w http.ResponseWriter, r *http.Request)
 
 }
 
-func AjaxLoadLogin(db *sql.DB, userID *uint, w http.ResponseWriter, r *http.Request) (interface{}, int) {
+func AjaxLoadLogin(db *sql.DB, auth *ajax.Auth, w http.ResponseWriter, r *http.Request) (interface{}, int) {
+
+	if auth == nil {
+		return nil, http.StatusOK
+	}
 
 	var user = struct {
 		IsAuthenticated bool   `json:"isAuthenticated"`
@@ -110,23 +116,23 @@ func AjaxLoadLogin(db *sql.DB, userID *uint, w http.ResponseWriter, r *http.Requ
 		Email           string `json:"email"`
 	}{}
 
-	if userID != nil {
-		err := db.QueryRow(
-			`SELECT id, user_role, handle, display_name, email FROM user_account WHERE id=$1`,
-			*userID,
-		).Scan(&user.ID, &user.Role, &user.Handle, &user.DisplayName, &user.Email)
-		if err != nil {
-			logging.LogError(r, userID, fmt.Errorf("loading user: %w", err))
-			return nil, http.StatusInternalServerError
-		}
-		user.IsAuthenticated = true
+	err := db.QueryRow(
+		`SELECT id, user_role, handle, display_name, email FROM user_account WHERE id=$1`,
+		auth.UserID,
+	).Scan(&user.ID, &user.Role, &user.Handle, &user.DisplayName, &user.Email)
+
+	if err != nil {
+		logging.LogError(r, auth, fmt.Errorf("loading user: %w", err))
+		return nil, http.StatusInternalServerError
 	}
+
+	user.IsAuthenticated = true
 
 	return user, http.StatusOK
 
 }
 
-func AjaxLogout(db *sql.DB, userID uint, w http.ResponseWriter, r *http.Request) (interface{}, int) {
+func AjaxLogout(db *sql.DB, auth ajax.Auth, w http.ResponseWriter, r *http.Request) (interface{}, int) {
 
 	if r.Method != http.MethodPost {
 		return nil, http.StatusBadRequest
@@ -134,14 +140,7 @@ func AjaxLogout(db *sql.DB, userID uint, w http.ResponseWriter, r *http.Request)
 
 	sessionTokenCookie, _ := r.Cookie(sessionTokenCookieName)
 
-	_, err := db.Exec(
-		"DELETE FROM user_session WHERE token=$1",
-		sessionTokenCookie.Value,
-	)
-	if err != nil {
-		logging.LogError(r, &userID, fmt.Errorf("deleting session: %w", err))
-		return false, http.StatusInternalServerError
-	}
+	_ = deleteSession(db, sessionTokenCookie.Value) // ignore error
 
 	clearCookie(w)
 

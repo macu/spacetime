@@ -2,6 +2,8 @@ package treetime
 
 import (
 	"fmt"
+
+	"treetime/pkg/utils/ajax"
 	"treetime/pkg/utils/db"
 )
 
@@ -12,7 +14,8 @@ const (
 	NodeContentTypeBody  NodeContentType = "body"
 )
 
-func LoadNodeTitle(db db.DBConn, userId *uint, nodeId uint) (string, error) {
+func LoadNodeTitle(db db.DBConn, auth *ajax.Auth, id uint) (string, error) {
+
 	var title string
 
 	err := db.QueryRow(`SELECT tree_node_content.text_content
@@ -20,7 +23,8 @@ func LoadNodeTitle(db db.DBConn, userId *uint, nodeId uint) (string, error) {
 		WHERE tree_node_content.node_id = $1
 		AND tree_node_content.content_type = $2
 		LIMIT 1`,
-		nodeId, NodeContentTypeTitle,
+		id,
+		NodeContentTypeTitle,
 	).Scan(&title)
 
 	if err != nil {
@@ -28,4 +32,5 @@ func LoadNodeTitle(db db.DBConn, userId *uint, nodeId uint) (string, error) {
 	}
 
 	return title, nil
+
 }

@@ -4,6 +4,7 @@ import (
 	"database/sql"
 	"fmt"
 
+	"treetime/pkg/utils/ajax"
 	"treetime/pkg/utils/db"
 )
 
@@ -15,7 +16,7 @@ type NodeHeader struct {
 	Tags  []NodeTag `json:"tags"`
 }
 
-func LoadNodeHeaderByKey(db db.DBConn, userId *uint, internalKey string) (*NodeHeader, error) {
+func LoadNodeHeaderByKey(db db.DBConn, auth *ajax.Auth, internalKey string) (*NodeHeader, error) {
 
 	var header = &NodeHeader{}
 
@@ -34,13 +35,13 @@ func LoadNodeHeaderByKey(db db.DBConn, userId *uint, internalKey string) (*NodeH
 		return nil, fmt.Errorf("loading node header by key: %w", err)
 	}
 
-	header.Title, err = LoadNodeTitle(db, userId, header.ID)
+	header.Title, err = LoadNodeTitle(db, auth, header.ID)
 
 	if err != nil {
 		return nil, err
 	}
 
-	header.Tags, err = LoadNodeTags(db, userId, header.ID)
+	header.Tags, err = LoadNodeTags(db, auth, header.ID)
 
 	if err != nil {
 		return nil, err
@@ -50,7 +51,7 @@ func LoadNodeHeaderByKey(db db.DBConn, userId *uint, internalKey string) (*NodeH
 
 }
 
-func LoadNodeHeaderByID(db db.DBConn, userId *uint, id uint) (*NodeHeader, error) {
+func LoadNodeHeaderByID(db db.DBConn, auth *ajax.Auth, id uint) (*NodeHeader, error) {
 
 	var header = &NodeHeader{}
 
@@ -69,13 +70,13 @@ func LoadNodeHeaderByID(db db.DBConn, userId *uint, id uint) (*NodeHeader, error
 		return nil, fmt.Errorf("loading node header by id: %w", err)
 	}
 
-	header.Title, err = LoadNodeTitle(db, userId, header.ID)
+	header.Title, err = LoadNodeTitle(db, auth, header.ID)
 
 	if err != nil {
 		return nil, err
 	}
 
-	header.Tags, err = LoadNodeTags(db, userId, header.ID)
+	header.Tags, err = LoadNodeTags(db, auth, header.ID)
 
 	if err != nil {
 		return nil, err

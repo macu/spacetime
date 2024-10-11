@@ -8,18 +8,22 @@ import (
 
 	"treetime/pkg/auth"
 	"treetime/pkg/env"
+	"treetime/pkg/treetime"
+	"treetime/pkg/utils/ajax"
 )
 
 var indexTemplate = template.Must(template.ParseFiles("html/index.html"))
 
-func indexHandler(db *sql.DB, userID *uint, w http.ResponseWriter, r *http.Request) {
+func indexHandler(db *sql.DB, user *ajax.Auth, w http.ResponseWriter, r *http.Request) {
 	indexTemplate.Execute(w, struct {
+		Local             bool
 		VersionStamp      string
 		PasswordMinLength uint
-		Local             bool
+		TreeMaxDepth      uint
 	}{
+		env.IsLocal(),
 		env.GetCacheControlVersionStamp(),
 		auth.PasswordMinLength,
-		env.IsLocal(),
+		treetime.TreeMaxDepth,
 	})
 }

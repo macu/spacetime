@@ -295,7 +295,7 @@ DECLARE
 	root_node_id INTEGER;
 	langs_node_id INTEGER;
 	lang_en_node_id INTEGER;
-	tag_node_id INTEGER;
+	tags_node_id INTEGER;
 	types_node_id INTEGER;
 BEGIN
 	-- exit if any tree node exists
@@ -340,13 +340,13 @@ BEGIN
 	-- create tags category
 	INSERT INTO tree_node (parent_id, node_class, created_at, created_by)
 	VALUES (root_node_id, 'category', NOW(), user_id)
-	RETURNING id INTO tag_node_id;
+	RETURNING id INTO tags_node_id;
 
 	INSERT INTO tree_node_content (node_id, content_type, text_content, created_at, created_by)
-	VALUES (tag_node_id, 'title', 'Tags', NOW(), user_id);
+	VALUES (tags_node_id, 'title', 'Tags', NOW(), user_id);
 
 	INSERT INTO tree_node_internal_key (node_id, internal_key)
-	VALUES (tag_node_id, 'tags');
+	VALUES (tags_node_id, 'tags');
 
 	-- create types category
 	INSERT INTO tree_node (parent_id, node_class, created_at, created_by)

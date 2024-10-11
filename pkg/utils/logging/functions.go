@@ -11,6 +11,7 @@ import (
 	"cloud.google.com/go/logging"
 
 	"treetime/pkg/env"
+	"treetime/pkg/utils/ajax"
 	"treetime/pkg/utils/types"
 )
 
@@ -92,7 +93,7 @@ func LogNotice(r *http.Request, jsonPayload interface{}) {
 	log.Printf("[notice] %s:%d %v", fn, line, jsonPayload)
 }
 
-func LogError(r *http.Request, userID *uint, err error) {
+func LogError(r *http.Request, auth *ajax.Auth, err error) {
 	if err == nil {
 		return
 	}
@@ -101,8 +102,8 @@ func LogError(r *http.Request, userID *uint, err error) {
 		initAppEngineErrorClient()
 		if appEngineErrorClient != nil {
 			var user string
-			if userID != nil {
-				user = types.UintToA(*userID)
+			if auth != nil {
+				user = types.UintToA(auth.UserID)
 			}
 			appEngineErrorClient.Report(errorreporting.Entry{
 				Error: err,

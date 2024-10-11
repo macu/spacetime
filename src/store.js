@@ -23,6 +23,9 @@ export const store = createStore({
 		passwordMinLength() {
 			return window.appConstants.passwordMinLength;
 		},
+		treeMaxDepth() {
+			return window.appConstants.treeMaxDepth;
+		},
 		loginLoaded(state) {
 			return state.user !== null;
 		},

@@ -31,28 +31,36 @@ var ajaxHandlersAuthOptional = map[string]map[string]ajax.AjaxRouteAuthOptional{
 }
 
 var ajaxHandlersAuthRequired = map[string]map[string]ajax.AjaxRouteAuthRequired{
-	http.MethodGet: {},
+	http.MethodGet: {
+		"/ajax/node/find-existing": AjaxFindExistingNodes,
+	},
 	http.MethodPost: {
+		"/ajax/node/create": AjaxCreateNode,
+		"/ajax/node/save":   AjaxSaveNode,
+
 		"/ajax/logout": auth.AjaxLogout,
 	},
 }
 
-func AjaxHandler(db *sql.DB, userID *uint, w http.ResponseWriter, r *http.Request) {
+func AjaxHandler(db *sql.DB, auth *ajax.Auth, w http.ResponseWriter, r *http.Request) {
 	// var rt = NewResponseTracker(w)
 
 	var handle = func(handler func() (interface{}, int)) {
+
 		// Verify access to admin routes
-		if strings.HasPrefix(r.URL.Path, "/ajax/admin") &&
-			(userID == nil || !user.CheckAdmin(db, *userID)) {
-			logging.LogError(r, userID, fmt.Errorf("forbidden admin access on %s", r.URL.Path))
-			w.WriteHeader(http.StatusForbidden)
-			return
+		if strings.HasPrefix(r.URL.Path, "/ajax/admin") {
+			if auth == nil || !user.CheckRoleAdmin(auth.Role) {
+				logging.LogError(r, auth, fmt.Errorf("forbidden admin access on %s", r.URL.Path))
+				w.WriteHeader(http.StatusForbidden)
+				return
+			}
 		}
+
 		response, statusCode := handler()
 		if response != nil {
 			js, err := json.Marshal(response)
 			if err != nil {
-				logging.LogError(r, userID, fmt.Errorf("marshalling response: %w", err))
+				logging.LogError(r, auth, fmt.Errorf("marshalling response: %w", err))
 				w.WriteHeader(http.StatusInternalServerError)
 				return
 			}
@@ -62,6 +70,7 @@ func AjaxHandler(db *sql.DB, userID *uint, w http.ResponseWriter, r *http.Reques
 		} else {
 			w.WriteHeader(statusCode)
 		}
+
 	}
 
 	handlersAuthOptional, foundMethod := ajaxHandlersAuthOptional[r.Method]
@@ -69,7 +78,7 @@ func AjaxHandler(db *sql.DB, userID *uint, w http.ResponseWriter, r *http.Reques
 		handler, fouundPath := handlersAuthOptional[r.URL.Path]
 		if fouundPath {
 			handle(func() (interface{}, int) {
-				return handler(db, userID, w, r)
+				return handler(db, auth, w, r)
 			})
 			return
 		}
@@ -79,11 +88,11 @@ func AjaxHandler(db *sql.DB, userID *uint, w http.ResponseWriter, r *http.Reques
 	if foundMethod {
 		handler, fouundPath := handlersAuthRequired[r.URL.Path]
 		if fouundPath {
-			if userID == nil {
+			if auth == nil {
 				w.WriteHeader(http.StatusForbidden)
 			} else {
 				handle(func() (interface{}, int) {
-					return handler(db, *userID, w, r)
+					return handler(db, *auth, w, r)
 				})
 			}
 			return

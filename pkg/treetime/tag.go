@@ -1,6 +1,7 @@
 package treetime
 
 import (
+	"treetime/pkg/utils/ajax"
 	"treetime/pkg/utils/db"
 )
 
@@ -19,7 +20,7 @@ type NodeLangTag struct {
 	LangCodes    []string  `json:"langCodes"`
 }
 
-func LoadNodeTags(db db.DBConn, userId *uint, nodeId uint) ([]NodeTag, error) {
+func LoadNodeTags(db db.DBConn, auth *ajax.Auth, nodeId uint) ([]NodeTag, error) {
 	var tags []NodeTag
 
 	return tags, nil

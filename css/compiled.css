@@ -42,6 +42,9 @@ html, body {
 .flex-row.nowrap, .flex-row-md.nowrap, .flex-row-lg.nowrap {
   flex-wrap: nowrap;
 }
+.flex-row.flex-inline, .flex-row-md.flex-inline, .flex-row-lg.flex-inline {
+  display: inline-flex;
+}
 .flex-row > .flex-1, .flex-row-md > .flex-1, .flex-row-lg > .flex-1 {
   flex: 1;
 }
@@ -91,24 +94,24 @@ html, body {
   row-gap: 60px;
 }
 
-.form-layout.form-width-md {
-  max-width: 600px;
-  margin: 0 auto;
-}
-
-.field {
+.form-layout > .field {
   align-items: flex-start;
 }
-.field > label:first-child:not([class]) {
+.form-layout > .field > label:first-child:not([class]) {
   align-items: flex-start;
   display: block;
   font-weight: bold;
 }
-.field > .value {
+.form-layout > .field > .value {
   font-size: larger;
 }
-.field > .el-input, .field > .el-select {
+.form-layout > .field > .el-input, .form-layout > .field > .el-select {
   width: 100%;
+}
+
+.page-width-sm {
+  max-width: 600px;
+  margin: 0 auto;
 }
 
 .page-width-md {
@@ -143,15 +146,17 @@ html, body {
   !*** css ./node_modules/css-loader/dist/cjs.js??clonedRuleSet-2.use[1]!./node_modules/vue-loader/dist/stylePostLoader.js!./node_modules/sass-loader/dist/cjs.js??clonedRuleSet-2.use[2]!./node_modules/vue-loader/dist/index.js??ruleSet[1].rules[5].use[0]!./src/widgets/parent-path.vue?vue&type=style&index=0&id=51488c82&lang=scss ***!
   \*****************************************************************************************************************************************************************************************************************************************************************************************************************************************/
 .parent-path {
-  display: flex;
-  flex-direction: column;
-  border: thin solid gray;
+  border: 2px solid gray;
+  background-color: gray;
   border-radius: 10px;
   box-shadow: 0 0 10px rgba(0, 0, 0, 0.1);
+  display: flex;
+  flex-direction: column;
+  row-gap: 2px;
 }
 .parent-path > div {
-  padding: 20px;
-  font-size: 120%;
+  padding: 10px 20px;
+  background-color: #eee;
 }
 .parent-path > div:first-child {
   border-top-left-radius: 10px;
@@ -160,9 +165,6 @@ html, body {
 .parent-path > div:last-child {
   border-bottom-left-radius: 10px;
   border-bottom-right-radius: 10px;
-}
-.parent-path > div:not(:first-child) {
-  border-top: thin solid gray;
 }
 /*!*******************************************************************************************************************************************************************************************************************************************************************************************************************************************!*\
   !*** css ./node_modules/css-loader/dist/cjs.js??clonedRuleSet-2.use[1]!./node_modules/vue-loader/dist/stylePostLoader.js!./node_modules/sass-loader/dist/cjs.js??clonedRuleSet-2.use[2]!./node_modules/vue-loader/dist/index.js??ruleSet[1].rules[5].use[0]!./src/widgets/material-icon.vue?vue&type=style&index=0&id=55e49714&lang=scss ***!

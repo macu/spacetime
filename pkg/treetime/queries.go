@@ -1,5 +1,10 @@
 package treetime
 
+type NodeSearchParams struct {
+	LimitToClass NodeClass
+	ExcludeClass NodeClass
+}
+
 type TagQueryParams struct {
 	LangTagIDs    []uint
 	PreferTagIDs  []uint // prefer results with these tags, in order

@@ -1,5 +1,5 @@
 <template>
-<div class="login-page form-layout form-width-md">
+<div class="login-page form-layout page-width-sm">
 
 	<h2>Log in</h2>
 

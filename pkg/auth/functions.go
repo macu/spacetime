@@ -35,6 +35,21 @@ func authUser(w http.ResponseWriter, db db.DBConn, userID uint) error {
 
 }
 
+func deleteSession(db *sql.DB, token string) error {
+
+	_, err := db.Exec(
+		"DELETE FROM user_session WHERE token=$1",
+		token,
+	)
+
+	if err != nil {
+		return fmt.Errorf("deleting session: %w", err)
+	}
+
+	return nil
+
+}
+
 func createCookie(w http.ResponseWriter, expires time.Time, token string) {
 	http.SetCookie(w, &http.Cookie{
 		Name:     sessionTokenCookieName,

@@ -17,9 +17,10 @@
 <script>
 // Constants defined in server code
 window.appConstants = {
+	local: {{.Local}},
 	appVersion: "{{.VersionStamp}}", // version stamp at load time
 	passwordMinLength: {{.PasswordMinLength}},
-	local: {{.Local}},
+	treeMaxDepth: {{.TreeMaxDepth}},
 };
 </script>
 

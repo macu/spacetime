@@ -7,3 +7,10 @@ export const NODE_CLASS = {
 	POST: "post",
 	COMMENT: "comment",
 };
+
+export const SYSTEM_NODE_KEYS = {
+	TREETIME: "treetime",
+	LANGS: "langs",
+	TAGS: "tags",
+	TYPES: "types",
+};
