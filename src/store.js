@@ -26,6 +26,12 @@ export const store = createStore({
 		treeMaxDepth() {
 			return window.appConstants.treeMaxDepth;
 		},
+		categoryTitleMaxLength() {
+			return window.appConstants.categoryTitleMaxLength;
+		},
+		categoryDescriptionMaxLength() {
+			return window.appConstants.categoryDescriptionMaxLength;
+		},
 		loginLoaded(state) {
 			return state.user !== null;
 		},

@@ -1,8 +1,8 @@
 package treetime
 
 type NodeSearchParams struct {
-	LimitToClass NodeClass
-	ExcludeClass NodeClass
+	LimitToClass string
+	ExcludeClass string
 }
 
 type TagQueryParams struct {

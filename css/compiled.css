@@ -25,12 +25,6 @@ html, body {
     transform: rotate(360deg);
   }
 }
-.tree-node-border {
-  padding: 20px;
-  border: thin solid gray;
-  border-radius: 10px;
-  box-shadow: 0 0 10px rgba(0, 0, 0, 0.1);
-}
 /*!******************************************************************************************************************************************************************!*\
   !*** css ./node_modules/css-loader/dist/cjs.js??clonedRuleSet-2.use[1]!./node_modules/sass-loader/dist/cjs.js??clonedRuleSet-2.use[2]!./src/styles/layouts.scss ***!
   \******************************************************************************************************************************************************************/
@@ -143,16 +137,25 @@ html, body {
   padding: 20px 20px 40px;
 }
 /*!*****************************************************************************************************************************************************************************************************************************************************************************************************************************************!*\
+  !*** css ./node_modules/css-loader/dist/cjs.js??clonedRuleSet-2.use[1]!./node_modules/vue-loader/dist/stylePostLoader.js!./node_modules/sass-loader/dist/cjs.js??clonedRuleSet-2.use[2]!./node_modules/vue-loader/dist/index.js??ruleSet[1].rules[5].use[0]!./src/widgets/node-header.vue?vue&type=style&index=0&id=0f86730f&lang=scss ***!
+  \*****************************************************************************************************************************************************************************************************************************************************************************************************************************************/
+.node-header {
+  padding: 20px;
+  border: 2px solid gray;
+  border-radius: 10px;
+  box-shadow: 0 0 10px rgba(0, 0, 0, 0.1);
+}
+/*!*****************************************************************************************************************************************************************************************************************************************************************************************************************************************!*\
   !*** css ./node_modules/css-loader/dist/cjs.js??clonedRuleSet-2.use[1]!./node_modules/vue-loader/dist/stylePostLoader.js!./node_modules/sass-loader/dist/cjs.js??clonedRuleSet-2.use[2]!./node_modules/vue-loader/dist/index.js??ruleSet[1].rules[5].use[0]!./src/widgets/parent-path.vue?vue&type=style&index=0&id=51488c82&lang=scss ***!
   \*****************************************************************************************************************************************************************************************************************************************************************************************************************************************/
 .parent-path {
-  border: 2px solid gray;
+  border: 1px solid gray;
   background-color: gray;
   border-radius: 10px;
   box-shadow: 0 0 10px rgba(0, 0, 0, 0.1);
   display: flex;
   flex-direction: column;
-  row-gap: 2px;
+  row-gap: 1px;
 }
 .parent-path > div {
   padding: 10px 20px;

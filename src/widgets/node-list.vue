@@ -3,7 +3,11 @@
 
 	<template v-for="n in nodes" :key="n.id">
 
-		<node-header :node="n" link-to/>
+		<node-header :node="n" link-to>
+			<template v-if="showNodeActions" #node-actions>
+				<slot name="node-actions" :node="n"/>
+			</template>
+		</node-header>
 
 	</template>
 
@@ -25,6 +29,16 @@ export default {
 		parentId: {
 			type: Number,
 			required: false,
+		},
+		autoloadMore: {
+			type: Boolean,
+			required: false,
+			default: false,
+		},
+	},
+	computed: {
+		showNodeActions() {
+			return !!this.$slots['node-actions'];
 		},
 	},
 };

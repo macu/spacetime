@@ -32,11 +32,12 @@ var ajaxHandlersAuthOptional = map[string]map[string]ajax.AjaxRouteAuthOptional{
 
 var ajaxHandlersAuthRequired = map[string]map[string]ajax.AjaxRouteAuthRequired{
 	http.MethodGet: {
-		"/ajax/node/find-existing": AjaxFindExistingNodes,
+		"/ajax/node/load-path":     AjaxNodeLoadPath,
+		"/ajax/node/find-existing": AjaxNodeFindExisting,
 	},
 	http.MethodPost: {
-		"/ajax/node/create": AjaxCreateNode,
-		"/ajax/node/save":   AjaxSaveNode,
+		"/ajax/node/create":         AjaxCreateNode,
+		"/ajax/node/create-content": AjaxCreateNodeContent,
 
 		"/ajax/logout": auth.AjaxLogout,
 	},

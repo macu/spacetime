@@ -8,14 +8,6 @@ import (
 	"treetime/pkg/utils/db"
 )
 
-type NodeHeader struct {
-	ID    uint      `json:"id"`
-	Class string    `json:"class"`
-	Key   *string   `json:"key"`
-	Title string    `json:"title"`
-	Tags  []NodeTag `json:"tags"`
-}
-
 func LoadNodeHeaderByKey(db db.DBConn, auth *ajax.Auth, internalKey string) (*NodeHeader, error) {
 
 	var header = &NodeHeader{}

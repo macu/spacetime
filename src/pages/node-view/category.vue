@@ -70,6 +70,22 @@ export default {
 				this.loadingChildren = false;
 			});
 		},
+		addSubcategory() {
+			this.$router.push({
+				name: 'create-category',
+				query: {
+					parentId: this.node.id,
+				},
+			});
+		},
+		addPost() {
+			this.$router.push({
+				name: 'create-post',
+				query: {
+					parentId: this.node.id,
+				},
+			});
+		},
 	},
 };
 </script>

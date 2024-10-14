@@ -1,5 +1,5 @@
 <template>
-<div class="node-header flex-column tree-node-border">
+<div class="node-header flex-column">
 	<h3 class="flex-row-md">
 		<node-icon :node="node"/>
 		<router-link v-if="linkTo" :to="route">
@@ -7,6 +7,9 @@
 		</router-link>
 		<span v-else v-text="node.title"/>
 	</h3>
+	<div v-if="showContent" class="flex-row-md">
+		<slot name="node-actions"/>
+	</div>
 </div>
 </template>
 
@@ -36,6 +39,20 @@ export default {
 				},
 			};
 		},
+		showContent() {
+			return !!this.$slots['node-actions'];
+		},
 	},
 };
 </script>
+
+<style lang="scss">
+@import '@/styles/vars.scss';
+
+.node-header {
+	padding: 20px;
+	border: 2px solid gray;
+	border-radius: $border-radius;
+	box-shadow: $box-shadow;
+}
+</style>

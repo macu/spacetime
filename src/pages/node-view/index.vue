@@ -77,6 +77,10 @@ import {
 } from '@/utils/ajax.js';
 
 import {
+	getPathKeyScope,
+} from '@/utils/tree.js';
+
+import {
 	NODE_CLASS,
 	SYSTEM_NODE_KEYS,
 } from '@/const.js';
@@ -100,34 +104,17 @@ export default {
 		NODE_CLASS() {
 			return NODE_CLASS;
 		},
-		systemScope() {
-			// Search the path for a node with a system key
-			let systemKeys = Object.values(SYSTEM_NODE_KEYS);
-			if (this.node) {
-				if (systemKeys.includes(this.node.key)) {
-					return this.node.key;
-				}
-			}
-			if (this.path && this.path.length) {
-				for (let i = 0; i < this.path.length; i++) {
-					let key = this.path[i].key;
-					if (key) {
-						if (systemKeys.includes(key)) {
-							return key;
-						}
-					}
-				}
-			}
-			return null;
+		keyScope() {
+			return getPathKeyScope([...(this.path || []), this.node]);
 		},
 		bodyClass() {
 			switch (this.node.class) {
 				case NODE_CLASS.CATEGORY:
-					if (this.systemScope === SYSTEM_NODE_KEYS.LANGS) {
+					if (this.keyScope === SYSTEM_NODE_KEYS.LANGS) {
 						return LangCategory;
-					} else if (this.systemScope === SYSTEM_NODE_KEYS.TAGS) {
+					} else if (this.keyScope === SYSTEM_NODE_KEYS.TAGS) {
 						return TagCategory;
-					} else if (this.systemScope === SYSTEM_NODE_KEYS.TYPES) {
+					} else if (this.keyScope === SYSTEM_NODE_KEYS.TYPES) {
 						if (this.node.class === NODE_CLASS.TYPE) {
 							return Type;
 						} else {

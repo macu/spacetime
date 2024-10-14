@@ -17,10 +17,6 @@
 <script>
 import NodeIcon from '@/widgets/node-icon.vue';
 
-import {
-	NODE_CLASS,
-} from '@/const.js';
-
 export default {
 	components: {
 		NodeIcon,
@@ -31,23 +27,19 @@ export default {
 			required: true,
 		},
 	},
-	computed: {
-		NODE_CLASS() {
-			return NODE_CLASS;
-		},
-	},
 };
 </script>
 
 <style lang="scss">
-$border-radius: 10px;
-$border-width: 2px;
+@import '@/styles/vars.scss';
+
+$border-width: 1px;
 
 .parent-path {
 	border: $border-width solid gray;
 	background-color: gray;
 	border-radius: $border-radius;
-	box-shadow: 0 0 10px rgba(0, 0, 0, 0.1);
+	box-shadow: $box-shadow;
 
 	display: flex;
 	flex-direction: column;

@@ -204,6 +204,20 @@ CREATE TRIGGER tree_node_content_tsvector_update BEFORE INSERT OR UPDATE
 ON tree_node_content FOR EACH ROW EXECUTE FUNCTION
 tsvector_update_trigger(text_search, 'pg_catalog.simple', text_content);
 
+-- create table for node links
+CREATE TABLE tree_node_link (
+	id SERIAL PRIMARY KEY,
+	node_id INTEGER NOT NULL REFERENCES tree_node (id) ON DELETE CASCADE,
+	url VARCHAR(1024) NOT NULL,
+	url_title VARCHAR(255) COLLATE case_insensitive,
+	url_desc VARCHAR(255),
+	url_image_data TEXT,
+	created_at TIMESTAMPTZ NOT NULL,
+	created_by INTEGER NOT NULL REFERENCES user_account (id) ON DELETE CASCADE
+);
+
+CREATE UNIQUE INDEX tree_node_link_idx ON tree_node_link (node_id);
+
 -- create table for voting on node title/body content
 CREATE TABLE tree_node_content_vote (
 	id SERIAL PRIMARY KEY,

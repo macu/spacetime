@@ -2,13 +2,15 @@ package treetime
 
 import (
 	"fmt"
+	"strings"
+	"time"
 	"treetime/pkg/utils/ajax"
 	"treetime/pkg/utils/db"
 )
 
-func VerifyCreateNodeAllowed(db db.DBConn, parentID uint, createClass NodeClass) (bool, error) {
+func VerifyCreateNodeAllowed(db db.DBConn, parentID *uint, createClass string) (bool, error) {
 
-	if parentID == 0 {
+	if parentID == nil {
 		// Only allow creating categories at the root
 		switch createClass {
 
@@ -25,7 +27,7 @@ func VerifyCreateNodeAllowed(db db.DBConn, parentID uint, createClass NodeClass)
 		return true, nil
 	}
 
-	parentClass, parentKey, err := LoadNodeMeta(db, parentID)
+	parentClass, parentKey, err := LoadNodeMeta(db, *parentID)
 
 	if err != nil {
 		return false, err
@@ -76,7 +78,7 @@ func VerifyCreateNodeAllowed(db db.DBConn, parentID uint, createClass NodeClass)
 
 		case NodeClassPost:
 			// Check all parents are categories
-			path, err := LoadNodeParentPath(db, nil, parentID)
+			path, err := LoadNodeParentPath(db, nil, *parentID)
 			if err != nil {
 				return false, err
 			}
@@ -89,7 +91,7 @@ func VerifyCreateNodeAllowed(db db.DBConn, parentID uint, createClass NodeClass)
 
 		case NodeClassType:
 			// Check parent is "types"
-			path, err := LoadNodeParentPath(db, nil, parentID)
+			path, err := LoadNodeParentPath(db, nil, *parentID)
 			if err != nil {
 				return false, err
 			}
@@ -104,7 +106,7 @@ func VerifyCreateNodeAllowed(db db.DBConn, parentID uint, createClass NodeClass)
 
 		case NodeClassTag:
 			// Check parent is "tags"
-			path, err := LoadNodeParentPath(db, nil, parentID)
+			path, err := LoadNodeParentPath(db, nil, *parentID)
 			if err != nil {
 				return false, err
 			}
@@ -119,7 +121,7 @@ func VerifyCreateNodeAllowed(db db.DBConn, parentID uint, createClass NodeClass)
 
 		case NodeClassLang:
 			// Check parent is "langs"
-			path, err := LoadNodeParentPath(db, nil, parentID)
+			path, err := LoadNodeParentPath(db, nil, *parentID)
 			if err != nil {
 				return false, err
 			}
@@ -150,18 +152,57 @@ func VerifyCreateNodeAllowed(db db.DBConn, parentID uint, createClass NodeClass)
 
 }
 
-func CreateNode(db db.DBConn, auth ajax.Auth, parentID uint, class NodeClass, title, content string) (*NodeHeader, error) {
+func CreateNode(conn db.DBConn, auth ajax.Auth, parentID *uint, class, title, description string) (*NodeHeader, error) {
 
-	allowed, err := VerifyCreateNodeAllowed(db, parentID, class)
+	title = strings.TrimSpace(title)
+	description = strings.TrimSpace(description)
+
+	allowed, err := VerifyCreateNodeAllowed(conn, parentID, class)
 
 	if err != nil {
 		return nil, err
 	}
 
 	if !allowed {
-		return nil, fmt.Errorf("not allowed")
+		return nil, fmt.Errorf("create node location not allowed")
 	}
 
-	return nil, fmt.Errorf("not implemented")
+	var node = NodeHeader{}
+	err = conn.QueryRow(`INSERT INTO tree_node
+		(node_class, parent_id, created_at, created_by)
+		VALUES ($1, $2, $3, $4)
+		RETURNING id, node_class`,
+		class, parentID, time.Now(), auth.UserID,
+	).Scan(&node.ID, &node.Class)
+
+	if err != nil {
+		return nil, fmt.Errorf("error creating node: %w", err)
+	}
+
+	err = conn.QueryRow(`INSERT INTO tree_node_content
+		(node_id, content_type, text_content, created_at, created_by)
+		VALUES ($1, $2, $3, $4, $5)
+		RETURNING text_content`,
+		node.ID, ContentTypeTitle, title, time.Now(), auth.UserID,
+	).Scan(&node.Title)
+
+	if err != nil {
+		return nil, fmt.Errorf("error creating node content: %w", err)
+	}
+
+	if description != "" {
+		err = conn.QueryRow(`INSERT INTO tree_node_content
+			(node_id, content_type, text_content, created_at, created_by)
+			VALUES ($1, $2, $3, $4, $5)
+			RETURNING text_content`,
+			node.ID, ContentTypeBody, description, time.Now(), auth.UserID,
+		).Scan(&node.Description)
+
+		if err != nil {
+			return nil, fmt.Errorf("error creating node content: %w", err)
+		}
+	}
+
+	return &node, nil
 
 }

@@ -7,13 +7,6 @@ import (
 	"treetime/pkg/utils/db"
 )
 
-type NodeContentType string
-
-const (
-	NodeContentTypeTitle NodeContentType = "title"
-	NodeContentTypeBody  NodeContentType = "body"
-)
-
 func LoadNodeTitle(db db.DBConn, auth *ajax.Auth, id uint) (string, error) {
 
 	var title string
@@ -24,7 +17,7 @@ func LoadNodeTitle(db db.DBConn, auth *ajax.Auth, id uint) (string, error) {
 		AND tree_node_content.content_type = $2
 		LIMIT 1`,
 		id,
-		NodeContentTypeTitle,
+		ContentTypeTitle,
 	).Scan(&title)
 
 	if err != nil {

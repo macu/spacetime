@@ -1,16 +1,21 @@
 export const NODE_CLASS = {
-	TAG: "tag",
-	LANG: "lang",
-	TYPE: "type",
-	FIELD: "field",
-	CATEGORY: "category",
-	POST: "post",
-	COMMENT: "comment",
+	TAG: 'tag',
+	LANG: 'lang',
+	TYPE: 'type',
+	FIELD: 'field',
+	CATEGORY: 'category',
+	POST: 'post',
+	COMMENT: 'comment',
 };
 
 export const SYSTEM_NODE_KEYS = {
-	TREETIME: "treetime",
-	LANGS: "langs",
-	TAGS: "tags",
-	TYPES: "types",
+	TREETIME: 'treetime',
+	LANGS: 'langs',
+	TAGS: 'tags',
+	TYPES: 'types',
+};
+
+export const BODY_TYPE = {
+	PLAINTEXT: 'plaintext',
+	MARKDOWN: 'markdown',
 };

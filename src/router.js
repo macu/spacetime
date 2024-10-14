@@ -9,6 +9,7 @@ import SignupPage from './pages/user-account/signup.vue';
 import SignupVerifyPage from './pages/user-account/signup-verify.vue';
 
 import NodeView from './pages/node-view/index.vue';
+import CreateCategory from './pages/create/category.vue';
 
 export default createRouter({
 	history: createWebHistory(),
@@ -37,6 +38,11 @@ export default createRouter({
 			path: '/node/:id',
 			name: 'node-view',
 			component: NodeView,
+		},
+		{
+			path: '/create/category',
+			name: 'create-category',
+			component: CreateCategory,
 		},
 	],
 });
