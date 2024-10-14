@@ -27,7 +27,7 @@ func LoadNodeHeaderByKey(db db.DBConn, auth *ajax.Auth, internalKey string) (*No
 		return nil, fmt.Errorf("loading node header by key: %w", err)
 	}
 
-	err = LoadNodeTitle(db, auth, header)
+	err = LoadContentForNode(db, auth, header)
 	if err != nil {
 		return nil, err
 	}
@@ -60,7 +60,7 @@ func LoadNodeHeaderByID(db db.DBConn, auth *ajax.Auth, id uint) (*NodeHeader, er
 		return nil, fmt.Errorf("loading node header by id: %w", err)
 	}
 
-	err = LoadNodeTitle(db, auth, header)
+	err = LoadContentForNode(db, auth, header)
 	if err != nil {
 		return nil, err
 	}

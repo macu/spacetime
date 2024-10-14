@@ -10,6 +10,10 @@ html, body {
   box-sizing: border-box;
 }
 
+.pre-wrap {
+  white-space: pre-wrap;
+}
+
 .spin {
   animation-name: spin;
   animation-duration: 2000ms;

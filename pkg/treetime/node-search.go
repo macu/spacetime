@@ -69,7 +69,7 @@ func FindExistingNodes(db db.DBConn, auth *ajax.Auth, parentID *uint, class, que
 		nodes = append(nodes, node)
 	}
 
-	err = LoadNodeTitles(db, auth, nodes)
+	err = LoadContentForNodes(db, auth, nodes)
 	if err != nil {
 		return nil, err
 	}

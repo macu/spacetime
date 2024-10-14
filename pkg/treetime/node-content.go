@@ -9,7 +9,14 @@ import (
 	"treetime/pkg/utils/db"
 )
 
-var multipleWhitespaceRegex = regexp.MustCompile(`\s{2,}`)
+// remove newlines and replace all whitespace with a single space
+var titleReplaceWhitespaceRegex = regexp.MustCompile(`(?:[\n\r\t\v\f]|\s{2,})`)
+
+// process whitespace to allow 2 newlines, no tabs, and no leading/trailing whitespace
+var bodyExcludedWhitespaceRegex = regexp.MustCompile(`[\r\v\f]`)
+var bodyCondenseNewlineRegex = regexp.MustCompile(`(?:\s*[\n]\s*){2,}`)
+var bodyReplaceWhitespaceRegex = regexp.MustCompile(`(?:\t|[ ]{2,})`)
+var bodyStripHangingWhitespaceRegex = regexp.MustCompile(`(?:\n[ ]+|[ ]+\n)`)
 
 func CheckContentLength(class, contentType, content string) bool {
 	switch class {
@@ -75,10 +82,22 @@ func CheckContentLength(class, contentType, content string) bool {
 
 func FormatTitle(content string) string {
 	content = strings.TrimSpace(content)
-	return multipleWhitespaceRegex.ReplaceAllString(content, " ")
+	return titleReplaceWhitespaceRegex.ReplaceAllString(content, " ")
 }
 
-func LoadNodeTitles(conn db.DBConn, auth *ajax.Auth, headers []NodeHeader) error {
+func FormatBody(content string) string {
+	content = strings.TrimSpace(content)
+	content = bodyExcludedWhitespaceRegex.ReplaceAllString(content, "")
+	content = bodyCondenseNewlineRegex.ReplaceAllString(content, "\n\n")
+	content = bodyReplaceWhitespaceRegex.ReplaceAllString(content, " ")
+	return bodyStripHangingWhitespaceRegex.ReplaceAllString(content, "\n")
+}
+
+func LoadContentTypeForNodes(conn db.DBConn, auth *ajax.Auth, contentType string, headers []NodeHeader) error {
+
+	if !IsValidNodeContentType(contentType) {
+		return fmt.Errorf("invalid content type: %s", contentType)
+	}
 
 	if len(headers) == 0 {
 		return nil
@@ -89,7 +108,7 @@ func LoadNodeTitles(conn db.DBConn, auth *ajax.Auth, headers []NodeHeader) error
 		nodeIDs = append(nodeIDs, header.ID)
 	}
 
-	var args = []interface{}{ContentTypeTitle}
+	var args = []interface{}{contentType}
 
 	rows, err := conn.Query(`SELECT
 		tree_node_content.node_id, tree_node_content.text_content
@@ -107,15 +126,20 @@ func LoadNodeTitles(conn db.DBConn, auth *ajax.Auth, headers []NodeHeader) error
 
 	for rows.Next() {
 		var id uint
-		var title string
-		err = rows.Scan(&id, &title)
+		var content string
+		err = rows.Scan(&id, &content)
 		if err != nil {
 			return fmt.Errorf("scanning node title: %w", err)
 		}
 
 		for i := range headers {
 			if headers[i].ID == id {
-				headers[i].Title = title
+				switch contentType {
+				case ContentTypeTitle:
+					headers[i].Title = content
+				case ContentTypeBody:
+					headers[i].Body = content
+				}
 				break
 			}
 		}
@@ -125,11 +149,27 @@ func LoadNodeTitles(conn db.DBConn, auth *ajax.Auth, headers []NodeHeader) error
 
 }
 
-func LoadNodeTitle(conn db.DBConn, auth *ajax.Auth, header *NodeHeader) error {
+func LoadContentForNodes(conn db.DBConn, auth *ajax.Auth, headers []NodeHeader) error {
+
+	err := LoadContentTypeForNodes(conn, auth, ContentTypeTitle, headers)
+	if err != nil {
+		return err
+	}
+
+	err = LoadContentTypeForNodes(conn, auth, ContentTypeBody, headers)
+	if err != nil {
+		return err
+	}
+
+	return nil
+
+}
+
+func LoadContentForNode(conn db.DBConn, auth *ajax.Auth, header *NodeHeader) error {
 
 	var headers = []NodeHeader{*header}
 
-	err := LoadNodeTitles(conn, auth, headers)
+	err := LoadContentForNodes(conn, auth, headers)
 	if err != nil {
 		return err
 	}

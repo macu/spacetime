@@ -72,7 +72,7 @@ func LoadNodePath(db db.DBConn, auth *ajax.Auth, id uint, orderRootFirst bool) (
 		}
 	}
 
-	err = LoadNodeTitles(db, auth, path)
+	err = LoadContentForNodes(db, auth, path)
 	if err != nil {
 		return nil, err
 	}
@@ -150,7 +150,7 @@ func LoadNodeParentPath(db db.DBConn, auth *ajax.Auth, id uint, orderRootFirst b
 		}
 	}
 
-	err = LoadNodeTitles(db, auth, path)
+	err = LoadContentForNodes(db, auth, path)
 	if err != nil {
 		return nil, err
 	}

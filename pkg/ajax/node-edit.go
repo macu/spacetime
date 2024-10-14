@@ -92,7 +92,7 @@ func AjaxCreateNode(conn *sql.DB, auth ajax.Auth, w http.ResponseWriter, r *http
 		return nil, http.StatusBadRequest
 	}
 
-	body := strings.TrimSpace(r.FormValue("body"))
+	body := treetime.FormatBody(r.FormValue("body"))
 	if !treetime.CheckContentLength(class, treetime.ContentTypeBody, body) {
 		return nil, http.StatusBadRequest
 	}

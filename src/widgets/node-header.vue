@@ -9,7 +9,7 @@
 		<span v-else-if="node.title" v-text="node.title"/>
 		<em v-else>Untitled</em>
 	</h3>
-	<div v-if="node.body" v-text="node.body" class="flex-column"/>
+	<div v-if="node.body" v-text="node.body" class="pre-wrap"/>
 	<div v-if="showContent" class="flex-row-md">
 		<slot name="node-actions"/>
 	</div>

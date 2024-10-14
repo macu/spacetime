@@ -55,3 +55,11 @@ func IsValidVote(vote string) bool {
 	}
 	return false
 }
+
+func IsValidNodeContentType(contentType string) bool {
+	switch contentType {
+	case ContentTypeTitle, ContentTypeBody:
+		return true
+	}
+	return false
+}

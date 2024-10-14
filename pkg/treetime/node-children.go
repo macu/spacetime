@@ -59,7 +59,7 @@ func LoadNodeChildren(conn db.DBConn, auth *ajax.Auth, id uint, offset uint, que
 		children = append(children, *childHeader)
 	}
 
-	err = LoadNodeTitles(conn, auth, children)
+	err = LoadContentForNodes(conn, auth, children)
 	if err != nil {
 		return nil, err
 	}
