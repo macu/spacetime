@@ -1,7 +1,7 @@
 <template>
 <div class="category-create-page flex-column-lg page-width-md">
 
-	<loading-message v-if="loadingPath"/>
+	<loading-message v-if="initializing"/>
 
 	<template v-else-if="createAllowed">
 
@@ -28,10 +28,10 @@
 			<div class="field">
 				<label>Description (optional)</label>
 				<el-input
-					v-model="description"
+					v-model="body"
 					type="textarea"
 					placeholder="Description"
-					:maxlength="descriptionMaxLength"
+					:maxlength="bodyMaxLength"
 					:autosize="{minRows: 2}"
 					show-word-limit
 					clearable
@@ -39,7 +39,7 @@
 			</div>
 
 			<loading-message
-				v-if="searchingExisting"
+				v-if="findingExisting"
 				message="Searching for existing categories..."
 				/>
 
@@ -56,26 +56,30 @@
 					Please ensure the category you are trying to create doesn't already exist.
 				</el-alert>
 
-				<node-list :nodes="existing">
+				<node-list :nodes="existingNodes">
 					<template #node-actions="{node}">
 						<el-button @click="gotoNode(node)" type="primary">
-							Go to category
+							<material-icon icon="arrow_forward"/>
+							<span>Go to category</span>
 						</el-button>
 					</template>
 				</node-list>
 
-				<el-button
-					type="primary" :disabled="submitDisabled" @click="create()">
-					Create new category
-				</el-button>
+				<div>
+					<el-button
+						type="primary" :disabled="submitDisabled" @click="create()">
+						Create category
+					</el-button>
+				</div>
 
 			</template>
 
-			<el-button
-				v-else
-				type="primary" :disabled="submitDisabled" @click="create()">
-				Create new category
-			</el-button>
+			<div v-else>
+				<el-button
+					type="primary" :disabled="submitDisabled" @click="create()">
+					Create category
+				</el-button>
+			</div>
 
 		</div>
 
@@ -83,7 +87,7 @@
 
 	<el-alert
 		v-else-if="maxDepthExceeded"
-		title="Maximum depth reached"
+		title="Maximum depth reached."
 		type="error"
 		:closable="false"
 		/>
@@ -112,7 +116,6 @@ import {
 
 import {
 	NODE_CLASS,
-	BODY_TYPE,
 } from '@/const.js';
 
 export default {
@@ -122,54 +125,45 @@ export default {
 	},
 	data() {
 		return {
-			loadingPath: true,
+			initializing: true,
 			path: [],
+			createAllowed: false,
+
 			title: '',
-			description: '',
-			bodyType: BODY_TYPE.PLAINTEXT,
-			loadingMarkdownPreview: false,
-			markdownPreview: null,
-			searchingExisting: false,
-			existing: null, // null if not yet loaded
+			body: '',
+
+			findingExisting: false,
+			existingNodes: null, // null if not yet loaded
+
 			creating: false,
 		};
 	},
 	computed: {
-		BODY_TYPE() {
-			return BODY_TYPE;
-		},
 		parentId() {
 			return this.$route.query.parentId || null;
 		},
 		titleMaxLength() {
 			return this.$store.getters.categoryTitleMaxLength;
 		},
-		descriptionMaxLength() {
-			return this.$store.getters.categoryDescriptionMaxLength;
+		bodyMaxLength() {
+			return this.$store.getters.categoryBodyMaxLength;
 		},
 		maxDepthExceeded() {
 			return this.path.length >= this.$store.getters.treeMaxDepth;
-		},
-		allowMarkdownPreview() {
-			return this.bodyType === BODY_TYPE.MARKDOWN && !!this.description.trim();
-		},
-		createAllowed() {
-			return !this.maxDepthExceeded && allowCreateCategory(this.path);
 		},
 		submitDisabled() {
 			return !this.createAllowed || !this.title.trim();
 		},
 		existingFound() {
-			return this.existing !== null && this.existing.length > 0;
+			return this.existingNodes !== null && this.existingNodes.length > 0;
 		},
 	},
 	watch: {
 		title() {
-			this.existing = null;
+			this.existingNodes = null;
 		},
-		description() {
-			this.existing = null;
-			this.markdownPreview = null;
+		body() {
+			this.existingNodes = null;
 		},
 	},
 	beforeRouteEnter(to, from, next) {
@@ -178,64 +172,68 @@ export default {
 		});
 	},
 	beforeRouteUpdate(to, from, next) {
-		this.loadingPath = true;
+		this.initializing = true;
 		this.path = [];
+		this.createAllowed = false;
 		this.title = '';
-		this.description = '';
+		this.body = '';
+		this.existingNodes = null;
 		this.creating = false;
-		this.existing = null;
 		next();
 		this.init(to.query);
 	},
 	methods: {
 		init(queryParams) {
 			if (queryParams && queryParams.parentId) {
-				this.loadParentPath(queryParams.parentId);
+				this.loadCreate(queryParams.parentId);
 			} else {
-				this.loadingPath = false;
+				this.initializing = false;
 			}
 		},
-		loadParentPath(parentId) {
+		loadCreate(parentId) {
 			if (!parentId) {
-				this.loadingPath = false;
+				this.initializing = false;
+				this.createAllowed = true;
 				return;
 			}
-			this.loadingPath = true;
-			ajaxGet('/ajax/node/load-path', {
-				id: parentId,
+			this.initializing = true;
+			ajaxGet('/ajax/node/load-create', {
+				parentId,
+				class: NODE_CLASS.CATEGORY,
 			}).then(data => {
 				this.path = data.path;
+				this.createAllowed = data.createAllowed;
 			}).finally(() => {
-				this.loadingPath = false;
+				this.initializing = false;
 			});
 		},
 		create() {
 			if (this.submitDisabled) {
 				return;
 			}
-			if (this.existing === null) {
+			if (this.existingNodes === null) {
 				// Search for existing
-				this.searchingExisting = true;
+				this.findingExisting = true;
+				let query = (this.title.trim() + ' ' + this.body.trim()).trim();
 				ajaxGet('/ajax/node/find-existing', {
 					parentId: this.parentId,
-					title: this.title.trim(),
-					description: this.description.trim(),
 					class: NODE_CLASS.CATEGORY,
+					query,
 				}).then(response => {
-					this.existing = response.nodes;
+					this.existingNodes = response.nodes;
 					if (!response.nodes.length) {
 						this.create();
 					}
 				}).finally(() => {
-					this.searchingExisting = false;
+					this.findingExisting = false;
 				});
 			} else {
 				this.creating = true;
 				ajaxPost('/ajax/node/create', {
 					parentId: this.parentId,
-					title: this.title.trim(),
-					description: this.description.trim(),
 					class: NODE_CLASS.CATEGORY,
+					title: this.title.trim(),
+					body: this.body.trim(),
 				}).then(response => {
 					this.$router.replace({
 						name: 'node-view',

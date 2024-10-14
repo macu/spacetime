@@ -29,8 +29,17 @@ export const store = createStore({
 		categoryTitleMaxLength() {
 			return window.appConstants.categoryTitleMaxLength;
 		},
-		categoryDescriptionMaxLength() {
-			return window.appConstants.categoryDescriptionMaxLength;
+		categoryBodyMaxLength() {
+			return window.appConstants.categoryBodyMaxLength;
+		},
+		tagTitleMaxLength() {
+			return window.appConstants.tagTitleMaxLength;
+		},
+		postTitleMaxLength() {
+			return window.appConstants.postTitleMaxLength;
+		},
+		postBodyMaxLength() {
+			return window.appConstants.postBodyMaxLength;
 		},
 		loginLoaded(state) {
 			return state.user !== null;

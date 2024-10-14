@@ -56,13 +56,11 @@ func AtoInt64NilIfEmpty(s string) (*int64, error) {
 // AtoUintNilIfEmpty converts base 10 string to uint,
 // and returns nil on err or empty.
 func AtoUintNilIfEmpty(s string) (*uint, error) {
+	if s == "" {
+		return nil, nil
+	}
 	r, err := strconv.ParseUint(s, 10, 64)
 	if err != nil {
-		e := err.(*strconv.NumError)
-		if e.Num == "" {
-			// Input was blank; return no error
-			return nil, nil
-		}
 		return nil, err
 	}
 	var u = uint(r)

@@ -7,6 +7,8 @@ DROP FUNCTION IF EXISTS delete_user_content;
 DROP FUNCTION IF EXISTS set_first_user_to_admin;
 DROP FUNCTION IF EXISTS init_db_content;
 
+DROP INDEX IF EXISTS user_account_handle_idx;
+DROP INDEX IF EXISTS user_account_email_idx;
 DROP INDEX IF EXISTS tree_node_tag_vote_idx;
 DROP INDEX IF EXISTS tree_node_tag_class_idx;
 DROP INDEX IF EXISTS tree_node_tag_vote_user_idx;
@@ -28,6 +30,7 @@ DROP INDEX IF EXISTS tree_node_merge_vote_idx;
 DROP INDEX IF EXISTS tree_node_merge_vote_user_idx;
 DROP INDEX IF EXISTS tree_node_content_search_idx;
 DROP INDEX IF EXISTS tree_node_content_search_composite_idx;
+DROP INDEX IF EXISTS tree_node_link_idx;
 
 DROP TABLE IF EXISTS tree_node_tag_vote;
 DROP TABLE IF EXISTS tree_node_content_tag_vote;
@@ -37,6 +40,7 @@ DROP TABLE IF EXISTS tree_node_vote;
 DROP TABLE IF EXISTS tree_node_lang_code;
 DROP TABLE IF EXISTS tree_node_internal_key;
 DROP TABLE IF EXISTS tree_node_merge_vote;
+DROP TABLE IF EXISTS tree_node_link;
 DROP TABLE IF EXISTS tree_node;
 
 DROP TABLE IF EXISTS user_signup_request;
@@ -222,14 +226,13 @@ CREATE UNIQUE INDEX tree_node_link_idx ON tree_node_link (node_id);
 CREATE TABLE tree_node_content_vote (
 	id SERIAL PRIMARY KEY,
 	node_id INTEGER NOT NULL REFERENCES tree_node (id) ON DELETE CASCADE,
-	content_type tree_node_content_type NOT NULL,
 	content_id INTEGER NOT NULL REFERENCES tree_node_content (id) ON DELETE CASCADE,
 	vote vote_type NOT NULL,
 	created_at TIMESTAMPTZ NOT NULL,
 	created_by INTEGER NOT NULL REFERENCES user_account (id) ON DELETE CASCADE
 );
 
-CREATE INDEX tree_node_content_vote_idx ON tree_node_content_vote (node_id, content_type, content_id, vote);
+CREATE INDEX tree_node_content_vote_idx ON tree_node_content_vote (node_id, content_id, vote);
 CREATE UNIQUE INDEX tree_node_content_vote_user_idx ON tree_node_content_vote (created_by, node_id, content_id);
 
 -- create table for tagging notes

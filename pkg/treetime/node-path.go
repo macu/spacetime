@@ -78,7 +78,7 @@ func LoadNodePath(db db.DBConn, auth *ajax.Auth, id uint) ([]NodeHeader, error) 
 
 }
 
-func LoadNodeParentPath(db db.DBConn, auth *ajax.Auth, id uint) ([]NodeHeader, error) {
+func LoadNodeParentPath(db db.DBConn, auth *ajax.Auth, id uint, orderRootFirst bool) ([]NodeHeader, error) {
 	var path = make([]NodeHeader, 0)
 
 	rows, err := db.Query(`WITH RECURSIVE parent_nodes AS (
@@ -144,9 +144,11 @@ func LoadNodeParentPath(db db.DBConn, auth *ajax.Auth, id uint) ([]NodeHeader, e
 		path = append(path, node)
 	}
 
-	// Reverse path
-	for i, j := 0, len(path)-1; i < j; i, j = i+1, j-1 {
-		path[i], path[j] = path[j], path[i]
+	if orderRootFirst {
+		// Reverse path
+		for i, j := 0, len(path)-1; i < j; i, j = i+1, j-1 {
+			path[i], path[j] = path[j], path[i]
+		}
 	}
 
 	return path, nil

@@ -30,7 +30,7 @@ func AjaxLoadNodeViewPage(db *sql.DB, auth *ajax.Auth, w http.ResponseWriter, r 
 		return nil, http.StatusNotFound
 	}
 
-	parentPath, err := treetime.LoadNodeParentPath(db, auth, id)
+	parentPath, err := treetime.LoadNodeParentPath(db, auth, id, true)
 
 	if err != nil {
 		logging.LogError(r, auth, fmt.Errorf("loading parent nodes: %w", err))

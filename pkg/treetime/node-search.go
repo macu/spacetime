@@ -10,11 +10,16 @@ import (
 
 var whitespaceRegex = regexp.MustCompile(`\s+`)
 
-func FindExistingNodes(db db.DBConn, auth *ajax.Auth, parentID *uint, class, title, description string) ([]NodeHeader, error) {
+func FindExistingNodes(db db.DBConn, auth *ajax.Auth, parentID *uint, class, query string) ([]NodeHeader, error) {
 
 	var nodes = []NodeHeader{}
 
-	var query = strings.TrimSpace(title + " " + description)
+	query = strings.TrimSpace(query)
+	if query == "" {
+		return nodes, nil
+	}
+
+	// Prepapre for to_tsquery
 	query = whitespaceRegex.ReplaceAllString(query, " | ")
 
 	var args = []interface{}{class, query}

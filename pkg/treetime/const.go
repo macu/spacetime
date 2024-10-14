@@ -1,9 +1,16 @@
 package treetime
 
-const TreeMaxDepth = 50
+const (
+	TreeMaxDepth = 50
 
-const CategoryTitleMaxLength = 100
-const CategoryDescriptionMaxLength = 500
+	CategoryTitleMaxLength = 100
+	CategoryBodyMaxLength  = 300
+
+	TagTitleMaxLength = 50
+
+	PostTitleMaxLength = 100
+	PostBodyMaxLength  = 3000
+)
 
 const (
 	NodeClassTag      string = "tag"
@@ -14,15 +21,6 @@ const (
 	NodeClassPost     string = "post"
 	NodeClassComment  string = "comment"
 )
-
-func IsValidNodeClass(class string) bool {
-	switch class {
-	case NodeClassTag, NodeClassLang, NodeClassType, NodeClassField,
-		NodeClassCategory, NodeClassPost, NodeClassComment:
-		return true
-	}
-	return false
-}
 
 const (
 	NodeKeyTreeTime string = "treetime"
@@ -36,15 +34,24 @@ const (
 	ContentTypeBody  string = "body"
 )
 
-func CheckContentLengthLimit(class, contentType, content string) bool {
+const (
+	VoteAgree    string = "agree"
+	VoteDisagree string = "disagree"
+)
+
+func IsValidNodeClass(class string) bool {
 	switch class {
-	case NodeClassCategory:
-		switch contentType {
-		case ContentTypeTitle:
-			return len(content) <= CategoryTitleMaxLength
-		case ContentTypeBody:
-			return len(content) <= CategoryDescriptionMaxLength
-		}
+	case NodeClassTag, NodeClassLang, NodeClassType, NodeClassField,
+		NodeClassCategory, NodeClassPost, NodeClassComment:
+		return true
+	}
+	return false
+}
+
+func IsValidVote(vote string) bool {
+	switch vote {
+	case VoteAgree, VoteDisagree:
+		return true
 	}
 	return false
 }

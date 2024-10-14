@@ -97,17 +97,19 @@ func ArgValuesMap(args *[]interface{}, values [][]interface{}) string {
 	return out
 }
 
-func InTransaction(r *http.Request, db *sql.DB, f func(*sql.Tx) error) error {
+func InTransaction(db *sql.DB, f func(*sql.Tx) error) error {
 
-	c := r.Context()
-	tx, err := db.BeginTx(c, nil)
+	tx, err := db.Begin()
 	if err != nil {
-		rbErr := tx.Rollback()
-		if rbErr != nil {
-			return fmt.Errorf("rollback: %v; on begin transaction: %w", rbErr, err)
-		}
 		return fmt.Errorf("begin transaction: %w", err)
 	}
+
+	defer func() {
+		if p := recover(); p != nil {
+			tx.Rollback()
+			panic(p)
+		}
+	}()
 
 	err = f(tx)
 	if err != nil {
@@ -115,7 +117,7 @@ func InTransaction(r *http.Request, db *sql.DB, f func(*sql.Tx) error) error {
 		if rbErr != nil {
 			return fmt.Errorf("rollback: %v; on run function: %w", rbErr, err)
 		}
-		return fmt.Errorf("run function: %w", err)
+		return fmt.Errorf("run function in transaction: %w", err)
 	}
 
 	err = tx.Commit()
@@ -128,13 +130,13 @@ func InTransaction(r *http.Request, db *sql.DB, f func(*sql.Tx) error) error {
 	}
 
 	return nil
+
 }
 
 func HandleInTransaction(r *http.Request, db *sql.DB, auth *ajax.Auth,
 	f func(*sql.Tx) (interface{}, int, error)) (interface{}, int) {
 
-	c := r.Context()
-	tx, err := db.BeginTx(c, nil)
+	tx, err := db.Begin()
 	if err != nil {
 		rbErr := tx.Rollback()
 		if rbErr != nil {
@@ -168,4 +170,5 @@ func HandleInTransaction(r *http.Request, db *sql.DB, auth *ajax.Auth,
 	}
 
 	return response, statusCode
+
 }

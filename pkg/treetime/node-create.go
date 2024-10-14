@@ -1,6 +1,7 @@
 package treetime
 
 import (
+	"database/sql"
 	"fmt"
 	"strings"
 	"time"
@@ -8,13 +9,13 @@ import (
 	"treetime/pkg/utils/db"
 )
 
-func VerifyCreateNodeAllowed(db db.DBConn, parentID *uint, createClass string) (bool, error) {
+func CheckCreateNodeAllowed(db db.DBConn, parentID *uint, createClass string) (bool, error) {
 
 	if parentID == nil {
-		// Only allow creating categories at the root
 		switch createClass {
 
 		case NodeClassCategory:
+			// Only allow creating categories at the root
 			return true, nil
 
 		default:
@@ -40,8 +41,7 @@ func VerifyCreateNodeAllowed(db db.DBConn, parentID *uint, createClass string) (
 
 		case NodeKeyLangs:
 			switch createClass {
-			case NodeClassLang:
-			case NodeClassCategory:
+			case NodeClassLang, NodeClassCategory:
 				return true, nil
 			default:
 				return false, nil
@@ -49,8 +49,7 @@ func VerifyCreateNodeAllowed(db db.DBConn, parentID *uint, createClass string) (
 
 		case NodeKeyTags:
 			switch createClass {
-			case NodeClassTag:
-			case NodeClassCategory:
+			case NodeClassTag, NodeClassCategory:
 				return true, nil
 			default:
 				return false, nil
@@ -58,8 +57,7 @@ func VerifyCreateNodeAllowed(db db.DBConn, parentID *uint, createClass string) (
 
 		case NodeKeyTypes:
 			switch createClass {
-			case NodeClassType:
-			case NodeClassCategory:
+			case NodeClassType, NodeClassCategory:
 				return true, nil
 			default:
 				return false, nil
@@ -78,12 +76,12 @@ func VerifyCreateNodeAllowed(db db.DBConn, parentID *uint, createClass string) (
 
 		case NodeClassPost:
 			// Check all parents are categories
-			path, err := LoadNodeParentPath(db, nil, *parentID)
+			path, err := LoadNodeParentPath(db, nil, *parentID, false)
 			if err != nil {
 				return false, err
 			}
 			for _, header := range path {
-				if header.Class != string(NodeClassCategory) {
+				if header.Class != NodeClassCategory {
 					return false, nil
 				}
 			}
@@ -91,14 +89,14 @@ func VerifyCreateNodeAllowed(db db.DBConn, parentID *uint, createClass string) (
 
 		case NodeClassType:
 			// Check parent is "types"
-			path, err := LoadNodeParentPath(db, nil, *parentID)
+			path, err := LoadNodeParentPath(db, nil, *parentID, false)
 			if err != nil {
 				return false, err
 			}
 			for _, header := range path {
 				if header.Key != nil && *header.Key == NodeKeyTypes {
 					return true, nil
-				} else if header.Class != string(NodeClassCategory) {
+				} else if header.Class != NodeClassCategory {
 					break
 				}
 			}
@@ -106,7 +104,7 @@ func VerifyCreateNodeAllowed(db db.DBConn, parentID *uint, createClass string) (
 
 		case NodeClassTag:
 			// Check parent is "tags"
-			path, err := LoadNodeParentPath(db, nil, *parentID)
+			path, err := LoadNodeParentPath(db, nil, *parentID, false)
 			if err != nil {
 				return false, err
 			}
@@ -121,7 +119,7 @@ func VerifyCreateNodeAllowed(db db.DBConn, parentID *uint, createClass string) (
 
 		case NodeClassLang:
 			// Check parent is "langs"
-			path, err := LoadNodeParentPath(db, nil, *parentID)
+			path, err := LoadNodeParentPath(db, nil, *parentID, false)
 			if err != nil {
 				return false, err
 			}
@@ -152,55 +150,89 @@ func VerifyCreateNodeAllowed(db db.DBConn, parentID *uint, createClass string) (
 
 }
 
-func CreateNode(conn db.DBConn, auth ajax.Auth, parentID *uint, class, title, description string) (*NodeHeader, error) {
+func CreateNode(conn *sql.DB, auth ajax.Auth, parentID *uint, class, title, body string) (*NodeHeader, error) {
 
-	title = strings.TrimSpace(title)
-	description = strings.TrimSpace(description)
+	if !IsValidNodeClass(class) {
+		return nil, fmt.Errorf("invalid node class: %s", class)
+	}
 
-	allowed, err := VerifyCreateNodeAllowed(conn, parentID, class)
+	title = FormatTitle(title)
+	if !CheckContentLength(class, ContentTypeTitle, title) {
+		return nil, fmt.Errorf("invalid title length for class: %s", class)
+	}
 
+	body = strings.TrimSpace(body)
+	if !CheckContentLength(class, ContentTypeBody, body) {
+		return nil, fmt.Errorf("invalid body length for class: %s", class)
+	}
+
+	allowed, err := CheckCreateNodeAllowed(conn, parentID, class)
 	if err != nil {
 		return nil, err
 	}
-
 	if !allowed {
-		return nil, fmt.Errorf("create node location not allowed")
+		return nil, fmt.Errorf("create node location not allowed: %s under node %d", class, *parentID)
 	}
 
 	var node = NodeHeader{}
-	err = conn.QueryRow(`INSERT INTO tree_node
-		(node_class, parent_id, created_at, created_by)
-		VALUES ($1, $2, $3, $4)
-		RETURNING id, node_class`,
-		class, parentID, time.Now(), auth.UserID,
-	).Scan(&node.ID, &node.Class)
+	err = db.InTransaction(conn, func(tx *sql.Tx) error {
 
-	if err != nil {
-		return nil, fmt.Errorf("error creating node: %w", err)
-	}
-
-	err = conn.QueryRow(`INSERT INTO tree_node_content
-		(node_id, content_type, text_content, created_at, created_by)
-		VALUES ($1, $2, $3, $4, $5)
-		RETURNING text_content`,
-		node.ID, ContentTypeTitle, title, time.Now(), auth.UserID,
-	).Scan(&node.Title)
-
-	if err != nil {
-		return nil, fmt.Errorf("error creating node content: %w", err)
-	}
-
-	if description != "" {
-		err = conn.QueryRow(`INSERT INTO tree_node_content
-			(node_id, content_type, text_content, created_at, created_by)
-			VALUES ($1, $2, $3, $4, $5)
-			RETURNING text_content`,
-			node.ID, ContentTypeBody, description, time.Now(), auth.UserID,
-		).Scan(&node.Description)
-
+		err = tx.QueryRow(`INSERT INTO tree_node
+			(node_class, parent_id, created_at, created_by)
+			VALUES ($1, $2, $3, $4)
+			RETURNING id, node_class`,
+			class, parentID, time.Now(), auth.UserID,
+		).Scan(&node.ID, &node.Class)
 		if err != nil {
-			return nil, fmt.Errorf("error creating node content: %w", err)
+			return fmt.Errorf("error creating node: %w", err)
 		}
+
+		err = SetNodeVote(tx, auth, parentID, node.ID, VoteAgree)
+		if err != nil {
+			return fmt.Errorf("error setting node vote: %w", err)
+		}
+
+		if title != "" {
+			var titleContentID uint
+			err = tx.QueryRow(`INSERT INTO tree_node_content
+				(node_id, content_type, text_content, created_at, created_by)
+				VALUES ($1, $2, $3, $4, $5)
+				RETURNING id, text_content`,
+				node.ID, ContentTypeTitle, title, time.Now(), auth.UserID,
+			).Scan(&titleContentID, &node.Title)
+			if err != nil {
+				return fmt.Errorf("error creating node content title: %w", err)
+			}
+
+			err = SetNodeContentVote(tx, auth, node.ID, titleContentID, VoteAgree)
+			if err != nil {
+				return fmt.Errorf("error setting node content vote: %w", err)
+			}
+		}
+
+		if body != "" {
+			var bodyContentID uint
+			err = tx.QueryRow(`INSERT INTO tree_node_content
+				(node_id, content_type, text_content, created_at, created_by)
+				VALUES ($1, $2, $3, $4, $5)
+				RETURNING id, text_content`,
+				node.ID, ContentTypeBody, body, time.Now(), auth.UserID,
+			).Scan(&bodyContentID, &node.Body)
+			if err != nil {
+				return fmt.Errorf("error creating node content body: %w", err)
+			}
+
+			err = SetNodeContentVote(tx, auth, node.ID, bodyContentID, VoteAgree)
+			if err != nil {
+				return fmt.Errorf("error setting node content vote: %w", err)
+			}
+		}
+
+		return nil
+
+	})
+	if err != nil {
+		return nil, err
 	}
 
 	return &node, nil
