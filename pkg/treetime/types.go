@@ -8,3 +8,10 @@ type NodeHeader struct {
 	Body  string    `json:"body"`
 	Tags  []NodeTag `json:"tags"`
 }
+
+type NodeTag struct {
+	ID           uint    `json:"id"`
+	Title        string  `json:"title"`
+	UserVote     *string `json:"userVote"`
+	SupportRatio float32 `json:"supportRatio"`
+}

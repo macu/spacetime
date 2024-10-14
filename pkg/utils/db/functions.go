@@ -3,17 +3,16 @@ package db
 import (
 	"database/sql"
 	"fmt"
-	"net/http"
+	"reflect"
 	"strconv"
+	"strings"
 
-	"treetime/pkg/utils/ajax"
-	"treetime/pkg/utils/logging"
 	"treetime/pkg/utils/types"
 )
 
 // Returns a placeholder representing the given arg in args,
 // adding the arg to args if not already present.
-func ArgPlaceholder(arg interface{}, args *[]interface{}) string {
+func Arg(args *[]interface{}, arg interface{}) string {
 	for i := 0; i < len(*args); i++ {
 		if (*args)[i] == arg {
 			return "$" + strconv.Itoa(i+1)
@@ -25,42 +24,31 @@ func ArgPlaceholder(arg interface{}, args *[]interface{}) string {
 
 // Returns the "= $N" or "IS NULL" part of an equality condition
 // where the operand may be null.
-func EqCond(col string, arg interface{}, args *[]interface{}) string {
+func Eq(col string, args *[]interface{}, arg interface{}) string {
 	if types.IsNil(arg) {
 		return col + " IS NULL"
 	}
-	return col + " = " + ArgPlaceholder(arg, args)
+	return col + " = " + Arg(args, arg)
 }
 
-// Returns the "= $N" or "IS NULL" part of an equality condition
-// where the operand may be null, and the placeholder index is given.
-func EqCondIndexed(col string, arg interface{}, index int) string {
-	if types.IsNil(arg) {
-		return col + " IS NULL"
+func In(col string, args *[]interface{}, values interface{}) string {
+	v := reflect.ValueOf(values)
+	if v.Kind() != reflect.Slice {
+		panic("values must be a slice")
 	}
-	return col + " = $" + strconv.Itoa(index)
-}
 
-func CreateArgsList(args *[]interface{}, values ...interface{}) string {
-	out := ``
-	for i := 0; i < len(values); i++ {
+	var out strings.Builder
+	out.WriteString(col + " IN (")
+
+	for i := 0; i < v.Len(); i++ {
 		if i > 0 {
-			out += `,`
+			out.WriteString(",")
 		}
-		out += ArgPlaceholder(values[i], args)
+		out.WriteString(Arg(args, v.Index(i).Interface()))
 	}
-	return out
-}
 
-func CreateArgsListInt64s(args *[]interface{}, values ...int64) string {
-	out := ``
-	for i := 0; i < len(values); i++ {
-		if i > 0 {
-			out += `,`
-		}
-		out += ArgPlaceholder(values[i], args)
-	}
-	return out
+	out.WriteString(")")
+	return out.String()
 }
 
 // create a VALUES (), (), ... postgres string using argument placeholders
@@ -80,7 +68,7 @@ func ArgValuesMap(args *[]interface{}, values [][]interface{}) string {
 			}
 
 			var v = values[i][j]
-			out += ArgPlaceholder(v, args)
+			out += Arg(args, v)
 
 			// include type casts with placeholders
 			switch v.(type) {
@@ -130,45 +118,5 @@ func InTransaction(db *sql.DB, f func(*sql.Tx) error) error {
 	}
 
 	return nil
-
-}
-
-func HandleInTransaction(r *http.Request, db *sql.DB, auth *ajax.Auth,
-	f func(*sql.Tx) (interface{}, int, error)) (interface{}, int) {
-
-	tx, err := db.Begin()
-	if err != nil {
-		rbErr := tx.Rollback()
-		if rbErr != nil {
-			logging.LogError(r, auth, fmt.Errorf("rollback: %v; on begin transaction: %w", rbErr, err))
-			return nil, http.StatusInternalServerError
-		}
-		logging.LogError(r, auth, fmt.Errorf("begin transaction: %w", err))
-		return nil, http.StatusInternalServerError
-	}
-
-	response, statusCode, err := f(tx)
-	if err != nil {
-		rbErr := tx.Rollback()
-		if rbErr != nil {
-			logging.LogError(r, auth, fmt.Errorf("rollback: %v; on run function: %w", rbErr, err))
-			return nil, http.StatusInternalServerError
-		}
-		logging.LogError(r, auth, fmt.Errorf("run function: %w", err))
-		return nil, statusCode
-	}
-
-	err = tx.Commit()
-	if err != nil {
-		rbErr := tx.Rollback()
-		if rbErr != nil {
-			logging.LogError(r, auth, fmt.Errorf("rollback: %v; on commit: %w", rbErr, err))
-			return nil, http.StatusInternalServerError
-		}
-		logging.LogError(r, auth, fmt.Errorf("commit: %w", err))
-		return nil, http.StatusInternalServerError
-	}
-
-	return response, statusCode
 
 }

@@ -14,24 +14,20 @@ import (
 func AjaxLoadNodeViewPage(db *sql.DB, auth *ajax.Auth, w http.ResponseWriter, r *http.Request) (interface{}, int) {
 
 	id, err := types.AtoUint(r.FormValue("id"))
-
 	if err != nil {
 		return nil, http.StatusBadRequest
 	}
 
 	node, err := treetime.LoadNodeHeaderByID(db, auth, id)
-
 	if err != nil {
 		logging.LogError(r, auth, fmt.Errorf("loading node header by ID: %w", err))
 		return nil, http.StatusInternalServerError
 	}
-
 	if node == nil {
 		return nil, http.StatusNotFound
 	}
 
 	parentPath, err := treetime.LoadNodeParentPath(db, auth, id, true)
-
 	if err != nil {
 		logging.LogError(r, auth, fmt.Errorf("loading parent nodes: %w", err))
 		return nil, http.StatusInternalServerError
@@ -50,13 +46,11 @@ func AjaxLoadNodeViewPage(db *sql.DB, auth *ajax.Auth, w http.ResponseWriter, r 
 func AjaxLoadNodeChildren(db *sql.DB, auth *ajax.Auth, w http.ResponseWriter, r *http.Request) (interface{}, int) {
 
 	id, err := types.AtoUint(r.FormValue("id"))
-
 	if err != nil {
 		return nil, http.StatusBadRequest
 	}
 
 	var offset uint
-
 	if offsetString := r.FormValue("offset"); offsetString != "" {
 		offset, err = types.AtoUint(offsetString)
 		if err != nil {
@@ -68,7 +62,6 @@ func AjaxLoadNodeChildren(db *sql.DB, auth *ajax.Auth, w http.ResponseWriter, r 
 		&treetime.NodeSearchParams{
 			ExcludeClass: treetime.NodeClassComment,
 		})
-
 	if err != nil {
 		logging.LogError(r, auth, fmt.Errorf("loading child nodes: %w", err))
 		return nil, http.StatusInternalServerError
@@ -85,13 +78,11 @@ func AjaxLoadNodeChildren(db *sql.DB, auth *ajax.Auth, w http.ResponseWriter, r 
 func AjaxLoadNodeComments(db *sql.DB, auth *ajax.Auth, w http.ResponseWriter, r *http.Request) (interface{}, int) {
 
 	id, err := types.AtoUint(r.FormValue("id"))
-
 	if err != nil {
 		return nil, http.StatusBadRequest
 	}
 
 	var offset uint
-
 	if offsetString := r.FormValue("offset"); offsetString != "" {
 		offset, err = types.AtoUint(offsetString)
 		if err != nil {
@@ -103,7 +94,6 @@ func AjaxLoadNodeComments(db *sql.DB, auth *ajax.Auth, w http.ResponseWriter, r 
 		&treetime.NodeSearchParams{
 			LimitToClass: treetime.NodeClassComment,
 		})
-
 	if err != nil {
 		logging.LogError(r, auth, fmt.Errorf("loading child nodes: %w", err))
 		return nil, http.StatusInternalServerError

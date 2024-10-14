@@ -5,7 +5,7 @@ import (
 	"treetime/pkg/utils/db"
 )
 
-func LoadNodePath(db db.DBConn, auth *ajax.Auth, id uint) ([]NodeHeader, error) {
+func LoadNodePath(db db.DBConn, auth *ajax.Auth, id uint, orderRootFirst bool) ([]NodeHeader, error) {
 	var path = make([]NodeHeader, 0)
 
 	rows, err := db.Query(`WITH RECURSIVE node_path AS (
@@ -62,16 +62,19 @@ func LoadNodePath(db db.DBConn, auth *ajax.Auth, id uint) ([]NodeHeader, error) 
 		if err != nil {
 			return nil, err
 		}
-		node.Title, err = LoadNodeTitle(db, auth, node.ID)
-		if err != nil {
-			return nil, err
-		}
 		path = append(path, node)
 	}
 
-	// Reverse path
-	for i, j := 0, len(path)-1; i < j; i, j = i+1, j-1 {
-		path[i], path[j] = path[j], path[i]
+	if orderRootFirst {
+		// Reverse path
+		for i, j := 0, len(path)-1; i < j; i, j = i+1, j-1 {
+			path[i], path[j] = path[j], path[i]
+		}
+	}
+
+	err = LoadNodeTitles(db, auth, path)
+	if err != nil {
+		return nil, err
 	}
 
 	return path, nil
@@ -137,10 +140,6 @@ func LoadNodeParentPath(db db.DBConn, auth *ajax.Auth, id uint, orderRootFirst b
 		if err != nil {
 			return nil, err
 		}
-		node.Title, err = LoadNodeTitle(db, auth, node.ID)
-		if err != nil {
-			return nil, err
-		}
 		path = append(path, node)
 	}
 
@@ -149,6 +148,11 @@ func LoadNodeParentPath(db db.DBConn, auth *ajax.Auth, id uint, orderRootFirst b
 		for i, j := 0, len(path)-1; i < j; i, j = i+1, j-1 {
 			path[i], path[j] = path[j], path[i]
 		}
+	}
+
+	err = LoadNodeTitles(db, auth, path)
+	if err != nil {
+		return nil, err
 	}
 
 	return path, nil

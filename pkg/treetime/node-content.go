@@ -1,7 +1,6 @@
 package treetime
 
 import (
-	"database/sql"
 	"fmt"
 	"regexp"
 	"strings"
@@ -79,26 +78,64 @@ func FormatTitle(content string) string {
 	return multipleWhitespaceRegex.ReplaceAllString(content, " ")
 }
 
-func LoadNodeTitle(conn db.DBConn, auth *ajax.Auth, id uint) (string, error) {
+func LoadNodeTitles(conn db.DBConn, auth *ajax.Auth, headers []NodeHeader) error {
 
-	var title string
-
-	err := conn.QueryRow(`SELECT tree_node_content.text_content
-		FROM tree_node_content
-		WHERE tree_node_content.node_id = $1
-		AND tree_node_content.content_type = $2
-		LIMIT 1`,
-		id,
-		ContentTypeTitle,
-	).Scan(&title)
-
-	if err != nil {
-		if err == sql.ErrNoRows {
-			return "", nil
-		}
-		return "", fmt.Errorf("loading node title: %w", err)
+	if len(headers) == 0 {
+		return nil
 	}
 
-	return title, nil
+	var nodeIDs []uint
+	for _, header := range headers {
+		nodeIDs = append(nodeIDs, header.ID)
+	}
+
+	var args = []interface{}{ContentTypeTitle}
+
+	rows, err := conn.Query(`SELECT
+		tree_node_content.node_id, tree_node_content.text_content
+		FROM tree_node_content
+		WHERE `+db.In("tree_node_content.node_id", &args, nodeIDs)+`
+		AND tree_node_content.content_type = $1`,
+		args...,
+	)
+
+	if err != nil {
+		return fmt.Errorf("loading node titles: %w", err)
+	}
+
+	defer rows.Close()
+
+	for rows.Next() {
+		var id uint
+		var title string
+		err = rows.Scan(&id, &title)
+		if err != nil {
+			return fmt.Errorf("scanning node title: %w", err)
+		}
+
+		for i := range headers {
+			if headers[i].ID == id {
+				headers[i].Title = title
+				break
+			}
+		}
+	}
+
+	return nil
+
+}
+
+func LoadNodeTitle(conn db.DBConn, auth *ajax.Auth, header *NodeHeader) error {
+
+	var headers = []NodeHeader{*header}
+
+	err := LoadNodeTitles(conn, auth, headers)
+	if err != nil {
+		return err
+	}
+
+	*header = headers[0]
+
+	return nil
 
 }

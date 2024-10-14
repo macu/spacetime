@@ -76,7 +76,7 @@ func CheckCreateNodeAllowed(db db.DBConn, parentID *uint, createClass string) (b
 
 		case NodeClassPost:
 			// Check all parents are categories
-			path, err := LoadNodeParentPath(db, nil, *parentID, false)
+			path, err := LoadNodePath(db, nil, *parentID, false)
 			if err != nil {
 				return false, err
 			}
@@ -89,7 +89,7 @@ func CheckCreateNodeAllowed(db db.DBConn, parentID *uint, createClass string) (b
 
 		case NodeClassType:
 			// Check parent is "types"
-			path, err := LoadNodeParentPath(db, nil, *parentID, false)
+			path, err := LoadNodePath(db, nil, *parentID, false)
 			if err != nil {
 				return false, err
 			}
@@ -104,7 +104,7 @@ func CheckCreateNodeAllowed(db db.DBConn, parentID *uint, createClass string) (b
 
 		case NodeClassTag:
 			// Check parent is "tags"
-			path, err := LoadNodeParentPath(db, nil, *parentID, false)
+			path, err := LoadNodePath(db, nil, *parentID, false)
 			if err != nil {
 				return false, err
 			}
@@ -119,7 +119,7 @@ func CheckCreateNodeAllowed(db db.DBConn, parentID *uint, createClass string) (b
 
 		case NodeClassLang:
 			// Check parent is "langs"
-			path, err := LoadNodeParentPath(db, nil, *parentID, false)
+			path, err := LoadNodePath(db, nil, *parentID, false)
 			if err != nil {
 				return false, err
 			}

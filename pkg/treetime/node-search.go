@@ -44,7 +44,7 @@ func FindExistingNodes(db db.DBConn, auth *ajax.Auth, parentID *uint, class, que
 		WHERE tree_node.node_class = $1
 		AND ts_rank(tree_node_content.text_search, to_tsquery('pg_catalog.simple', $2)) > 0
 		`+orderBy+`
-		LIMIT 10`,
+		LIMIT 20`,
 		args...,
 	)
 
@@ -66,11 +66,12 @@ func FindExistingNodes(db db.DBConn, auth *ajax.Auth, parentID *uint, class, que
 			continue
 		}
 		alreadySeenIDs[node.ID] = true
-		node.Title, err = LoadNodeTitle(db, auth, node.ID)
-		if err != nil {
-			return nil, err
-		}
 		nodes = append(nodes, node)
+	}
+
+	err = LoadNodeTitles(db, auth, nodes)
+	if err != nil {
+		return nil, err
 	}
 
 	return nodes, nil

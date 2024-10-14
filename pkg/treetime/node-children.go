@@ -1,6 +1,7 @@
 package treetime
 
 import (
+	"fmt"
 	"treetime/pkg/utils/ajax"
 	"treetime/pkg/utils/db"
 )
@@ -15,14 +16,12 @@ func LoadNodeChildren(conn db.DBConn, auth *ajax.Auth, id uint, offset uint, que
 
 	var limitToClassPart string
 	if query != nil && query.LimitToClass != "" {
-		limitToClassPart = "AND tn.node_class = " +
-			db.ArgPlaceholder(string(query.LimitToClass), &args)
+		limitToClassPart = "AND tn.node_class = " + db.Arg(&args, query.LimitToClass)
 	}
 
 	var excludeClassPart string
 	if query != nil && query.ExcludeClass != "" {
-		excludeClassPart = "AND tn.node_class != " +
-			db.ArgPlaceholder(string(query.ExcludeClass), &args)
+		excludeClassPart = "AND tn.node_class != " + db.Arg(&args, query.ExcludeClass)
 	}
 
 	rows, err := conn.Query(`SELECT
@@ -46,19 +45,23 @@ func LoadNodeChildren(conn db.DBConn, auth *ajax.Auth, id uint, offset uint, que
 	)
 
 	if err != nil {
-		return nil, err
+		return nil, fmt.Errorf("loading node children: %w", err)
 	}
 
 	defer rows.Close()
 
 	for rows.Next() {
 		var childHeader = &NodeHeader{}
-		rows.Scan(&childHeader.ID, &childHeader.Class, &childHeader.Key)
-		childHeader.Title, err = LoadNodeTitle(conn, auth, childHeader.ID)
+		err = rows.Scan(&childHeader.ID, &childHeader.Class, &childHeader.Key)
 		if err != nil {
-			return nil, err
+			return nil, fmt.Errorf("scanning node header: %w", err)
 		}
 		children = append(children, *childHeader)
+	}
+
+	err = LoadNodeTitles(conn, auth, children)
+	if err != nil {
+		return nil, err
 	}
 
 	return children, nil

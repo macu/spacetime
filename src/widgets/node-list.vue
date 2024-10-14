@@ -1,7 +1,7 @@
 <template>
 <div class="node-list flex-column-md">
 
-	<template v-for="n in nodes" :key="n.id">
+	<template v-for="n in nodes">
 
 		<node-header :node="n" link-to>
 			<template v-if="showNodeActions" #node-actions>

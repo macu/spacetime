@@ -21,10 +21,6 @@ func LoadNodeMeta(db db.DBConn, id uint) (string, *string, error) {
 		return "", nil, fmt.Errorf("loading node class: %w", err)
 	}
 
-	if err != nil {
-		return "", nil, err
-	}
-
 	return class, key, nil
 
 }

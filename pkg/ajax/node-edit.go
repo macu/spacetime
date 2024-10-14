@@ -24,9 +24,8 @@ func AjaxLoadCreateNode(db *sql.DB, auth ajax.Auth, w http.ResponseWriter, r *ht
 	}
 
 	path := []treetime.NodeHeader{}
-
 	if parentID != nil {
-		path, err = treetime.LoadNodePath(db, &auth, *parentID)
+		path, err = treetime.LoadNodePath(db, &auth, *parentID, true)
 		if err != nil {
 			logging.LogError(r, &auth, fmt.Errorf("loading node path: %w", err))
 			return nil, http.StatusInternalServerError
