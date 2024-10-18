@@ -3,13 +3,15 @@ package treetime
 const (
 	TreeMaxDepth = 50
 
-	CategoryTitleMaxLength = 100
-	CategoryBodyMaxLength  = 300
-
-	TagTitleMaxLength = 50
-
-	PostTitleMaxLength = 100
-	PostBodyMaxLength  = 3000
+	CategoryTitleMaxLength       = 100
+	CategoryDescriptionMaxLength = 300
+	LangTitleMaxLength           = 50
+	TagTitleMaxLength            = 50
+	TypeTitleMaxLength           = 50
+	TypeDescriptionMaxLength     = 200
+	PostTitleMaxLength           = 100
+	PostBlockMaxLength           = 1024
+	CommentMaxLength             = 1024
 )
 
 const (
@@ -31,7 +33,7 @@ const (
 
 const (
 	ContentTypeTitle string = "title"
-	ContentTypeBody  string = "body"
+	ContentTypeBody  string = "description"
 )
 
 const (

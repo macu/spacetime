@@ -10,6 +10,8 @@ import (
 
 var whitespaceRegex = regexp.MustCompile(`\s+`)
 
+const findExistingLimit = 20
+
 func FindExistingNodes(db db.DBConn, auth *ajax.Auth, parentID *uint, class, query string) ([]NodeHeader, error) {
 
 	var nodes = []NodeHeader{}
@@ -22,29 +24,38 @@ func FindExistingNodes(db db.DBConn, auth *ajax.Auth, parentID *uint, class, que
 	// Prepapre for to_tsquery
 	query = whitespaceRegex.ReplaceAllString(query, " | ")
 
-	var args = []interface{}{class, query}
+	var args = []interface{}{class, query, findExistingLimit}
 
 	var orderBy string
-
 	if parentID != nil {
 		args = append(args, *parentID)
-		orderBy = `ORDER BY (tree_node.parent_id = $3) DESC,
-		ts_rank_cd(tree_node_content.text_search, to_tsquery('pg_catalog.simple', $2)) DESC`
+		orderBy = `(tree_node.parent_id = $3) DESC, ordered_ranks.max_rank DESC`
 	} else {
-		orderBy = "ORDER BY ts_rank_cd(tree_node_content.text_search, to_tsquery('pg_catalog.simple', $2)) DESC"
+		orderBy = "ordered_ranks.max_rank DESC"
 	}
 
-	rows, err := db.Query(`
+	rows, err := db.Query(`WITH content_ranks AS (
+			SELECT tree_node.id,
+				ts_rank_cd(tree_node_content.text_search, to_tsquery('pg_catalog.simple', $2)) AS rank
+			FROM tree_node
+			INNER JOIN tree_node_content ON tree_node.id = tree_node_content.node_id
+			WHERE tree_node.node_class = $1
+			AND ts_rank(tree_node_content.text_search, to_tsquery('pg_catalog.simple', $2)) > 0
+		), ordered_ranks AS (
+		SELECT id,
+			rank,
+			MAX(rank) AS max_rank
+		FROM content_ranks
+		)
 		SELECT tree_node.id,
 			tree_node.node_class,
-			tree_node_internal_key.internal_key
+			tree_node_meta.internal_key
 		FROM tree_node
-		LEFT JOIN tree_node_internal_key ON tree_node.id = tree_node_internal_key.node_id
-		INNER JOIN tree_node_content ON tree_node.id = tree_node_content.node_id
-		WHERE tree_node.node_class = $1
-		AND ts_rank(tree_node_content.text_search, to_tsquery('pg_catalog.simple', $2)) > 0
-		`+orderBy+`
-		LIMIT 20`,
+		LEFT JOIN tree_node_meta ON tree_node.id = tree_node_meta.node_id
+		INNER JOIN ordered_ranks ON tree_node.id = ordered_ranks.id
+		WHERE tree_node.is_deleted = FALSE
+		ORDER BY `+orderBy+`
+		LIMIT $3`,
 		args...,
 	)
 

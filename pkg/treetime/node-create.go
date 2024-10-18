@@ -68,6 +68,7 @@ func CheckCreateNodeAllowed(db db.DBConn, parentID *uint, createClass string) (b
 	switch parentClass {
 
 	case NodeClassCategory:
+		// Everything except fields can be created under categories
 		switch createClass {
 
 		case NodeClassCategory:
@@ -111,7 +112,7 @@ func CheckCreateNodeAllowed(db db.DBConn, parentID *uint, createClass string) (b
 			for _, header := range path {
 				if header.Key != nil && *header.Key == NodeKeyTags {
 					return true, nil
-				} else if header.Class != string(NodeClassCategory) {
+				} else if header.Class != NodeClassCategory {
 					break
 				}
 			}
@@ -126,7 +127,7 @@ func CheckCreateNodeAllowed(db db.DBConn, parentID *uint, createClass string) (b
 			for _, header := range path {
 				if header.Key != nil && *header.Key == NodeKeyLangs {
 					return true, nil
-				} else if header.Class != string(NodeClassCategory) {
+				} else if header.Class != NodeClassCategory {
 					break
 				}
 			}
@@ -138,13 +139,24 @@ func CheckCreateNodeAllowed(db db.DBConn, parentID *uint, createClass string) (b
 
 	case NodeClassType:
 		switch createClass {
-		case NodeClassField:
+		case NodeClassType, NodeClassField:
+			// Allow creating types and fields as direct children of types
+			return true, nil
+		default:
+			return false, nil
+		}
+
+	case NodeClassTag:
+		switch createClass {
+		case NodeClassTag:
+			// Allow creating tags as direct children of tags
 			return true, nil
 		default:
 			return false, nil
 		}
 
 	default:
+		// All other classes do not allow children
 		return false, nil
 	}
 

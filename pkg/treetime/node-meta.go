@@ -10,9 +10,9 @@ func LoadNodeMeta(db db.DBConn, id uint) (string, *string, error) {
 	var class string
 	var key *string
 
-	err := db.QueryRow(`SELECT tree_node.node_class, tree_node_internal_key.internal_key
+	err := db.QueryRow(`SELECT tree_node.node_class, tree_node_meta.internal_key
 		FROM tree_node
-		LEFt JOIN tree_node_internal_key ON tree_node.id = tree_node_internal_key.node_id
+		LEFt JOIN tree_node_meta ON tree_node.id = tree_node_meta.node_id
 		WHERE tree_node.id = $1`,
 		id,
 	).Scan(&class, &key)

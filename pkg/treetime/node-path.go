@@ -12,14 +12,14 @@ func LoadNodePath(db db.DBConn, auth *ajax.Auth, id uint, orderRootFirst bool) (
 			SELECT
 				tree_node.id,
 				tree_node.node_class,
-				tree_node_internal_key.internal_key,
+				tree_node_meta.internal_key,
 				tree_node.parent_id
 			FROM
 				tree_node
 			LEFT JOIN
-				tree_node_internal_key
+				tree_node_meta
 			ON
-				tree_node.id = tree_node_internal_key.node_id
+				tree_node.id = tree_node_meta.node_id
 			WHERE
 				tree_node.id = $1 -- Starting node ID
 
@@ -28,14 +28,15 @@ func LoadNodePath(db db.DBConn, auth *ajax.Auth, id uint, orderRootFirst bool) (
 			SELECT
 				tn.id,
 				tn.node_class,
-				tnik.internal_key,
+				tn.is_deleted,
+				tnmeta.internal_key,
 				tn.parent_id
 			FROM
 				tree_node tn
 			LEFT JOIN
-				tree_node_internal_key tnik
+				tree_node_meta tnmeta
 			ON
-				tn.id = tnik.node_id
+				tn.id = tnmeta.node_id
 			INNER JOIN
 				node_path pn
 			ON
@@ -44,6 +45,7 @@ func LoadNodePath(db db.DBConn, auth *ajax.Auth, id uint, orderRootFirst bool) (
 		SELECT
 			id,
 			node_class,
+			is_deleted,
 			internal_key
 		FROM
 			node_path`,
@@ -58,7 +60,7 @@ func LoadNodePath(db db.DBConn, auth *ajax.Auth, id uint, orderRootFirst bool) (
 
 	for rows.Next() {
 		var node = NodeHeader{}
-		err = rows.Scan(&node.ID, &node.Class, &node.Key)
+		err = rows.Scan(&node.ID, &node.Class, &node.IsDeleted, &node.Key)
 		if err != nil {
 			return nil, err
 		}
@@ -88,14 +90,15 @@ func LoadNodeParentPath(db db.DBConn, auth *ajax.Auth, id uint, orderRootFirst b
 			SELECT
 				tree_node.id,
 				tree_node.node_class,
-				tree_node_internal_key.internal_key,
+				tree_node.is_deleted,
+				tree_node_meta.internal_key,
 				tree_node.parent_id
 			FROM
 				tree_node
 			LEFT JOIN
-				tree_node_internal_key
+				tree_node_meta
 			ON
-				tree_node.id = tree_node_internal_key.node_id
+				tree_node.id = tree_node_meta.node_id
 			WHERE
 				tree_node.id = $1 -- Starting node ID
 
@@ -104,14 +107,15 @@ func LoadNodeParentPath(db db.DBConn, auth *ajax.Auth, id uint, orderRootFirst b
 			SELECT
 				tn.id,
 				tn.node_class,
-				tnik.internal_key,
+				tn.is_deleted,
+				tnmeta.internal_key,
 				tn.parent_id
 			FROM
 				tree_node tn
 			LEFT JOIN
-				tree_node_internal_key tnik
+				tree_node_meta tnmeta
 			ON
-				tn.id = tnik.node_id
+				tn.id = tnmeta.node_id
 			INNER JOIN
 				parent_nodes pn
 			ON
@@ -120,6 +124,7 @@ func LoadNodeParentPath(db db.DBConn, auth *ajax.Auth, id uint, orderRootFirst b
 		SELECT
 			id,
 			node_class,
+			is_deleted,
 			internal_key
 		FROM
 			parent_nodes
@@ -136,7 +141,7 @@ func LoadNodeParentPath(db db.DBConn, auth *ajax.Auth, id uint, orderRootFirst b
 
 	for rows.Next() {
 		var node = NodeHeader{}
-		err = rows.Scan(&node.ID, &node.Class, &node.Key)
+		err = rows.Scan(&node.ID, &node.Class, &node.IsDeleted, &node.Key)
 		if err != nil {
 			return nil, err
 		}

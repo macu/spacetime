@@ -29,10 +29,21 @@ func CheckContentLength(class, contentType, content string) bool {
 				len(content) <= CategoryTitleMaxLength
 		case ContentTypeBody:
 			// Body not required
-			return len(content) <= CategoryBodyMaxLength
+			return len(content) <= CategoryDescriptionMaxLength
 		}
 
-	case NodeClassLang, NodeClassTag:
+	case NodeClassLang:
+		switch contentType {
+		case ContentTypeTitle:
+			// Title required
+			return len(content) > 0 &&
+				len(content) <= LangTitleMaxLength
+		case ContentTypeBody:
+			// Body not allowed
+			return len(content) == 0
+		}
+
+	case NodeClassTag:
 		switch contentType {
 		case ContentTypeTitle:
 			// Title required
@@ -48,10 +59,10 @@ func CheckContentLength(class, contentType, content string) bool {
 		case ContentTypeTitle:
 			// Title required
 			return len(content) > 0 &&
-				len(content) <= TagTitleMaxLength
+				len(content) <= TypeTitleMaxLength
 		case ContentTypeBody:
 			// Body not required
-			return len(content) <= CategoryBodyMaxLength
+			return len(content) <= TypeDescriptionMaxLength
 		}
 
 	case NodeClassPost:
@@ -62,18 +73,18 @@ func CheckContentLength(class, contentType, content string) bool {
 		case ContentTypeBody:
 			// Body required
 			return len(content) > 0 &&
-				len(content) <= PostBodyMaxLength
+				len(content) <= PostBlockMaxLength
 		}
 
 	case NodeClassComment:
 		switch contentType {
 		case ContentTypeTitle:
-			// Title not required
-			return len(content) <= PostTitleMaxLength
+			// Title not allowed
+			return len(content) == 0
 		case ContentTypeBody:
 			// Body required
 			return len(content) > 0 &&
-				len(content) <= PostBodyMaxLength
+				len(content) <= CommentMaxLength
 		}
 
 	}

@@ -27,15 +27,16 @@ func LoadNodeChildren(conn db.DBConn, auth *ajax.Auth, id uint, offset uint, que
 	rows, err := conn.Query(`SELECT
 			tn.id,
 			tn.node_class,
-			tnik.internal_key
+			tnmeta.internal_key
 		FROM
 			tree_node tn
 		LEFT JOIN
-			tree_node_internal_key tnik
+			tree_node_meta tnmeta
 		ON
-			tn.id = tnik.node_id
+			tn.id = tnmeta.node_id
 		WHERE
 			tn.parent_id = $1
+			AND tn.is_deleted = FALSE
 			`+limitToClassPart+`
 			`+excludeClassPart+`
 		ORDER BY tn.id

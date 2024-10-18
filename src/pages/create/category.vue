@@ -31,7 +31,7 @@
 					v-model="body"
 					type="textarea"
 					placeholder="Description"
-					:maxlength="bodyMaxLength"
+					:maxlength="descriptionMaxLength"
 					:autosize="{minRows: 2}"
 					show-word-limit
 					clearable
@@ -145,8 +145,8 @@ export default {
 		titleMaxLength() {
 			return this.$store.getters.categoryTitleMaxLength;
 		},
-		bodyMaxLength() {
-			return this.$store.getters.categoryBodyMaxLength;
+		descriptionMaxLength() {
+			return this.$store.getters.categoryDescriptionMaxLength;
 		},
 		maxDepthExceeded() {
 			return this.path.length >= this.$store.getters.treeMaxDepth;

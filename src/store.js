@@ -29,17 +29,26 @@ export const store = createStore({
 		categoryTitleMaxLength() {
 			return window.appConstants.categoryTitleMaxLength;
 		},
-		categoryBodyMaxLength() {
-			return window.appConstants.categoryBodyMaxLength;
+		categoryDescriptionMaxLength() {
+			return window.appConstants.categoryDescriptionMaxLength;
+		},
+		langTitleMaxLength() {
+			return window.appConstants.langTitleMaxLength;
 		},
 		tagTitleMaxLength() {
 			return window.appConstants.tagTitleMaxLength;
 		},
+		typeTitleMaxLength() {
+			return window.appConstants.typeTitleMaxLength;
+		},
+		typeDescriptionMaxLength() {
+			return window.appConstants.typeDescriptionMaxLength;
+		},
 		postTitleMaxLength() {
 			return window.appConstants.postTitleMaxLength;
 		},
-		postBodyMaxLength() {
-			return window.appConstants.postBodyMaxLength;
+		postBlockMaxLength() {
+			return window.appConstants.postBlockMaxLength;
 		},
 		loginLoaded(state) {
 			return state.user !== null;
