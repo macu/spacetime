@@ -29,7 +29,8 @@ func FindExistingNodes(db db.DBConn, auth *ajax.Auth, parentID *uint, class, que
 	var orderBy string
 	if parentID != nil {
 		args = append(args, *parentID)
-		orderBy = `(tree_node.parent_id = $3) DESC, ordered_ranks.max_rank DESC`
+		orderBy = `(tree_node.parent_id IS NOT NULL AND tree_node.parent_id = $4) DESC,
+			ordered_ranks.max_rank DESC`
 	} else {
 		orderBy = "ordered_ranks.max_rank DESC"
 	}
@@ -42,10 +43,10 @@ func FindExistingNodes(db db.DBConn, auth *ajax.Auth, parentID *uint, class, que
 			WHERE tree_node.node_class = $1
 			AND ts_rank(tree_node_content.text_search, to_tsquery('pg_catalog.simple', $2)) > 0
 		), ordered_ranks AS (
-		SELECT id,
-			rank,
+			SELECT id,
 			MAX(rank) AS max_rank
-		FROM content_ranks
+			FROM content_ranks
+			GROUP BY id
 		)
 		SELECT tree_node.id,
 			tree_node.node_class,

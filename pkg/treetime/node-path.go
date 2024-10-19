@@ -12,6 +12,7 @@ func LoadNodePath(db db.DBConn, auth *ajax.Auth, id uint, orderRootFirst bool) (
 			SELECT
 				tree_node.id,
 				tree_node.node_class,
+				tree_node.is_deleted,
 				tree_node_meta.internal_key,
 				tree_node.parent_id
 			FROM
