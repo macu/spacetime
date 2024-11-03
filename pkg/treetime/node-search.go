@@ -48,11 +48,8 @@ func FindExistingNodes(db db.DBConn, auth *ajax.Auth, parentID *uint, class, que
 			FROM content_ranks
 			GROUP BY id
 		)
-		SELECT tree_node.id,
-			tree_node.node_class,
-			tree_node_meta.internal_key
+		SELECT tree_node.id, tree_node.node_class
 		FROM tree_node
-		LEFT JOIN tree_node_meta ON tree_node.id = tree_node_meta.node_id
 		INNER JOIN ordered_ranks ON tree_node.id = ordered_ranks.id
 		WHERE tree_node.is_deleted = FALSE
 		ORDER BY `+orderBy+`
@@ -70,7 +67,7 @@ func FindExistingNodes(db db.DBConn, auth *ajax.Auth, parentID *uint, class, que
 
 	for rows.Next() {
 		var node NodeHeader
-		err = rows.Scan(&node.ID, &node.Class, &node.Key)
+		err = rows.Scan(&node.ID, &node.Class)
 		if err != nil {
 			return nil, fmt.Errorf("scanning node: %w", err)
 		}

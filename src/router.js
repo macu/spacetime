@@ -8,8 +8,9 @@ import LoginPage from './pages/user-account/login.vue';
 import SignupPage from './pages/user-account/signup.vue';
 import SignupVerifyPage from './pages/user-account/signup-verify.vue';
 
-import NodeView from './pages/node-view/index.vue';
-import CreateCategory from './pages/create/category.vue';
+import NodeView from './pages/nodes/view.vue';
+import CreateCategory from './pages/nodes/create-category.vue';
+import CreatePost from './pages/nodes/create-post.vue';
 
 export default createRouter({
 	history: createWebHistory(),
@@ -43,6 +44,11 @@ export default createRouter({
 			path: '/create/category',
 			name: 'create-category',
 			component: CreateCategory,
+		},
+		{
+			path: '/create/post',
+			name: 'create-post',
+			component: CreatePost,
 		},
 	],
 });

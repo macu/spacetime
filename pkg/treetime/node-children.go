@@ -24,16 +24,10 @@ func LoadNodeChildren(conn db.DBConn, auth *ajax.Auth, id uint, offset uint, que
 		excludeClassPart = "AND tn.node_class != " + db.Arg(&args, query.ExcludeClass)
 	}
 
-	rows, err := conn.Query(`SELECT
-			tn.id,
-			tn.node_class,
-			tnmeta.internal_key
+	rows, err := conn.Query(`SELECT tn.id, tn.node_class,
+		tn.owner_type, tn.created_by
 		FROM
 			tree_node tn
-		LEFT JOIN
-			tree_node_meta tnmeta
-		ON
-			tn.id = tnmeta.node_id
 		WHERE
 			tn.parent_id = $1
 			AND tn.is_deleted = FALSE
@@ -53,7 +47,8 @@ func LoadNodeChildren(conn db.DBConn, auth *ajax.Auth, id uint, offset uint, que
 
 	for rows.Next() {
 		var childHeader = &NodeHeader{}
-		err = rows.Scan(&childHeader.ID, &childHeader.Class, &childHeader.Key)
+		err = rows.Scan(&childHeader.ID, &childHeader.Class,
+			&childHeader.OwnerType, &childHeader.CreatedBy)
 		if err != nil {
 			return nil, fmt.Errorf("scanning node header: %w", err)
 		}

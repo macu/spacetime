@@ -1,7 +1,7 @@
 <template>
-<div class="signup-verify-page form-layout page-width-sm">
+<form-layout class="signup-verify-page page-width-sm">
 
-	<h2>Verify sign up</h2>
+	<template #title>Verify sign up</template>
 
 	<loading-message v-if="loading" message="Loading signup request..."/>
 
@@ -9,54 +9,49 @@
 
 		<p>Finish setting up your account below.</p>
 
-		<div class="field">
-			<label>Email address</label>
+		<form-field title="Email address" required>
 			<el-input v-model="signupRequest.email" type="email"
 				readonly autocomplete="username"/>
-		</div>
+		</form-field>
 
-		<div class="field">
-			<label>Handle (optional)</label>
+		<form-field title="Handle">
 			<p>This handle will make your user profile accessible via URL.</p>
 			<p>Format: letters A-Z, numbers, and underscores, with no spaces.</p>
 			<el-input v-model="handle" type="text"
 				:maxlength="25" show-word-limit
 				autocapitalize="none" autocomplete="off"/>
-		</div>
+		</form-field>
 
-		<div class="field">
-			<label>Display name (required)</label>
+		<form-field title="Display name" required>
+			<label></label>
 			<p>This name will be displayed on your user profile and posts you create.</p>
 			<el-input v-model="displayName" type="text"
 				:maxlength="50" show-word-limit
 				autocapitalize="none" autocomplete="off"/>
-		</div>
+		</form-field>
 
-		<div class="field">
-			<label>Password</label>
+		<form-field title="Password">
 			<p>Minimum length is {{$store.getters.passwordMinLength}} characters.</p>
 			<el-input v-model="password" type="password"
 				:maxlength="100" show-password
 				autocapitalize="none" autocomplete="new-password"/>
-		</div>
+		</form-field>
 
-		<div class="field">
-			<label>Verify password</label>
+		<form-field title="Verify password">
 			<el-input v-model="verifyPassword" type="password"
 				:maxlength="100" show-password
 				autocapitalize="none" autocomplete="new-password"/>
-		</div>
+		</form-field>
 
-		<div class="field">
-			<label>Message to admin (optional; say Hi!)</label>
+		<form-field title="Message to admin (optional; say Hi)">
 			<el-input type="textarea" :maxlength="200"
 				:autosize="{minRows: 2}" show-word-limit
 				autocapitalize="none" autocomplete="off"/>
-		</div>
+		</form-field>
 
-		<div class="flex-row-md">
+		<form-actions>
 			<el-button @click="create()" :disabled="createDisabled">Create account</el-button>
-		</div>
+		</form-actions>
 
 		<loading-message v-if="submitting" message="Creating account..."/>
 
@@ -67,7 +62,7 @@
 		<p>Please <router-link :to="{name: 'signup'}">register again</router-link>.</p>
 	</el-alert>
 
-</div>
+</form-layout>
 </template>
 
 <script>

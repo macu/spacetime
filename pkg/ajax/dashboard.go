@@ -10,9 +10,11 @@ import (
 	"treetime/pkg/utils/logging"
 )
 
+const treeTimeCategoryID = 1 // first category created in init script
+
 func AjaxDashboard(db *sql.DB, auth *ajax.Auth, w http.ResponseWriter, r *http.Request) (interface{}, int) {
 
-	var treetimeNode, err = treetime.LoadNodeHeaderByKey(db, auth, treetime.NodeKeyTreeTime)
+	var treetimeNode, err = treetime.LoadNodeHeaderByID(db, auth, treeTimeCategoryID)
 
 	if err != nil {
 		logging.LogError(r, auth, fmt.Errorf("loading category header by key: %w", err))

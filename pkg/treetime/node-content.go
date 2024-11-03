@@ -1,6 +1,7 @@
 package treetime
 
 import (
+	"encoding/json"
 	"fmt"
 	"regexp"
 	"strings"
@@ -10,105 +11,139 @@ import (
 )
 
 // remove newlines and replace all whitespace with a single space
-var titleReplaceWhitespaceRegex = regexp.MustCompile(`(?:[\n\r\t\v\f]|\s{2,})`)
+var sanitizeWhitespaceRegex = regexp.MustCompile(`\s+`)
 
-// process whitespace to allow 2 newlines, no tabs, and no leading/trailing whitespace
-var bodyExcludedWhitespaceRegex = regexp.MustCompile(`[\r\v\f]`)
-var bodyCondenseNewlineRegex = regexp.MustCompile(`(?:\s*[\n]\s*){2,}`)
-var bodyReplaceWhitespaceRegex = regexp.MustCompile(`(?:\t|[ ]{2,})`)
-var bodyStripHangingWhitespaceRegex = regexp.MustCompile(`(?:\n[ ]+|[ ]+\n)`)
+func FormatTitle(content *string) *string {
+	if content != nil {
+		newContent := sanitizeWhitespaceRegex.ReplaceAllString(strings.TrimSpace(*content), " ")
+		return &newContent
+	}
+	return content
+}
 
-func CheckContentLength(class, contentType, content string) bool {
+func FormatDescription(content *string) *string {
+	if content != nil {
+		newContent := strings.TrimSpace(*content)
+		return &newContent
+	}
+	return content
+}
+
+func SanitizeNodeContent(class string, content *NodeContent) {
 	switch class {
 
-	case NodeClassCategory:
-		switch contentType {
-		case ContentTypeTitle:
-			// Title required
-			return len(content) > 0 &&
-				len(content) <= CategoryTitleMaxLength
-		case ContentTypeBody:
-			// Body not required
-			return len(content) <= CategoryDescriptionMaxLength
-		}
-
-	case NodeClassLang:
-		switch contentType {
-		case ContentTypeTitle:
-			// Title required
-			return len(content) > 0 &&
-				len(content) <= LangTitleMaxLength
-		case ContentTypeBody:
-			// Body not allowed
-			return len(content) == 0
-		}
+	case NodeClassCategory, NodeClassType, NodeClassField:
+		content.Title = FormatTitle(content.Title)
+		content.Description = FormatDescription(content.Description)
+		content.Text = nil
+		content.Blocks = nil
 
 	case NodeClassTag:
-		switch contentType {
-		case ContentTypeTitle:
-			// Title required
-			return len(content) > 0 &&
-				len(content) <= TagTitleMaxLength
-		case ContentTypeBody:
-			// Body not allowed
-			return len(content) == 0
-		}
-
-	case NodeClassType, NodeClassField:
-		switch contentType {
-		case ContentTypeTitle:
-			// Title required
-			return len(content) > 0 &&
-				len(content) <= TypeTitleMaxLength
-		case ContentTypeBody:
-			// Body not required
-			return len(content) <= TypeDescriptionMaxLength
-		}
+		content.Title = FormatTitle(content.Title)
+		content.Description = nil
+		content.Text = nil
+		content.Blocks = nil
 
 	case NodeClassPost:
-		switch contentType {
-		case ContentTypeTitle:
-			// Title not required
-			return len(content) <= PostTitleMaxLength
-		case ContentTypeBody:
-			// Body required
-			return len(content) > 0 &&
-				len(content) <= PostBlockMaxLength
+		content.Title = FormatTitle(content.Title)
+		content.Description = nil
+		content.Text = nil
+		if content.Blocks != nil {
+			filteredBlocks := []NodePostBlock{}
+			for i := range *content.Blocks {
+				block := (*content.Blocks)[i]
+				if block.Type == NodePostBlockTypeText {
+					block.Text = FormatDescription(block.Text)
+					if block.Text != nil && *block.Text != "" {
+						filteredBlocks = append(filteredBlocks, block)
+					}
+				}
+			}
+			content.Blocks = &filteredBlocks
 		}
 
 	case NodeClassComment:
-		switch contentType {
-		case ContentTypeTitle:
-			// Title not allowed
-			return len(content) == 0
-		case ContentTypeBody:
-			// Body required
-			return len(content) > 0 &&
-				len(content) <= CommentMaxLength
+		content.Title = FormatTitle(content.Title)
+		content.Description = nil
+		content.Text = FormatDescription(content.Text)
+		content.Blocks = nil
+
+	}
+}
+
+func IsValidNodeContent(class string, content NodeContent) bool {
+	switch class {
+
+	case NodeClassCategory, NodeClassType, NodeClassField:
+		if content.Title == nil || *content.Title == "" {
+			return false
+		}
+		if content.Text != nil {
+			return false
+		}
+		if content.Blocks != nil {
+			return false
+		}
+
+	case NodeClassTag:
+		if content.Title == nil || *content.Title == "" {
+			return false
+		}
+		if content.Description != nil {
+			return false
+		}
+		if content.Text != nil {
+			return false
+		}
+		if content.Blocks != nil {
+			return false
+		}
+
+	case NodeClassPost:
+		if content.Title == nil || *content.Title == "" {
+			return false
+		}
+		if content.Description != nil {
+			return false
+		}
+		if content.Text != nil {
+			return false
+		}
+		if content.Blocks == nil || len(*content.Blocks) == 0 {
+			return false
+		}
+
+	case NodeClassComment:
+		if content.Text == nil || *content.Text == "" {
+			return false
+		}
+		if content.Description != nil {
+			return false
+		}
+		if content.Blocks != nil {
+			return false
+		}
+
+	case NodeClassLang:
+		if content.Title == nil || *content.Title == "" {
+			return false
+		}
+		if content.Description != nil {
+			return false
+		}
+		if content.Text != nil {
+			return false
+		}
+		if content.Blocks != nil {
+			return false
 		}
 
 	}
-	return false
+
+	return true
 }
 
-func FormatTitle(content string) string {
-	content = strings.TrimSpace(content)
-	return titleReplaceWhitespaceRegex.ReplaceAllString(content, " ")
-}
-
-func FormatBody(content string) string {
-	content = strings.TrimSpace(content)
-	content = bodyExcludedWhitespaceRegex.ReplaceAllString(content, "")
-	content = bodyCondenseNewlineRegex.ReplaceAllString(content, "\n\n")
-	content = bodyReplaceWhitespaceRegex.ReplaceAllString(content, " ")
-	return bodyStripHangingWhitespaceRegex.ReplaceAllString(content, "\n")
-}
-
-func LoadContentTypeForNodes(conn db.DBConn, auth *ajax.Auth, contentType string, headers []NodeHeader) error {
-
-	if !IsValidNodeContentType(contentType) {
-		return fmt.Errorf("invalid content type: %s", contentType)
-	}
+func LoadContentForNodes(conn db.DBConn, auth *ajax.Auth, headers []NodeHeader) error {
 
 	if len(headers) == 0 {
 		return nil
@@ -119,57 +154,38 @@ func LoadContentTypeForNodes(conn db.DBConn, auth *ajax.Auth, contentType string
 		nodeIDs = append(nodeIDs, header.ID)
 	}
 
-	var args = []interface{}{contentType}
+	var args = []interface{}{}
 
 	rows, err := conn.Query(`SELECT
-		tree_node_content.node_id, tree_node_content.text_content
+		tree_node_content.node_id, tree_node_content.content_json
 		FROM tree_node_content
-		WHERE `+db.In("tree_node_content.node_id", &args, nodeIDs)+`
-		AND tree_node_content.content_type = $1`,
+		WHERE `+db.In("tree_node_content.node_id", &args, nodeIDs),
 		args...,
 	)
 
 	if err != nil {
-		return fmt.Errorf("loading node titles: %w", err)
+		return fmt.Errorf("loading node content: %w", err)
 	}
 
 	defer rows.Close()
 
 	for rows.Next() {
 		var id uint
-		var content string
-		err = rows.Scan(&id, &content)
+		var jsonContent string
+		err = rows.Scan(&id, &jsonContent)
 		if err != nil {
-			return fmt.Errorf("scanning node title: %w", err)
+			return fmt.Errorf("scanning node content: %w", err)
 		}
 
 		for i := range headers {
 			if headers[i].ID == id {
-				switch contentType {
-				case ContentTypeTitle:
-					headers[i].Title = content
-				case ContentTypeBody:
-					headers[i].Body = content
+				err = json.Unmarshal([]byte(jsonContent), &headers[i].Content)
+				if err != nil {
+					return fmt.Errorf("unmarshalling node content: %w", err)
 				}
 				break
 			}
 		}
-	}
-
-	return nil
-
-}
-
-func LoadContentForNodes(conn db.DBConn, auth *ajax.Auth, headers []NodeHeader) error {
-
-	err := LoadContentTypeForNodes(conn, auth, ContentTypeTitle, headers)
-	if err != nil {
-		return err
-	}
-
-	err = LoadContentTypeForNodes(conn, auth, ContentTypeBody, headers)
-	if err != nil {
-		return err
 	}
 
 	return nil

@@ -2,6 +2,7 @@ package ajax
 
 import (
 	"database/sql"
+	"encoding/json"
 	"fmt"
 	"net/http"
 	"strings"
@@ -32,7 +33,7 @@ func AjaxLoadCreateNode(db *sql.DB, auth ajax.Auth, w http.ResponseWriter, r *ht
 		}
 	}
 
-	createAllowed, err := treetime.CheckCreateNodeAllowed(db, parentID, class)
+	createAllowed, err := treetime.IsValidNodeCreatePath(db, parentID, class)
 	if err != nil {
 		logging.LogError(r, &auth, fmt.Errorf("verifying create node allowed: %w", err))
 		return nil, http.StatusInternalServerError
@@ -82,22 +83,30 @@ func AjaxCreateNode(conn *sql.DB, auth ajax.Auth, w http.ResponseWriter, r *http
 		return nil, http.StatusBadRequest
 	}
 
+	langNodeID, err := types.AtoUintNilIfEmpty(r.FormValue("langNodeId"))
+	if err != nil {
+		return nil, http.StatusBadRequest
+	}
+
 	class := strings.TrimSpace(r.FormValue("class"))
 	if !treetime.IsValidNodeClass(class) {
 		return nil, http.StatusBadRequest
 	}
 
-	title := treetime.FormatTitle(r.FormValue("title"))
-	if !treetime.CheckContentLength(class, treetime.ContentTypeTitle, title) {
+	contentJSON := r.FormValue("content")
+	var content treetime.NodeContent
+	err = json.Unmarshal([]byte(contentJSON), &content)
+	if err != nil {
 		return nil, http.StatusBadRequest
 	}
 
-	body := treetime.FormatBody(r.FormValue("body"))
-	if !treetime.CheckContentLength(class, treetime.ContentTypeBody, body) {
+	treetime.SanitizeNodeContent(class, &content)
+
+	if !treetime.IsValidNodeContent(class, content) {
 		return nil, http.StatusBadRequest
 	}
 
-	node, err := treetime.CreateNode(conn, auth, parentID, class, title, body)
+	node, err := treetime.CreateNode(conn, auth, parentID, langNodeID, class, content)
 	if err != nil {
 		logging.LogError(r, &auth, fmt.Errorf("creating node: %w", err))
 		return nil, http.StatusInternalServerError

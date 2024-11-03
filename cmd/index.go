@@ -22,12 +22,14 @@ func indexHandler(db *sql.DB, user *ajax.Auth, w http.ResponseWriter, r *http.Re
 		TreeMaxDepth                 uint
 		CategoryTitleMaxLength       uint
 		CategoryDescriptionMaxLength uint
-		LangTitleMaxLength           uint
 		TagTitleMaxLength            uint
 		TypeTitleMaxLength           uint
 		TypeDescriptionMaxLength     uint
 		PostTitleMaxLength           uint
 		PostBlockMaxLength           uint
+		PostBlockCount               uint
+		PostURLMaxLength             uint
+		CommentMaxLength             uint
 	}{
 		env.IsLocal(),
 		env.GetCacheControlVersionStamp(),
@@ -35,11 +37,13 @@ func indexHandler(db *sql.DB, user *ajax.Auth, w http.ResponseWriter, r *http.Re
 		treetime.TreeMaxDepth,
 		treetime.CategoryTitleMaxLength,
 		treetime.CategoryDescriptionMaxLength,
-		treetime.LangTitleMaxLength,
 		treetime.TagTitleMaxLength,
 		treetime.TypeTitleMaxLength,
 		treetime.TypeDescriptionMaxLength,
 		treetime.PostTitleMaxLength,
 		treetime.PostBlockMaxLength,
+		treetime.PostBlockCount,
+		treetime.PostURLMaxLength,
+		treetime.CommentMaxLength,
 	})
 }

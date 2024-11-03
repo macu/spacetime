@@ -21,14 +21,18 @@ window.appConstants = {
 	appVersion: "{{.VersionStamp}}", // version stamp at load time
 	passwordMinLength: {{.PasswordMinLength}},
 	treeMaxDepth: {{.TreeMaxDepth}},
-	categoryTitleMaxLength: {{.CategoryTitleMaxLength}},
-	categoryDescriptionMaxLength: {{.CategoryDescriptionMaxLength}},
-	langTitleMaxLength: {{.LangTitleMaxLength}},
-	tagTitleMaxLength: {{.TagTitleMaxLength}},
-	typeTitleMaxLength: {{.TypeTitleMaxLength}},
-	typeDescriptionMaxLength: {{.TypeDescriptionMaxLength}},
-	postTitleMaxLength: {{.PostTitleMaxLength}},
-	postBlockMaxLength: {{.PostBlockMaxLength}},
+	maxLengths: {
+		categoryTitle: {{.CategoryTitleMaxLength}},
+		categoryDescription: {{.CategoryDescriptionMaxLength}},
+		tagTitle: {{.TagTitleMaxLength}},
+		typeTitle: {{.TypeTitleMaxLength}},
+		typeDescription: {{.TypeDescriptionMaxLength}},
+		postTitle: {{.PostTitleMaxLength}},
+		postBlock: {{.PostBlockMaxLength}},
+		postBlockCount: {{.PostBlockCount}},
+		postUrl: {{.PostURLMaxLength}},
+		commentBody: {{.CommentMaxLength}},
+	},
 };
 </script>
 

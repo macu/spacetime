@@ -3,9 +3,32 @@
 
 	<h2>Dashboard</h2>
 
+	<div class="flex-row">
+		<el-button @click="gotoCreateCategory()" type="primary">
+			<material-icon icon="add"/>
+			<span>Create category</span>
+		</el-button>
+		<el-button @click="gotoLanguages()">
+			<material-icon icon="language"/>
+			<span>Languages</span>
+		</el-button>
+		<el-button @click="gotoTypes()">
+			<material-icon icon="category"/>
+			<span>Types</span>
+		</el-button>
+		<el-button @click="gotoTags()">
+			<material-icon icon="label"/>
+			<span>Tags</span>
+		</el-button>
+	</div>
+
 	<loading-message v-if="loading"/>
 
-	<node-header v-else-if="treetimeNode" :node="treetimeNode" link-to/>
+	<template v-else>
+
+		<node-header v-if="treetimeNode" :node="treetimeNode" link-to/>
+
+	</template>
 
 </div>
 </template>
@@ -38,6 +61,15 @@ export default {
 			}).finally((error) => {
 				this.loading = false;
 			});
+		},
+		gotoCreateCategory() {
+			this.$router.push({name: 'create-category'});
+		},
+		gotoLanguages() {
+		},
+		gotoTypes() {
+		},
+		gotoTags() {
 		},
 	},
 };

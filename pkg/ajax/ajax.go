@@ -17,6 +17,8 @@ var ajaxHandlersAuthOptional = map[string]map[string]ajax.AjaxRouteAuthOptional{
 	http.MethodGet: {
 		"/ajax/load-login": auth.AjaxLoadLogin,
 
+		"/ajax/load-langs": AjaxLoadLangauges,
+
 		"/ajax/dashboard":     AjaxDashboard,
 		"/ajax/node/view":     AjaxLoadNodeViewPage,
 		"/ajax/node/children": AjaxLoadNodeChildren,

@@ -1,7 +1,7 @@
 <template>
 <div class="parent-path">
 
-	<div v-for="n in path" :key="n.id" class="flex-row-md nowrap">
+	<div v-for="n in pathWithTitles" :key="n.id" class="flex-row-md nowrap">
 
 		<node-icon :node="n"/>
 
@@ -17,6 +17,10 @@
 <script>
 import NodeIcon from '@/widgets/node-icon.vue';
 
+import {
+	NODE_CLASS,
+} from '@/const.js';
+
 export default {
 	components: {
 		NodeIcon,
@@ -25,6 +29,29 @@ export default {
 		path: {
 			type: Array,
 			required: true,
+		},
+	},
+	computed: {
+		pathWithTitles() {
+			return this.path.map(n => {
+				switch (n.class) {
+					case NODE_CLASS.LANG:
+					case NODE_CLASS.TAG:
+					case NODE_CLASS.CATEGORY:
+					case NODE_CLASS.TYPE:
+					case NODE_CLASS.FIELD:
+					case NODE_CLASS.POST:
+						return {
+							...n,
+							title: n.content.title,
+						};
+					case NODE_CLASS.COMMENT:
+						return {
+							...n,
+							title: n.content.text,
+						};
+				}
+			});
 		},
 	},
 };

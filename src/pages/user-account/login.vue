@@ -1,32 +1,30 @@
 <template>
-<div class="login-page form-layout page-width-sm">
+<form-layout class="login-page page-width-sm">
 
-	<h2>Log in</h2>
+	<template #title>Log in</template>
 
-	<div class="field">
-		<label>Email address</label>
+	<form-field title="Email address">
 		<el-input v-model="email" type="email" :maxlength="50"
 			autocapitalize="none" autocomplete="username"
 			@keyup.enter.native="login()"
 			/>
-	</div>
+	</form-field>
 
-	<div class="field">
-		<label>Password</label>
+	<form-field title="Password">
 		<el-input v-model="password" type="password" :maxlength="100"
 			autocapitalize="none" autocomplete="current-password"
 			@keyup.enter.native="login()"
 			/>
-	</div>
+	</form-field>
 
-	<div class="flex-row-md">
+	<form-actions>
 		<el-button @click="login()" :disabled="loginDisabled">Log in</el-button>
 		<router-link :to="{name: 'signup'}">Register</router-link>
-	</div>
+	</form-actions>
 
 	<loading-message v-if="loading" message="Logging in..."/>
 
-</div>
+</form-layout>
 </template>
 
 <script>

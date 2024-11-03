@@ -11,6 +11,62 @@ html, body {
 	white-space: pre-wrap;
 }
 
+div.center {
+	display: flex;
+	justify-content: center;
+	align-items: center;
+}
+
+.el-button>span,
+.el-tag>.el-tag__content,
+.el-dropdown-menu>.el-dropdown-menu__item,
+.el-menu.el-menu--horizontal>.el-menu-item,
+.el-menu--horizontal>.el-menu>.el-menu-item,
+.el-sub-menu>.el-sub-menu__title {
+	// add spacing for material icons
+	display: flex;
+	flex-direction: row;
+	align-items: center;
+	column-gap: 10px;
+	>.material-icons {
+		font-size: larger;
+	}
+}
+
+.el-checkbox>.el-checkbox__label, .el-radio>.el-radio__label {
+	white-space: normal;
+	word-break: normal;
+	overflow-wrap: anywhere;
+}
+
+.el-alert {
+	>.el-alert__content {
+		width: 100%;
+		padding-top: 10px;
+		padding-bottom: 10px;
+		>.el-alert__title+.el-alert__description {
+			margin-top: 10px;
+		}
+		>.el-alert__description {
+			display: flex;
+			flex-direction: column;
+			row-gap: 10px;
+			align-items: flex-start;
+			white-space: normal;
+			word-break: normal;
+			>* {
+				margin: 0;
+			}
+			&:empty {
+				display: none;
+			}
+		}
+		>.el-alert__description:first-child {
+			margin: 0;
+		}
+	}
+}
+
 .spin {
 	animation-name: spin;
 	animation-duration: 2000ms;

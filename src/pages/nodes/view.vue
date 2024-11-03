@@ -15,16 +15,16 @@
 				Category
 			</template>
 			<template v-else-if="node.class === NODE_CLASS.LANG">
-				Language tag
+				Language
 			</template>
 			<template v-else-if="node.class === NODE_CLASS.TAG">
 				Tag
 			</template>
 			<template v-else-if="node.class === NODE_CLASS.TYPE">
-				Type tag
+				Type
 			</template>
 			<template v-else-if="node.class === NODE_CLASS.FIELD">
-				Field tag
+				Field
 			</template>
 			<template v-else-if="node.class === NODE_CLASS.POST">
 				Post
@@ -37,13 +37,41 @@
 			</template>
 		</h2>
 
-		<node-header :node="node"/>
+		<node-header :node="node" show-all/>
 
-		<component
-			v-if="bodyClass"
-			:is="bodyClass"
-			:node="node"
-			:depth="depth"
+		<horizontal-controls>
+			<el-dropdown @command="gotoCreate" placement="bottom-start">
+				<el-button type="primary">
+					<span>Add subcontent</span>
+					<material-icon icon="arrow_drop_down"/>
+				</el-button>
+				<template #dropdown>
+					<el-dropdown-menu>
+						<el-dropdown-item command="create-category">
+							<material-icon icon="folder"/>
+							<span>Category</span>
+						</el-dropdown-item>
+						<el-dropdown-item command="create-post">
+							<material-icon icon="description"/>
+							<span>Post</span>
+						</el-dropdown-item>
+					</el-dropdown-menu>
+				</template>
+			</el-dropdown>
+		</horizontal-controls>
+
+		<loading-message v-if="loadingChildren"/>
+
+		<node-list
+			v-else-if="children.length"
+			:nodes="children"
+			:parent-id="node.id"
+			/>
+
+		<el-alert v-else
+			title="No subcontent currently exists."
+			type="info"
+			:closable="false"
 			/>
 
 	</template>
@@ -59,18 +87,7 @@
 <script>
 import ParentPath from '@/widgets/parent-path.vue';
 import NodeHeader from '@/widgets/node-header.vue';
-
-// Body classes
-import Category from './category.vue';
-import Lang from './lang.vue';
-import LangCategory from './lang-category.vue';
-import Tag from './tag.vue';
-import TagCategory from './tag-category.vue';
-import Type from './type.vue';
-import TypeCategory from './type-category.vue';
-import Field from './field.vue';
-import Post from './post.vue';
-import Comment from './comment.vue';
+import NodeList from '@/widgets/node-list.vue';
 
 import {
 	ajaxGet,
@@ -89,12 +106,16 @@ export default {
 	components: {
 		ParentPath,
 		NodeHeader,
+		NodeList,
 	},
 	data() {
 		return {
 			loadingNode: true,
 			node: null,
 			path: [],
+
+			loadingChildren: true,
+			children: [],
 		};
 	},
 	computed: {
@@ -106,36 +127,6 @@ export default {
 		},
 		keyScope() {
 			return getPathKeyScope([...(this.path || []), this.node]);
-		},
-		bodyClass() {
-			switch (this.node.class) {
-				case NODE_CLASS.CATEGORY:
-					if (this.keyScope === SYSTEM_NODE_KEYS.LANGS) {
-						return LangCategory;
-					} else if (this.keyScope === SYSTEM_NODE_KEYS.TAGS) {
-						return TagCategory;
-					} else if (this.keyScope === SYSTEM_NODE_KEYS.TYPES) {
-						if (this.node.class === NODE_CLASS.TYPE) {
-							return Type;
-						} else {
-							return TypeCategory;
-						}
-					}
-					return Category;
-				case NODE_CLASS.LANG:
-					return Lang;
-				case NODE_CLASS.TAG:
-					return Tag;
-				case NODE_CLASS.TYPE:
-					return Type;
-				case NODE_CLASS.FIELD:
-					return Field;
-				case NODE_CLASS.POST:
-					return Post;
-				case NODE_CLASS.COMMENT:
-					return Comment;
-			}
-			return null;
 		},
 		depth() {
 			return this.path.length + 1;
@@ -150,6 +141,7 @@ export default {
 		this.loadingNode = true;
 		this.node = null;
 		this.path = [];
+		this.children = [];
 
 		next();
 
@@ -163,8 +155,30 @@ export default {
 			}).then(response => {
 				this.node = response.node;
 				this.path = response.path;
+				this.loadChildren();
 			}).finally(() => {
 				this.loadingNode = false;
+			});
+		},
+		loadChildren() {
+			if (!this.node) {
+				return;
+			}
+			this.loadingChildren = true;
+			ajaxGet('/ajax/node/children', {
+				id: this.node.id,
+			}).then(response => {
+				this.children = response.nodes;
+			}).finally(() => {
+				this.loadingChildren = false;
+			});
+		},
+		gotoCreate(routeName) {
+			this.$router.push({
+				name: routeName,
+				query: {
+					parentId: this.node.id,
+				},
 			});
 		},
 	},

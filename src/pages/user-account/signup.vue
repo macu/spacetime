@@ -1,7 +1,7 @@
 <template>
-<div class="signup-page form-layout page-width-sm">
+<form-layout class="signup-page page-width-sm">
 
-	<h2>Sign up</h2>
+	<template #title>Sign up</template>
 
 	<template v-if="submitted">
 
@@ -13,23 +13,22 @@
 
 		<p>Please provide a valid email address to create your account.</p>
 
-		<div class="field">
-			<label>Email address</label>
+		<form-field title="Email address">
 			<el-input v-model="email" type="email"
 				:maxlength="50" show-word-limit
 				autocapitalize="none" autocomplete="email"/>
-		</div>
+		</form-field>
 
-		<div class="flex-row-md">
+		<form-actions>
 			<el-button @click="register()" :disabled="registerDisabled">Register</el-button>
 			<router-link :to="{name: 'login'}">Log in</router-link>
-		</div>
+		</form-actions>
 
 		<loading-message v-if="loading" message="Submitting..."/>
 
 	</template>
 
-</div>
+</form-layout>
 </template>
 
 <script>

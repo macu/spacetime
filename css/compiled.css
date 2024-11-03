@@ -14,6 +14,64 @@ html, body {
   white-space: pre-wrap;
 }
 
+div.center {
+  display: flex;
+  justify-content: center;
+  align-items: center;
+}
+
+.el-button > span,
+.el-tag > .el-tag__content,
+.el-dropdown-menu > .el-dropdown-menu__item,
+.el-menu.el-menu--horizontal > .el-menu-item,
+.el-menu--horizontal > .el-menu > .el-menu-item,
+.el-sub-menu > .el-sub-menu__title {
+  display: flex;
+  flex-direction: row;
+  align-items: center;
+  column-gap: 10px;
+}
+.el-button > span > .material-icons,
+.el-tag > .el-tag__content > .material-icons,
+.el-dropdown-menu > .el-dropdown-menu__item > .material-icons,
+.el-menu.el-menu--horizontal > .el-menu-item > .material-icons,
+.el-menu--horizontal > .el-menu > .el-menu-item > .material-icons,
+.el-sub-menu > .el-sub-menu__title > .material-icons {
+  font-size: larger;
+}
+
+.el-checkbox > .el-checkbox__label, .el-radio > .el-radio__label {
+  white-space: normal;
+  word-break: normal;
+  overflow-wrap: anywhere;
+}
+
+.el-alert > .el-alert__content {
+  width: 100%;
+  padding-top: 10px;
+  padding-bottom: 10px;
+}
+.el-alert > .el-alert__content > .el-alert__title + .el-alert__description {
+  margin-top: 10px;
+}
+.el-alert > .el-alert__content > .el-alert__description {
+  display: flex;
+  flex-direction: column;
+  row-gap: 10px;
+  align-items: flex-start;
+  white-space: normal;
+  word-break: normal;
+}
+.el-alert > .el-alert__content > .el-alert__description > * {
+  margin: 0;
+}
+.el-alert > .el-alert__content > .el-alert__description:empty {
+  display: none;
+}
+.el-alert > .el-alert__content > .el-alert__description:first-child {
+  margin: 0;
+}
+
 .spin {
   animation-name: spin;
   animation-duration: 2000ms;
@@ -66,17 +124,22 @@ html, body {
 }
 
 .flex-column, .flex-column-md, .flex-column-lg, .flex-column-xl,
-.form-layout, .field {
+.el-drawer.flex-column-drawer > .el-drawer__body {
   display: flex;
   flex-direction: column;
   align-items: stretch;
 }
-.flex-column > *, .flex-column-md > *, .flex-column-lg > *, .flex-column-xl > *,
-.form-layout > *, .field > * {
+.flex-column.flex-align-end, .flex-column-md.flex-align-end, .flex-column-lg.flex-align-end, .flex-column-xl.flex-align-end,
+.el-drawer.flex-column-drawer > .el-drawer__body.flex-align-end {
+  align-items: flex-end;
+}
+.flex-column > *, .flex-column > .el-button + .el-button, .flex-column-md > *, .flex-column-md > .el-button + .el-button, .flex-column-lg > *, .flex-column-lg > .el-button + .el-button, .flex-column-xl > *, .flex-column-xl > .el-button + .el-button,
+.el-drawer.flex-column-drawer > .el-drawer__body > *,
+.el-drawer.flex-column-drawer > .el-drawer__body > .el-button + .el-button {
   margin: 0;
 }
 
-.flex-column, .field {
+.flex-column {
   row-gap: 10px;
 }
 
@@ -84,27 +147,13 @@ html, body {
   row-gap: 20px;
 }
 
-.flex-column-lg, .form-layout {
+.flex-column-lg,
+.el-drawer.flex-column-drawer > .el-drawer__body {
   row-gap: 40px;
 }
 
 .flex-column-xl {
   row-gap: 60px;
-}
-
-.form-layout > .field {
-  align-items: flex-start;
-}
-.form-layout > .field > label:first-child:not([class]) {
-  align-items: flex-start;
-  display: block;
-  font-weight: bold;
-}
-.form-layout > .field > .value {
-  font-size: larger;
-}
-.form-layout > .field > .el-input, .form-layout > .field > .el-select {
-  width: 100%;
 }
 
 .page-width-sm {
@@ -176,6 +225,13 @@ html, body {
   border-bottom-left-radius: 10px;
   border-bottom-right-radius: 10px;
 }
+/*!*********************************************************************************************************************************************************************************************************************************************************************************************************************************************!*\
+  !*** css ./node_modules/css-loader/dist/cjs.js??clonedRuleSet-2.use[1]!./node_modules/vue-loader/dist/stylePostLoader.js!./node_modules/sass-loader/dist/cjs.js??clonedRuleSet-2.use[2]!./node_modules/vue-loader/dist/index.js??ruleSet[1].rules[5].use[0]!./src/pages/nodes/create-post.vue?vue&type=style&index=0&id=7d7a5d1f&lang=scss ***!
+  \*********************************************************************************************************************************************************************************************************************************************************************************************************************************************/
+.post-edit-page .edit-post-block {
+  padding: 10px;
+  background-color: white;
+}
 /*!*******************************************************************************************************************************************************************************************************************************************************************************************************************************************!*\
   !*** css ./node_modules/css-loader/dist/cjs.js??clonedRuleSet-2.use[1]!./node_modules/vue-loader/dist/stylePostLoader.js!./node_modules/sass-loader/dist/cjs.js??clonedRuleSet-2.use[2]!./node_modules/vue-loader/dist/index.js??ruleSet[1].rules[5].use[0]!./src/widgets/material-icon.vue?vue&type=style&index=0&id=55e49714&lang=scss ***!
   \*******************************************************************************************************************************************************************************************************************************************************************************************************************************************/
@@ -200,4 +256,18 @@ html, body {
 }
 .loading-message.right {
   justify-content: flex-end;
+}
+/*!****************************************************************************************************************************************************************************************************************************************************************************************************************************************!*\
+  !*** css ./node_modules/css-loader/dist/cjs.js??clonedRuleSet-2.use[1]!./node_modules/vue-loader/dist/stylePostLoader.js!./node_modules/sass-loader/dist/cjs.js??clonedRuleSet-2.use[2]!./node_modules/vue-loader/dist/index.js??ruleSet[1].rules[5].use[0]!./src/widgets/form-field.vue?vue&type=style&index=0&id=09e9792a&lang=scss ***!
+  \****************************************************************************************************************************************************************************************************************************************************************************************************************************************/
+.form-layout-form-field > h3 {
+  font-weight: bold;
+}
+.form-layout-form-field > .form-field-body {
+  padding: 20px;
+  background-color: #eee;
+  border-radius: 8px;
+}
+.form-layout-form-field > .form-field-body > .form-value {
+  font-size: larger;
 }

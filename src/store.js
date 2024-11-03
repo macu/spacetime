@@ -13,6 +13,7 @@ export const store = createStore({
 	state() {
 		return {
 			user: null, // null means indeterminate
+			langs: [],
 			windowWidth: window.innerWidth,
 		};
 	},
@@ -26,29 +27,8 @@ export const store = createStore({
 		treeMaxDepth() {
 			return window.appConstants.treeMaxDepth;
 		},
-		categoryTitleMaxLength() {
-			return window.appConstants.categoryTitleMaxLength;
-		},
-		categoryDescriptionMaxLength() {
-			return window.appConstants.categoryDescriptionMaxLength;
-		},
-		langTitleMaxLength() {
-			return window.appConstants.langTitleMaxLength;
-		},
-		tagTitleMaxLength() {
-			return window.appConstants.tagTitleMaxLength;
-		},
-		typeTitleMaxLength() {
-			return window.appConstants.typeTitleMaxLength;
-		},
-		typeDescriptionMaxLength() {
-			return window.appConstants.typeDescriptionMaxLength;
-		},
-		postTitleMaxLength() {
-			return window.appConstants.postTitleMaxLength;
-		},
-		postBlockMaxLength() {
-			return window.appConstants.postBlockMaxLength;
+		maxLengths() {
+			return window.appConstants.maxLengths;
 		},
 		loginLoaded(state) {
 			return state.user !== null;
@@ -103,6 +83,11 @@ export const store = createStore({
 		logout(context) {
 			return ajaxPost('/ajax/logout').then(() => {
 				context.commit('setUser', false);
+			});
+		},
+		loadLangs(context) {
+			return ajaxGet('/ajax/load-langs').then(langs => {
+				context.state.langs = langs;
 			});
 		},
 	},

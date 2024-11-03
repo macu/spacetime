@@ -16,17 +16,8 @@ export default {
 	},
 	computed: {
 		icon() {
-			if (this.node.key) {
-				switch (this.node.key) {
-					case 'treetime':
-						return 'park';
-					case 'langs':
-						return 'language';
-					case 'types':
-						return 'category';
-					case 'tags':
-						return 'label';
-				}
+			if (this.node.id === 1) {
+				return 'park'; // TreeTime info category
 			}
 			switch (this.node.class) {
 				case NODE_CLASS.TAG:

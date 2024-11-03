@@ -5,6 +5,35 @@ import (
 	"treetime/pkg/utils/db"
 )
 
+func IsValidNodeCreatePath(db db.DBConn, parentID *uint, createClass string) (bool, error) {
+
+	switch createClass {
+
+	case NodeClassLang:
+		// Language nodes cannot be created by the user
+		return false, nil
+
+	case NodeClassCategory, NodeClassTag, NodeClassType, NodeClassPost, NodeClassComment:
+		// Can be created anywhere
+		return true, nil
+
+	case NodeClassField:
+		// Fields can only be created under types
+		if parentID == nil {
+			return false, nil
+		}
+		parentClass, err := LoadNodeClass(db, *parentID)
+		if err != nil {
+			return false, err
+		}
+		return parentClass == NodeClassType, nil
+
+	}
+
+	return false, nil
+
+}
+
 func LoadNodePath(db db.DBConn, auth *ajax.Auth, id uint, orderRootFirst bool) ([]NodeHeader, error) {
 	var path = make([]NodeHeader, 0)
 
@@ -13,14 +42,11 @@ func LoadNodePath(db db.DBConn, auth *ajax.Auth, id uint, orderRootFirst bool) (
 				tree_node.id,
 				tree_node.node_class,
 				tree_node.is_deleted,
-				tree_node_meta.internal_key,
-				tree_node.parent_id
+				tree_node.parent_id,
+				tree_node.owner_type,
+				tree_node.created_by
 			FROM
 				tree_node
-			LEFT JOIN
-				tree_node_meta
-			ON
-				tree_node.id = tree_node_meta.node_id
 			WHERE
 				tree_node.id = $1 -- Starting node ID
 
@@ -30,14 +56,11 @@ func LoadNodePath(db db.DBConn, auth *ajax.Auth, id uint, orderRootFirst bool) (
 				tn.id,
 				tn.node_class,
 				tn.is_deleted,
-				tnmeta.internal_key,
-				tn.parent_id
+				tn.parent_id,
+				tn.owner_type,
+				tn.created_by
 			FROM
 				tree_node tn
-			LEFT JOIN
-				tree_node_meta tnmeta
-			ON
-				tn.id = tnmeta.node_id
 			INNER JOIN
 				node_path pn
 			ON
@@ -47,7 +70,8 @@ func LoadNodePath(db db.DBConn, auth *ajax.Auth, id uint, orderRootFirst bool) (
 			id,
 			node_class,
 			is_deleted,
-			internal_key
+			owner_type,
+			created_by
 		FROM
 			node_path`,
 		id,
@@ -61,7 +85,8 @@ func LoadNodePath(db db.DBConn, auth *ajax.Auth, id uint, orderRootFirst bool) (
 
 	for rows.Next() {
 		var node = NodeHeader{}
-		err = rows.Scan(&node.ID, &node.Class, &node.IsDeleted, &node.Key)
+		err = rows.Scan(&node.ID, &node.Class,
+			&node.IsDeleted, &node.OwnerType, &node.CreatedBy)
 		if err != nil {
 			return nil, err
 		}
@@ -92,14 +117,11 @@ func LoadNodeParentPath(db db.DBConn, auth *ajax.Auth, id uint, orderRootFirst b
 				tree_node.id,
 				tree_node.node_class,
 				tree_node.is_deleted,
-				tree_node_meta.internal_key,
-				tree_node.parent_id
+				tree_node.parent_id,
+				tree_node.owner_type,
+				tree_node.created_by
 			FROM
 				tree_node
-			LEFT JOIN
-				tree_node_meta
-			ON
-				tree_node.id = tree_node_meta.node_id
 			WHERE
 				tree_node.id = $1 -- Starting node ID
 
@@ -109,14 +131,11 @@ func LoadNodeParentPath(db db.DBConn, auth *ajax.Auth, id uint, orderRootFirst b
 				tn.id,
 				tn.node_class,
 				tn.is_deleted,
-				tnmeta.internal_key,
-				tn.parent_id
+				tn.parent_id,
+				tn.owner_type,
+				tn.created_by
 			FROM
 				tree_node tn
-			LEFT JOIN
-				tree_node_meta tnmeta
-			ON
-				tn.id = tnmeta.node_id
 			INNER JOIN
 				parent_nodes pn
 			ON
@@ -126,7 +145,8 @@ func LoadNodeParentPath(db db.DBConn, auth *ajax.Auth, id uint, orderRootFirst b
 			id,
 			node_class,
 			is_deleted,
-			internal_key
+			owner_type,
+			created_by
 		FROM
 			parent_nodes
 		WHERE
@@ -142,7 +162,8 @@ func LoadNodeParentPath(db db.DBConn, auth *ajax.Auth, id uint, orderRootFirst b
 
 	for rows.Next() {
 		var node = NodeHeader{}
-		err = rows.Scan(&node.ID, &node.Class, &node.IsDeleted, &node.Key)
+		err = rows.Scan(&node.ID, &node.Class,
+			&node.IsDeleted, &node.OwnerType, &node.CreatedBy)
 		if err != nil {
 			return nil, err
 		}

@@ -1,13 +1,10 @@
 -- Clean up previous instance
 
 DROP TRIGGER IF EXISTS on_user_account_insert ON user_account;
-DROP TRIGGER IF EXISTS tree_node_content_tsvector_update ON tree_node_content;
 
 DROP FUNCTION IF EXISTS delete_user_content;
 DROP FUNCTION IF EXISTS set_first_user_to_admin;
 DROP FUNCTION IF EXISTS init_db_content;
-DROP FUNCTION IF EXISTS update_text_search;
-DROP FUNCTION IF EXISTS extract_text_from_json;
 
 DROP INDEX IF EXISTS user_account_handle_idx;
 DROP INDEX IF EXISTS user_account_email_idx;
@@ -17,30 +14,22 @@ DROP INDEX IF EXISTS tree_node_tag_vote_user_idx;
 DROP INDEX IF EXISTS tree_node_content_vote_idx;
 DROP INDEX IF EXISTS tree_node_content_vote_user_idx;
 DROP INDEX IF EXISTS tree_node_content_idx;
-DROP INDEX IF EXISTS tree_node_content_tag_vote_idx;
-DROP INDEX IF EXISTS tree_node_content_tag_class_idx;
-DROP INDEX IF EXISTS tree_node_content_tag_vote_user_idx;
 DROP INDEX IF EXISTS tree_node_vote_idx;
 DROP INDEX IF EXISTS tree_node_vote_user_idx;
 DROP INDEX IF EXISTS tree_node_parent_idx;
 DROP INDEX IF EXISTS tree_node_class_idx;
 DROP INDEX IF EXISTS tree_node_lang_code_node_idx;
 DROP INDEX IF EXISTS tree_node_lang_code_idx;
-DROP INDEX IF EXISTS tree_node_meta_idx;
-DROP INDEX IF EXISTS tree_node_meta_node_idx;
 DROP INDEX IF EXISTS tree_node_owner_ordering_idx;
 DROP INDEX IF EXISTS tree_node_merge_vote_idx;
 DROP INDEX IF EXISTS tree_node_merge_vote_user_idx;
 DROP INDEX IF EXISTS tree_node_content_search_idx;
-DROP INDEX IF EXISTS tree_node_content_search_composite_idx;
 
 DROP TABLE IF EXISTS tree_node_tag_vote;
-DROP TABLE IF EXISTS tree_node_content_tag_vote;
 DROP TABLE IF EXISTS tree_node_content_vote;
 DROP TABLE IF EXISTS tree_node_content;
 DROP TABLE IF EXISTS tree_node_vote;
 DROP TABLE IF EXISTS tree_node_lang_code;
-DROP TABLE IF EXISTS tree_node_meta;
 DROP TABLE IF EXISTS tree_node_owner_ordering;
 DROP TABLE IF EXISTS tree_node_merge_vote;
 DROP TABLE IF EXISTS tree_node;
@@ -54,8 +43,6 @@ DROP TYPE IF EXISTS user_role_type;
 DROP TYPE IF EXISTS tree_node_class;
 DROP TYPE IF EXISTS owner_type;
 DROP TYPE IF EXISTS vote_type;
-DROP TYPE IF EXISTS tree_node_content_type;
-DROP TYPE IF EXISTS tree_node_body_type;
 
 DROP COLLATION IF EXISTS case_insensitive;
 
@@ -146,24 +133,14 @@ CREATE TABLE tree_node (
 	id SERIAL PRIMARY KEY,
 	parent_id INTEGER REFERENCES tree_node (id) ON DELETE CASCADE, -- allow null for root
 	node_class tree_node_class NOT NULL,
-	owned_by owner_type NOT NULL DEFAULT 'public',
+	owner_type owner_type NOT NULL DEFAULT 'public',
 	is_deleted BOOLEAN NOT NULL DEFAULT FALSE,
 	created_at TIMESTAMPTZ NOT NULL,
 	created_by INTEGER REFERENCES user_account (id) ON DELETE SET NULL
 );
 
-CREATE INDEX tree_node_parent_idx ON tree_node (parent_id, is_deleted, owned_by);
+CREATE INDEX tree_node_parent_idx ON tree_node (parent_id, is_deleted, owner_type);
 CREATE INDEX tree_node_class_idx ON tree_node (parent_id, is_deleted, node_class);
-
--- create table for associating internal keys with specific system nodes
-CREATE TABLE tree_node_meta (
-	id SERIAL PRIMARY KEY,
-	node_id INTEGER NOT NULL REFERENCES tree_node (id) ON DELETE CASCADE,
-	internal_key VARCHAR(10) NOT NULL
-);
-
-CREATE UNIQUE INDEX tree_node_meta_node_idx ON tree_node_meta (node_id);
-CREATE UNIQUE INDEX tree_node_meta_idx ON tree_node_meta (internal_key);
 
 -- create table for ordering user-owned nodes
 CREATE TABLE tree_node_owner_ordering (
@@ -197,63 +174,18 @@ CREATE TABLE tree_node_vote (
 CREATE INDEX tree_node_vote_idx ON tree_node_vote (parent_id, node_id, vote);
 CREATE UNIQUE INDEX tree_node_vote_user_idx ON tree_node_vote (created_by, parent_id, node_id);
 
--- create table for node title/body content
-CREATE TYPE tree_node_content_type AS ENUM (
-	'title', -- categories, tags, types, fields, langs, posts
-	'description', -- categories
-	'comment-body', -- comments
-	'post-json' -- block on posts
-);
 CREATE TABLE tree_node_content (
 	id SERIAL PRIMARY KEY,
 	node_id INTEGER NOT NULL REFERENCES tree_node (id) ON DELETE CASCADE,
-	content_type tree_node_content_type NOT NULL,
-	text_content TEXT NOT NULL COLLATE case_insensitive,
+	lang_node_id INTEGER REFERENCES tree_node (id) ON DELETE SET NULL,
+	content_json JSONB NOT NULL,
 	text_search TSVECTOR, -- for searching text_content
 	created_at TIMESTAMPTZ NOT NULL,
 	created_by INTEGER REFERENCES user_account (id) ON DELETE SET NULL
 );
 
-CREATE UNIQUE INDEX tree_node_content_idx ON tree_node_content (node_id, content_type, text_content);
+CREATE INDEX tree_node_content_idx ON tree_node_content (node_id, lang_node_id);
 CREATE INDEX tree_node_content_search_idx ON tree_node_content USING GIN (text_search);
-CREATE INDEX tree_node_content_search_composite_idx ON tree_node_content (content_type, text_search);
-
--- write functions to update tsvector on insert/update
-CREATE OR REPLACE FUNCTION extract_text_from_json(json_data JSONB) RETURNS TEXT AS $$
-DECLARE
-	extracted_text TEXT;
-BEGIN
-	-- Extract text from the JSON body.
-	SELECT string_agg(value, ' ') INTO extracted_text
-	FROM jsonb_each_text(json_data)
-	WHERE key IN ('text');
-
-	RETURN extracted_text;
-END;
-$$ LANGUAGE plpgsql;
-
-CREATE OR REPLACE FUNCTION update_text_search() RETURNS TRIGGER AS $$
-DECLARE
-	text_to_index TEXT;
-BEGIN
-	IF NEW.content_type = 'post-json' THEN
-		text_to_index := extract_text_from_json(NEW.text_content::JSONB);
-	ELSE
-		text_to_index := NEW.text_content;
-	END IF;
-
-	IF text_to_index IS NULL OR text_to_index = '' THEN
-		NEW.text_search := NULL;
-	ELSE
-		NEW.text_search := to_tsvector('pg_catalog.simple', text_to_index);
-	END IF;
-
-	RETURN NEW;
-END;
-$$ LANGUAGE plpgsql;
-
-CREATE TRIGGER tree_node_content_tsvector_update BEFORE INSERT OR UPDATE
-ON tree_node_content FOR EACH ROW EXECUTE FUNCTION update_text_search();
 
 -- create table for voting on node title/body content
 CREATE TABLE tree_node_content_vote (
@@ -282,21 +214,6 @@ CREATE TABLE tree_node_tag_vote (
 CREATE INDEX tree_node_tag_vote_idx ON tree_node_tag_vote (node_id, tag_node_id, vote);
 CREATE INDEX tree_node_tag_class_idx ON tree_node_tag_vote (node_id, tag_class, tag_node_id, vote);
 CREATE UNIQUE INDEX tree_node_tag_vote_user_idx ON tree_node_tag_vote (created_by, node_id, tag_node_id);
-
--- create table for tagging node content
-CREATE TABLE tree_node_content_tag_vote (
-	id SERIAL PRIMARY KEY,
-	content_id INTEGER NOT NULL REFERENCES tree_node_content (id) ON DELETE CASCADE,
-	tag_node_id INTEGER NOT NULL REFERENCES tree_node (id) ON DELETE CASCADE,
-	tag_class tree_node_class NOT NULL,
-	vote vote_type NOT NULL,
-	created_at TIMESTAMPTZ NOT NULL,
-	created_by INTEGER NOT NULL REFERENCES user_account (id) ON DELETE CASCADE
-);
-
-CREATE INDEX tree_node_content_tag_vote_idx ON tree_node_content_tag_vote (content_id, tag_node_id, vote);
-CREATE INDEX tree_node_content_tag_class_idx ON tree_node_content_tag_vote (content_id, tag_class, tag_node_id, vote);
-CREATE INDEX tree_node_content_tag_vote_user_idx ON tree_node_content_tag_vote (created_by, content_id, tag_node_id);
 
 -- create table for soft merging nodes
 CREATE TABLE tree_node_merge_vote (
@@ -342,11 +259,8 @@ RETURNS VOID
 LANGUAGE PLPGSQL
 AS $$
 DECLARE
-	root_node_id INTEGER;
-	langs_node_id INTEGER;
+	treetime_node_id INTEGER;
 	lang_en_node_id INTEGER;
-	tags_node_id INTEGER;
-	types_node_id INTEGER;
 BEGIN
 	-- exit if any tree node exists
 	PERFORM 1 FROM tree_node LIMIT 1;
@@ -354,60 +268,23 @@ BEGIN
 		RETURN;
 	END IF;
 
-	-- create root node
-	INSERT INTO tree_node (node_class, owned_by, created_at, created_by)
+	-- create treetime node
+	INSERT INTO tree_node (node_class, owner_type, created_at, created_by)
 	VALUES ('category', 'admin', NOW(), user_id)
-	RETURNING id INTO root_node_id;
+	RETURNING id INTO treetime_node_id;
 
-	INSERT INTO tree_node_content (node_id, content_type, text_content, created_at, created_by)
-	VALUES (root_node_id, 'title', 'TreeTime', NOW(), user_id);
+	-- insert TreeTime title
+	INSERT INTO tree_node_content (node_id, content_json, created_at, created_by)
+	VALUES (treetime_node_id, '{"title": "TreeTime"}', NOW(), user_id);
 
-	INSERT INTO tree_node_meta (node_id, internal_key)
-	VALUES (root_node_id, 'treetime');
-
-	-- create languages category
-	INSERT INTO tree_node (parent_id, node_class, owned_by, created_at, created_by)
-	VALUES (root_node_id, 'category', 'admin', NOW(), user_id)
-	RETURNING id INTO langs_node_id;
-
-	INSERT INTO tree_node_content (node_id, content_type, text_content, created_at, created_by)
-	VALUES (langs_node_id, 'title', 'Languages', NOW(), user_id);
-
-	INSERT INTO tree_node_meta (node_id, internal_key)
-	VALUES (langs_node_id, 'langs');
-
-	-- create English lang
-	INSERT INTO tree_node (parent_id, node_class, owned_by, created_at, created_by)
-	VALUES (langs_node_id, 'lang', 'admin', NOW(), user_id)
+	-- create English language node
+	INSERT INTO tree_node (node_class, owner_type, created_at, created_by)
+	VALUES ('lang', 'admin', NOW(), user_id)
 	RETURNING id INTO lang_en_node_id;
 
-	INSERT INTO tree_node_content (node_id, content_type, text_content, created_at, created_by)
-	VALUES (lang_en_node_id, 'title', 'English', NOW(), user_id);
-
-	INSERT INTO tree_node_lang_code (node_id, lang_code)
-	VALUES (lang_en_node_id, 'en');
-
-	-- create tags category
-	INSERT INTO tree_node (parent_id, node_class, owned_by, created_at, created_by)
-	VALUES (root_node_id, 'category', 'admin', NOW(), user_id)
-	RETURNING id INTO tags_node_id;
-
-	INSERT INTO tree_node_content (node_id, content_type, text_content, created_at, created_by)
-	VALUES (tags_node_id, 'title', 'Tags', NOW(), user_id);
-
-	INSERT INTO tree_node_meta (node_id, internal_key)
-	VALUES (tags_node_id, 'tags');
-
-	-- create types category
-	INSERT INTO tree_node (parent_id, node_class, owned_by, created_at, created_by)
-	VALUES (root_node_id, 'category', 'admin', NOW(), user_id)
-	RETURNING id INTO types_node_id;
-
-	INSERT INTO tree_node_content (node_id, content_type, text_content, created_at, created_by)
-	VALUES (types_node_id, 'title', 'Types', NOW(), user_id);
-
-	INSERT INTO tree_node_meta (node_id, internal_key)
-	VALUES (types_node_id, 'types');
+	-- insert English language node content
+	INSERT INTO tree_node_content (node_id, lang_node_id, content_json, created_at, created_by)
+	VALUES (lang_en_node_id, lang_en_node_id, '{"title": "English"}', NOW(), user_id);
 END;
 $$;
 

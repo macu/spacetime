@@ -11,6 +11,8 @@ const (
 	TypeDescriptionMaxLength     = 200
 	PostTitleMaxLength           = 100
 	PostBlockMaxLength           = 1024
+	PostBlockCount               = 10
+	PostURLMaxLength             = 200
 	CommentMaxLength             = 1024
 )
 
@@ -25,15 +27,13 @@ const (
 )
 
 const (
-	NodeKeyTreeTime string = "treetime"
-	NodeKeyLangs    string = "langs"
-	NodeKeyTags     string = "tags"
-	NodeKeyTypes    string = "types"
+	NodePostBlockTypeText string = "text"
 )
 
 const (
-	ContentTypeTitle string = "title"
-	ContentTypeBody  string = "description"
+	OwnerTypeAdmin  string = "admin"
+	OwnerTypePublic string = "public"
+	OwnerTypeUser   string = "user"
 )
 
 const (
@@ -58,9 +58,9 @@ func IsValidVote(vote string) bool {
 	return false
 }
 
-func IsValidNodeContentType(contentType string) bool {
-	switch contentType {
-	case ContentTypeTitle, ContentTypeBody:
+func IsValidOwnerType(ownerType string) bool {
+	switch ownerType {
+	case OwnerTypeAdmin, OwnerTypePublic, OwnerTypeUser:
 		return true
 	}
 	return false

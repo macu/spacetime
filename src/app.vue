@@ -51,6 +51,7 @@ export default {
 	mounted() {
 		// Load current user
 		this.$store.dispatch('loadLogin');
+		this.$store.dispatch('loadLangs');
 	},
 	methods: {
 		logout() {

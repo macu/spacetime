@@ -11,6 +11,10 @@ import ElementPlus from 'element-plus';
 
 import MaterialIcon from '@/widgets/material-icon.vue';
 import LoadingMessage from '@/widgets/loading-message.vue';
+import HorizontalControls from '@/widgets/horizontal-controls.vue';
+import FormLayout from '@/widgets/form-layout.vue';
+import FormField from '@/widgets/form-field.vue';
+import FormActions from '@/widgets/form-actions.vue';
 
 const app = createApp(App);
 
@@ -23,5 +27,9 @@ app.use(ElementPlus, {
 
 app.component('material-icon', MaterialIcon);
 app.component('loading-message', LoadingMessage);
+app.component('horizontal-controls', HorizontalControls);
+app.component('form-layout', FormLayout);
+app.component('form-field', FormField);
+app.component('form-actions', FormActions);
 
 app.mount("#app");
