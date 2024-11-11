@@ -5,26 +5,39 @@
 
 	<template v-else-if="createAllowed">
 
-		<el-drawer v-if="existingFound" v-model="showingExisting" class="flex-column-drawer">
+		<el-drawer v-if="existingFound" v-model="showingExisting">
 
 			<template #header>
-				<h3>Existing categories</h3>
+				<div class="flex-column">
+					<h3>Existing categories</h3>
+				</div>
 			</template>
 
-			<el-alert
-				title="Found similar existing content"
-				type="success" effect="dark" show-icon :closable="false">
-				Please ensure the category you are trying to create doesn't already exist.
-			</el-alert>
+			<div class="flex-column-lg">
 
-			<node-list :nodes="existingNodes">
-				<template #node-actions="{node}">
-					<el-button @click="gotoNode(node)" type="primary">
-						<material-icon icon="arrow_forward"/>
-						<span>Go to category</span>
-					</el-button>
-				</template>
-			</node-list>
+				<el-alert
+					title="Found similar existing content"
+					type="success" effect="dark" show-icon :closable="false">
+					Please ensure the category you are trying to create doesn't already exist.
+				</el-alert>
+
+				<node-list :nodes="existingNodes">
+					<template #node-actions="{node}">
+						<el-button @click="gotoNode(node)" type="primary">
+							<material-icon icon="arrow_forward"/>
+							<span>Go to category</span>
+						</el-button>
+					</template>
+				</node-list>
+
+			</div>
+
+			<template #footer>
+				<el-button @click="cancel(true)" type="warning">
+					<material-icon icon="cancel"/>
+					<span>Cancel create category</span>
+				</el-button>
+			</template>
 
 		</el-drawer>
 

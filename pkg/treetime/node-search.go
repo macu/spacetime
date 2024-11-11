@@ -71,10 +71,19 @@ func FindExistingNodes(db db.DBConn, auth *ajax.Auth, parentID *uint, class, que
 		if err != nil {
 			return nil, fmt.Errorf("scanning node: %w", err)
 		}
+
 		if alreadySeenIDs[node.ID] {
 			continue
 		}
 		alreadySeenIDs[node.ID] = true
+
+		var path = []NodeHeader{}
+		path, err = LoadNodeParentPath(db, auth, node.ID, true)
+		if err != nil {
+			return nil, fmt.Errorf("loading parent path: %w", err)
+		}
+		node.Path = &path
+
 		nodes = append(nodes, node)
 	}
 

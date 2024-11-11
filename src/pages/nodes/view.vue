@@ -1,6 +1,8 @@
 <template>
 <div class="category-view-page flex-column-lg page-width-md">
 
+	<el-backtop :right="40" :bottom="40" :visibility-height="1000"/>
+
 	<loading-message v-if="loadingNode"/>
 
 	<template v-else-if="node">
@@ -30,15 +32,18 @@
 
 		<horizontal-controls>
 			<create-dropdown :parent-id="node.id" :disabled="disableCreate"/>
+			<span v-if="total > 0">{{total}} child nodes</span>
 		</horizontal-controls>
 
-		<loading-message v-if="loadingChildren"/>
+		<template v-if="children.length">
+			<node-list :nodes="children"/>
+			<loading-message v-if="loadingChildren"/>
+			<el-button v-else-if="total > children.length" @click="loadChildren()">
+				Load more
+			</el-button>
+		</template>
 
-		<node-list
-			v-else-if="children.length"
-			:nodes="children"
-			:parent-id="node.id"
-			/>
+		<loading-message v-else-if="loadingChildren"/>
 
 		<el-alert v-else
 			title="No subcontent currently exists."
@@ -84,6 +89,7 @@ export default {
 
 			loadingChildren: true,
 			children: [],
+			total: 0,
 		};
 	},
 	computed: {
@@ -133,8 +139,14 @@ export default {
 			this.loadingChildren = true;
 			ajaxGet('/ajax/node/children', {
 				id: this.node.id,
+				offset: this.children.length,
 			}).then(response => {
-				this.children = response.nodes;
+				if (this.children.length) {
+					this.children.push(...response.nodes);
+				} else {
+					this.children = response.nodes;
+				}
+				this.total = response.total;
 			}).finally(() => {
 				this.loadingChildren = false;
 			});

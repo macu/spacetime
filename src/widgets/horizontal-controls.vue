@@ -1,5 +1,5 @@
 <template>
-<div class="flex-row-md">
+<div class="horizontal-controls flex-row-md">
 	<slot/>
 </div>
 </template>

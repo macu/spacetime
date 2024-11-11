@@ -1,6 +1,8 @@
 <template>
 <div class="dashboard-page flex-column-lg page-width-md">
 
+	<el-backtop :right="40" :bottom="40" :visibility-height="1000"/>
+
 	<h2>Dashboard</h2>
 
 	<div class="flex-row">

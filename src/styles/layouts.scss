@@ -35,8 +35,7 @@
 	column-gap: 40px;
 }
 
-.flex-column, .flex-column-md, .flex-column-lg, .flex-column-xl,
-.el-drawer.flex-column-drawer>.el-drawer__body {
+.flex-column, .flex-column-md, .flex-column-lg, .flex-column-xl {
 	display: flex;
 	flex-direction: column;
 	align-items: stretch;
@@ -58,8 +57,7 @@
 	row-gap: 20px;
 }
 
-.flex-column-lg,
-.el-drawer.flex-column-drawer>.el-drawer__body {
+.flex-column-lg  {
 	row-gap: 40px;
 }
 

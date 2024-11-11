@@ -26,10 +26,6 @@ export default {
 			type: Array,
 			required: true,
 		},
-		parentId: {
-			type: Number,
-			required: false,
-		},
 		autoloadMore: {
 			type: Boolean,
 			required: false,
