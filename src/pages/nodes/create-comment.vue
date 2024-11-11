@@ -1,5 +1,5 @@
 <template>
-<div class="post-edit-page flex-column-lg page-width-md">
+<div class="comment-edit-page flex-column-lg page-width-md">
 
 	<loading-message v-if="initializing"/>
 
@@ -7,50 +7,19 @@
 
 		<node-header v-if="parent" :node="parent" show-all/>
 
-		<form-layout title="Create post">
+		<form-layout title="Create comment">
 
-			<form-field title="Title" required>
+			<form-field>
 				<el-input
-					v-model="title"
-					placeholder="Enter title"
-					:maxlength="titleMaxLength"
+					v-model="text"
+					type="textarea"
+					:autosize="{minRows: 3}"
+					placeholder="Enter comment"
+					:maxlength="commentMaxLength"
 					show-word-limit
+					resize="none"
 					clearable
 					/>
-			</form-field>
-
-			<form-field title="Body" required>
-				<div v-for="b in blocks" class="edit-post-block flex-row">
-					<el-input
-						v-model="b.text"
-						type="textarea"
-						:autosize="{minRows: 3}"
-						placeholder="Enter text"
-						:maxlength="blockMaxLength"
-						show-word-limit
-						resize="none"
-						class="flex-1"
-						/>
-					<div v-if="blocks.length > 1" class="flex-column flex-align-end">
-						<div class="flex-row">
-							<el-button @click="moveBlockUp(b)" circle>
-								<material-icon icon="arrow_upward"/>
-							</el-button>
-							<el-button @click="moveBlockDown(b)" circle>
-								<material-icon icon="arrow_downward"/>
-							</el-button>
-						</div>
-						<el-button @click="confirmDeleteBlock(b)" type="warning" circle>
-							<material-icon icon="delete"/>
-						</el-button>
-					</div>
-				</div>
-				<div class="center">
-					<el-button @click="addBlock()" type="primary" :disabled="addBlockDisabled">
-						<material-icon icon="add"/>
-						<span>Add block</span>
-					</el-button>
-				</div>
 			</form-field>
 
 			<form-field title="Language" required>
@@ -59,13 +28,13 @@
 
 			<loading-message
 				v-if="creating"
-				message="Creating post..."
+				message="Creating comment..."
 				/>
 
 			<form-actions v-else>
 				<el-button
 					type="primary" :disabled="submitDisabled" @click="create()">
-					Create post
+					Create comment
 				</el-button>
 
 				<el-button
@@ -87,7 +56,7 @@
 		/>
 
 	<el-alert v-else
-		title="Creating posts is not allowed here."
+		title="Creating comments is not allowed here."
 		type="error"
 		:closable="false"
 		/>
@@ -120,8 +89,7 @@ export default {
 			parent: null,
 			createAllowed: false,
 
-			title: '',
-			blocks: [],
+			text: '',
 			langNodeId: null,
 
 			creating: false,
@@ -131,32 +99,20 @@ export default {
 		parentId() {
 			return this.$route.query.parentId || null;
 		},
-		titleMaxLength() {
-			return this.$store.getters.maxLengths.postTitle;
-		},
-		blockMaxLength() {
-			return this.$store.getters.maxLengths.postBlock;
-		},
-		blockMaxCount() {
-			return this.$store.getters.maxLengths.postBlockCount;
-		},
-		addBlockDisabled() {
-			return this.blocks.length >= this.blockMaxCount;
+		commentMaxLength() {
+			return this.$store.getters.maxLengths.commentBody;
 		},
 		maxDepthExceeded() {
 			return this.parent
 				? this.parent.path.length >= this.$store.getters.treeMaxDepth
 				: false;
 		},
-		hasTitle() {
-			return !!this.title.trim();
-		},
-		hasBodyContent() {
-			return this.blocks.some(block => !!block.text.trim());
+		hasText() {
+			return !!this.text.trim();
 		},
 		submitDisabled() {
 			return !this.createAllowed || this.creating ||
-				!this.hasTitle || !this.hasBodyContent || !this.langNodeId;
+				!this.hasText || !this.langNodeId;
 		},
 	},
 	beforeRouteEnter(to, from, next) {
@@ -168,8 +124,7 @@ export default {
 		this.initializing = true;
 		this.parent = null;
 		this.createAllowed = false;
-		this.title = '';
-		this.blocks = [];
+		this.text = '';
 		this.creating = false;
 		next();
 		this.init(to.query);
@@ -191,47 +146,13 @@ export default {
 			this.initializing = true;
 			ajaxGet('/ajax/node/load-create', {
 				parentId,
-				class: NODE_CLASS.POST,
+				class: NODE_CLASS.COMMENT,
 			}).then(data => {
 				this.parent = data.parent;
 				this.createAllowed = data.createAllowed;
-				if (this.createAllowed) {
-					// Add default text block
-					this.blocks = [{type: 'text', text: ''}];
-				}
 			}).finally(() => {
 				this.initializing = false;
 			});
-		},
-
-		addBlock() {
-			if (this.addBlockDisabled) {
-				return;
-			}
-			this.blocks.push({type: 'text', text: ''});
-		},
-		moveBlockUp(block) {
-			const index = this.blocks.indexOf(block);
-			if (index > 0) {
-				this.blocks.splice(index, 1);
-				this.blocks.splice(index - 1, 0, block);
-			}
-		},
-		moveBlockDown(block) {
-			const index = this.blocks.indexOf(block);
-			if (index < this.blocks.length - 1) {
-				this.blocks.splice(index, 1);
-				this.blocks.splice(index + 1, 0, block);
-			}
-		},
-		confirmDeleteBlock(block) {
-			this.$confirm('Delete this block?', 'Confirm', {
-				confirmButtonText: 'Delete',
-				cancelButtonText: 'Cancel',
-				type: 'warning',
-			}).then(() => {
-				this.blocks = this.blocks.filter(b => b !== block);
-			}).catch(() => {});
 		},
 
 		create() {
@@ -242,11 +163,10 @@ export default {
 			ajaxPost('/ajax/node/create', {
 				parentId: this.parentId,
 				ownerType: OWNER_TYPE.USER,
-				class: NODE_CLASS.POST,
+				class: NODE_CLASS.COMMENT,
 				langNodeId: this.langNodeId,
 				content: JSON.stringify({
-					title: this.title.trim(),
-					blocks: this.blocks,
+					text: this.text.trim(),
 				}),
 			}).then(response => {
 				this.$router.replace({
@@ -261,7 +181,7 @@ export default {
 		},
 
 		cancel(confirmed = false) {
-			if (!confirmed && (this.hasTitle || this.hasBodyContent)) {
+			if (!confirmed && this.hasText) {
 				this.$confirm('Are you sure you want to cancel?', 'Unsaved changes', {
 					confirmButtonText: 'Yes',
 					cancelButtonText: 'No',
@@ -288,12 +208,3 @@ export default {
 	},
 };
 </script>
-
-<style lang="scss">
-.post-edit-page {
-	.edit-post-block {
-		padding: 10px;
-		background-color: white;
-	}
-}
-</style>

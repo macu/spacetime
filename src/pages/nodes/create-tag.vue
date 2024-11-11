@@ -1,5 +1,5 @@
 <template>
-<div class="category-create-page flex-column-lg page-width-md">
+<div class="tag-create-page flex-column-lg page-width-md">
 
 	<loading-message v-if="initializing"/>
 
@@ -8,57 +8,27 @@
 		<el-drawer v-if="existingFound" v-model="showingExisting" class="flex-column-drawer">
 
 			<template #header>
-				<h3>Existing categories</h3>
+				<h3>Existing tags</h3>
 			</template>
 
 			<el-alert
 				title="Found similar existing content"
 				type="success" effect="dark" show-icon :closable="false">
-				Please ensure the category you are trying to create doesn't already exist.
+				Please ensure the tag you are trying to create doesn't already exist.
 			</el-alert>
 
 			<node-list :nodes="existingNodes">
 				<template #node-actions="{node}">
 					<el-button @click="gotoNode(node)" type="primary">
 						<material-icon icon="arrow_forward"/>
-						<span>Go to category</span>
+						<span>Go to tag</span>
 					</el-button>
 				</template>
 			</node-list>
 
 		</el-drawer>
 
-		<node-header v-if="parent" :node="parent" show-all/>
-
-		<form-layout title="Create category">
-
-			<form-field title="Ownership">
-				<el-radio-group v-model="ownerType" class="flex-column">
-					<el-radio :label="OWNER_TYPE.PUBLIC">
-						<div class="flex-row">
-							<material-icon icon="public"/>
-							<span>This category will belong to the public</span>
-						</div>
-					</el-radio>
-					<el-radio :label="OWNER_TYPE.USER">
-						<div class="flex-row">
-							<material-icon icon="person"/>
-							<span>This category will belong to me</span>
-						</div>
-					</el-radio>
-				</el-radio-group>
-				<el-alert
-					v-if="ownerType === OWNER_TYPE.PUBLIC"
-					type="info" effect="dark" show-icon :closable="false">
-					<p>You will not be able to delete this category after it is created.</p>
-					<p>Other users will be able to change the title and description.</p>
-				</el-alert>
-				<el-alert
-					v-else-if="ownerType === OWNER_TYPE.USER"
-					type="info" effect="dark" show-icon :closable="false">
-					<p>You will have control over this category and the content directly within it, and your name will be displayed along with it.</p>
-				</el-alert>
-			</form-field>
+		<form-layout title="Create tag">
 
 			<form-field title="Title" required>
 				<el-input
@@ -70,31 +40,18 @@
 					/>
 			</form-field>
 
-			<form-field title="Description">
-				<el-input
-					v-model="description"
-					type="textarea"
-					placeholder="Description"
-					:maxlength="descriptionMaxLength"
-					:autosize="{minRows: 2}"
-					show-word-limit
-					resize="none"
-					clearable
-					/>
-			</form-field>
-
 			<form-field title="Language" required>
 				<lang-select v-model="langNodeId"/>
 			</form-field>
 
 			<loading-message
 				v-if="findingExisting"
-				message="Searching for existing categories..."
+				message="Searching for existing tags..."
 				/>
 
 			<loading-message
 				v-else-if="creating"
-				message="Creating category..."
+				message="Creating tag..."
 				/>
 
 			<template v-else>
@@ -102,7 +59,7 @@
 				<el-alert
 					v-if="existingNotFound"
 					type="success"
-					title="No similar categories were found."
+					title="No similar tags were found."
 					show-icon :closable="false"
 					/>
 
@@ -111,7 +68,7 @@
 						@click="create()"
 						type="primary"
 						:disabled="submitDisabled">
-						Create category
+						Create tag
 					</el-button>
 
 					<el-button
@@ -119,14 +76,14 @@
 						@click="findExisting()"
 						:disabled="submitDisabled">
 						<material-icon icon="search"/>
-						<span>Check for similar existing categories</span>
+						<span>Check for similar existing tags</span>
 					</el-button>
 
 					<el-button
 						v-else-if="existingFound"
 						@click="showExisting()">
 						<material-icon icon="search"/>
-						<span>Show existing categories</span>
+						<span>Show existing tags</span>
 					</el-button>
 
 					<el-button
@@ -150,7 +107,7 @@
 		/>
 
 	<el-alert v-else
-		title="Creating categories is not allowed here."
+		title="Creating tags is not allowed here."
 		type="error"
 		:closable="false"
 		/>
@@ -159,7 +116,7 @@
 </template>
 
 <script>
-import NodeHeader from '@/widgets/node-header.vue';
+import ParentPath from '@/widgets/parent-path.vue';
 import NodeList from '@/widgets/node-list.vue';
 import LangSelect from '@/widgets/lang-select.vue';
 
@@ -175,19 +132,17 @@ import {
 
 export default {
 	components: {
-		NodeHeader,
+		ParentPath,
 		NodeList,
 		LangSelect,
 	},
 	data() {
 		return {
 			initializing: true,
-			parent: null,
+			path: [],
 			createAllowed: false,
 
-			ownerType: OWNER_TYPE.PUBLIC,
 			title: '',
-			description: '',
 			langNodeId: null,
 
 			findingExisting: false,
@@ -198,28 +153,17 @@ export default {
 		};
 	},
 	computed: {
-		OWNER_TYPE() {
-			return OWNER_TYPE;
-		},
 		parentId() {
 			return this.$route.query.parentId || null;
 		},
 		titleMaxLength() {
-			return this.$store.getters.maxLengths.categoryTitle;
-		},
-		descriptionMaxLength() {
-			return this.$store.getters.maxLengths.categoryDescription;
+			return this.$store.getters.maxLengths.tagTitle;
 		},
 		maxDepthExceeded() {
-			return this.parent
-				? this.parent.path.length >= this.$store.getters.treeMaxDepth
-				: false;
+			return this.path.length >= this.$store.getters.treeMaxDepth;
 		},
 		hasTitle() {
 			return !!this.title.trim();
-		},
-		hasDescription() {
-			return !!this.description.trim();
 		},
 		submitDisabled() {
 			return !this.createAllowed || this.creating ||
@@ -239,9 +183,6 @@ export default {
 		title() {
 			this.existingNodes = null;
 		},
-		description() {
-			this.existingNodes = null;
-		},
 	},
 	beforeRouteEnter(to, from, next) {
 		next(vm => {
@@ -250,11 +191,10 @@ export default {
 	},
 	beforeRouteUpdate(to, from, next) {
 		this.initializing = true;
-		this.parent = null;
+		this.path = [];
 		this.createAllowed = false;
 		this.ownerType = OWNER_TYPE.PUBLIC;
 		this.title = '';
-		this.description = '';
 		this.existingNodes = null;
 		this.creating = false;
 		next();
@@ -277,20 +217,10 @@ export default {
 			this.initializing = true;
 			ajaxGet('/ajax/node/load-create', {
 				parentId,
-				class: NODE_CLASS.CATEGORY,
+				class: NODE_CLASS.TAG,
 			}).then(data => {
-				this.parent = data.parent;
+				this.path = data.path;
 				this.createAllowed = data.createAllowed;
-				if (data.parent && data.parent.path.length > 0) {
-					// Default to user-owned if creating within user-owned parent category
-					let parentNode = data.parent.path[data.parent.path.length - 1];
-					if (
-						parentNode.ownerType === OWNER_TYPE.USER &&
-						parentNode.creator.id === this.$store.getters.currentUserId
-					) {
-						this.ownerType = OWNER_TYPE.USER;
-					}
-				}
 			}).finally(() => {
 				this.initializing = false;
 			});
@@ -302,8 +232,8 @@ export default {
 			this.findingExisting = true;
 			ajaxGet('/ajax/node/find-existing', {
 				parentId: this.parentId,
-				class: NODE_CLASS.CATEGORY,
-				query: (this.title.trim() + ' ' + this.description.trim()).trim(),
+				class: NODE_CLASS.TAG,
+				query: this.title.trim(),
 			}).then(response => {
 				this.existingNodes = response.nodes;
 				if (response.nodes.length > 0) {
@@ -323,12 +253,11 @@ export default {
 			this.creating = true;
 			ajaxPost('/ajax/node/create', {
 				parentId: this.parentId,
-				ownerType: this.ownerType,
-				class: NODE_CLASS.CATEGORY,
+				ownerType: OWNER_TYPE.PUBLIC,
+				class: NODE_CLASS.TAG,
 				langNodeId: this.langNodeId,
 				content: JSON.stringify({
 					title: this.title.trim(),
-					description: this.description.trim(),
 				}),
 			}).then(response => {
 				this.$router.replace({
@@ -350,7 +279,7 @@ export default {
 			});
 		},
 		cancel(confirmed = false) {
-			if (!confirmed && (this.hasTitle || this.hasDescription)) {
+			if (!confirmed && this.hasTitle) {
 				this.$confirm('Are you sure you want to cancel?', 'Unsaved changes', {
 					confirmButtonText: 'Yes',
 					cancelButtonText: 'No',

@@ -10,22 +10,22 @@ import (
 	"treetime/pkg/utils/db"
 )
 
-func CreateNode(conn *sql.DB, auth ajax.Auth, parentID, langNodeID *uint, class string, content NodeContent) (*NodeHeader, error) {
+func CreateNode(conn *sql.DB, auth ajax.Auth, parentID, langNodeID *uint, class, ownerType string, content NodeContent) (*NodeHeader, error) {
 
 	if !IsValidNodeClass(class) {
 		return nil, fmt.Errorf("invalid node class: %s", class)
 	}
 
-	if !IsValidNodeContent(class, content) {
-		return nil, fmt.Errorf("invalid node content for class: %s", class)
+	if !IsValidOwnerType(ownerType) {
+		return nil, fmt.Errorf("invalid node owner type: %s", ownerType)
 	}
 
-	allowed, err := IsValidNodeCreatePath(conn, parentID, class)
-	if err != nil {
-		return nil, err
+	if !IsValidOwnerTypeForClass(class, ownerType) {
+		return nil, fmt.Errorf("invalid owner type for class: %s for %s", ownerType, class)
 	}
-	if !allowed {
-		return nil, fmt.Errorf("create node location not allowed: %s under node %v", class, parentID)
+
+	if !IsValidNodeContent(class, content) {
+		return nil, fmt.Errorf("invalid node content for class: %s", class)
 	}
 
 	if langNodeID != nil {
@@ -39,18 +39,21 @@ func CreateNode(conn *sql.DB, auth ajax.Auth, parentID, langNodeID *uint, class 
 	}
 
 	var node = NodeHeader{
-		Class:   class,
-		Content: content,
+		Class:     class,
+		Content:   content,
+		OwnerType: &ownerType,
 	}
+
+	var err error
 
 	err = db.InTransaction(conn, func(tx *sql.Tx) error {
 
 		err = tx.QueryRow(`INSERT INTO tree_node
-			(node_class, parent_id, created_at, created_by)
-			VALUES ($1, $2, $3, $4)
-			RETURNING id, node_class`,
-			class, parentID, time.Now(), auth.UserID,
-		).Scan(&node.ID, &node.Class)
+			(node_class, parent_id, owner_type, created_at, created_by)
+			VALUES ($1, $2, $3, $4, $5)
+			RETURNING id`,
+			class, parentID, ownerType, time.Now(), auth.UserID,
+		).Scan(&node.ID)
 		if err != nil {
 			return fmt.Errorf("error creating node: %w", err)
 		}

@@ -7,20 +7,16 @@ const (
 	CategoryDescriptionMaxLength = 300
 	LangTitleMaxLength           = 50
 	TagTitleMaxLength            = 50
-	TypeTitleMaxLength           = 50
-	TypeDescriptionMaxLength     = 200
 	PostTitleMaxLength           = 100
 	PostBlockMaxLength           = 1024
-	PostBlockCount               = 10
+	PostBlockMaxCount            = 10
 	PostURLMaxLength             = 200
 	CommentMaxLength             = 1024
 )
 
 const (
-	NodeClassTag      string = "tag"
 	NodeClassLang     string = "lang"
-	NodeClassType     string = "type"
-	NodeClassField    string = "field"
+	NodeClassTag      string = "tag"
 	NodeClassCategory string = "category"
 	NodeClassPost     string = "post"
 	NodeClassComment  string = "comment"
@@ -43,7 +39,7 @@ const (
 
 func IsValidNodeClass(class string) bool {
 	switch class {
-	case NodeClassTag, NodeClassLang, NodeClassType, NodeClassField,
+	case NodeClassTag, NodeClassLang,
 		NodeClassCategory, NodeClassPost, NodeClassComment:
 		return true
 	}
@@ -64,4 +60,31 @@ func IsValidOwnerType(ownerType string) bool {
 		return true
 	}
 	return false
+}
+
+func IsValidOwnerTypeForClass(class, ownerType string) bool {
+
+	if !IsValidNodeClass(class) || !IsValidOwnerType(ownerType) {
+		return false
+	}
+
+	if ownerType == OwnerTypeAdmin {
+		return true
+	}
+
+	switch class {
+
+	case NodeClassTag:
+		return ownerType == OwnerTypePublic
+
+	case NodeClassCategory:
+		return ownerType == OwnerTypePublic || ownerType == OwnerTypeUser
+
+	case NodeClassPost, NodeClassComment:
+		return ownerType == OwnerTypeUser
+
+	}
+
+	return false
+
 }

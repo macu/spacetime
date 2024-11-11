@@ -32,7 +32,7 @@ func FormatDescription(content *string) *string {
 func SanitizeNodeContent(class string, content *NodeContent) {
 	switch class {
 
-	case NodeClassCategory, NodeClassType, NodeClassField:
+	case NodeClassCategory:
 		content.Title = FormatTitle(content.Title)
 		content.Description = FormatDescription(content.Description)
 		content.Text = nil
@@ -63,7 +63,7 @@ func SanitizeNodeContent(class string, content *NodeContent) {
 		}
 
 	case NodeClassComment:
-		content.Title = FormatTitle(content.Title)
+		content.Title = nil
 		content.Description = nil
 		content.Text = FormatDescription(content.Text)
 		content.Blocks = nil
@@ -74,14 +74,23 @@ func SanitizeNodeContent(class string, content *NodeContent) {
 func IsValidNodeContent(class string, content NodeContent) bool {
 	switch class {
 
-	case NodeClassCategory, NodeClassType, NodeClassField:
+	case NodeClassCategory:
 		if content.Title == nil || *content.Title == "" {
+			return false
+		}
+		if content.Description == nil {
 			return false
 		}
 		if content.Text != nil {
 			return false
 		}
 		if content.Blocks != nil {
+			return false
+		}
+		if len(*content.Title) > CategoryTitleMaxLength {
+			return false
+		}
+		if len(*content.Description) > CategoryDescriptionMaxLength {
 			return false
 		}
 
@@ -98,6 +107,9 @@ func IsValidNodeContent(class string, content NodeContent) bool {
 		if content.Blocks != nil {
 			return false
 		}
+		if len(*content.Title) > TagTitleMaxLength {
+			return false
+		}
 
 	case NodeClassPost:
 		if content.Title == nil || *content.Title == "" {
@@ -112,15 +124,36 @@ func IsValidNodeContent(class string, content NodeContent) bool {
 		if content.Blocks == nil || len(*content.Blocks) == 0 {
 			return false
 		}
+		if len(*content.Blocks) > PostBlockMaxCount {
+			return false
+		}
+		for i := range *content.Blocks {
+			block := (*content.Blocks)[i]
+			if block.Type != NodePostBlockTypeText {
+				return false
+			}
+			if block.Text == nil || *block.Text == "" {
+				return false
+			}
+			if len(*block.Text) > PostBlockMaxLength {
+				return false
+			}
+		}
 
 	case NodeClassComment:
-		if content.Text == nil || *content.Text == "" {
+		if content.Title != nil {
 			return false
 		}
 		if content.Description != nil {
 			return false
 		}
 		if content.Blocks != nil {
+			return false
+		}
+		if content.Text == nil || *content.Text == "" {
+			return false
+		}
+		if len(*content.Text) > CommentMaxLength {
 			return false
 		}
 
@@ -135,6 +168,9 @@ func IsValidNodeContent(class string, content NodeContent) bool {
 			return false
 		}
 		if content.Blocks != nil {
+			return false
+		}
+		if len(*content.Title) > LangTitleMaxLength {
 			return false
 		}
 
@@ -156,8 +192,7 @@ func LoadContentForNodes(conn db.DBConn, auth *ajax.Auth, headers []NodeHeader) 
 
 	var args = []interface{}{}
 
-	rows, err := conn.Query(`SELECT
-		tree_node_content.node_id, tree_node_content.content_json
+	rows, err := conn.Query(`SELECT node_id, content_json, lang_node_id
 		FROM tree_node_content
 		WHERE `+db.In("tree_node_content.node_id", &args, nodeIDs),
 		args...,
@@ -172,7 +207,8 @@ func LoadContentForNodes(conn db.DBConn, auth *ajax.Auth, headers []NodeHeader) 
 	for rows.Next() {
 		var id uint
 		var jsonContent string
-		err = rows.Scan(&id, &jsonContent)
+		var langNodeID *uint
+		err = rows.Scan(&id, &jsonContent, &langNodeID)
 		if err != nil {
 			return fmt.Errorf("scanning node content: %w", err)
 		}
@@ -183,6 +219,7 @@ func LoadContentForNodes(conn db.DBConn, auth *ajax.Auth, headers []NodeHeader) 
 				if err != nil {
 					return fmt.Errorf("unmarshalling node content: %w", err)
 				}
+				headers[i].Content.LangNodeID = langNodeID
 				break
 			}
 		}

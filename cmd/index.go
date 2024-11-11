@@ -23,8 +23,6 @@ func indexHandler(db *sql.DB, user *ajax.Auth, w http.ResponseWriter, r *http.Re
 		CategoryTitleMaxLength       uint
 		CategoryDescriptionMaxLength uint
 		TagTitleMaxLength            uint
-		TypeTitleMaxLength           uint
-		TypeDescriptionMaxLength     uint
 		PostTitleMaxLength           uint
 		PostBlockMaxLength           uint
 		PostBlockCount               uint
@@ -38,11 +36,9 @@ func indexHandler(db *sql.DB, user *ajax.Auth, w http.ResponseWriter, r *http.Re
 		treetime.CategoryTitleMaxLength,
 		treetime.CategoryDescriptionMaxLength,
 		treetime.TagTitleMaxLength,
-		treetime.TypeTitleMaxLength,
-		treetime.TypeDescriptionMaxLength,
 		treetime.PostTitleMaxLength,
 		treetime.PostBlockMaxLength,
-		treetime.PostBlockCount,
+		treetime.PostBlockMaxCount,
 		treetime.PostURLMaxLength,
 		treetime.CommentMaxLength,
 	})

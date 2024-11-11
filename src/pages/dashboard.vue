@@ -4,17 +4,10 @@
 	<h2>Dashboard</h2>
 
 	<div class="flex-row">
-		<el-button @click="gotoCreateCategory()" type="primary">
-			<material-icon icon="add"/>
-			<span>Create category</span>
-		</el-button>
+		<create-dropdown :disabled="disableCreate"/>
 		<el-button @click="gotoLanguages()">
 			<material-icon icon="language"/>
 			<span>Languages</span>
-		</el-button>
-		<el-button @click="gotoTypes()">
-			<material-icon icon="category"/>
-			<span>Types</span>
 		</el-button>
 		<el-button @click="gotoTags()">
 			<material-icon icon="label"/>
@@ -35,6 +28,7 @@
 
 <script>
 import NodeHeader from '@/widgets/node-header.vue';
+import CreateDropdown from '@/widgets/create-dropdown.vue';
 
 import {
 	ajaxGet,
@@ -43,12 +37,21 @@ import {
 export default {
 	components: {
 		NodeHeader,
+		CreateDropdown,
 	},
 	data() {
 		return {
 			loading: true,
 			treetimeNode: null,
 		};
+	},
+	computed: {
+		authenticated() {
+			return this.$store.getters.userIsAuthenticated;
+		},
+		disableCreate() {
+			return !this.authenticated;
+		},
 	},
 	mounted() {
 		this.loadDashboard();
@@ -66,10 +69,10 @@ export default {
 			this.$router.push({name: 'create-category'});
 		},
 		gotoLanguages() {
-		},
-		gotoTypes() {
+			this.$router.push({name: 'langs-view'});
 		},
 		gotoTags() {
+			this.$router.push({name: 'tags-view'});
 		},
 	},
 };

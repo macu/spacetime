@@ -21,22 +21,22 @@ div.center {
 }
 
 .el-button > span,
-.el-tag > .el-tag__content,
-.el-dropdown-menu > .el-dropdown-menu__item,
-.el-menu.el-menu--horizontal > .el-menu-item,
-.el-menu--horizontal > .el-menu > .el-menu-item,
-.el-sub-menu > .el-sub-menu__title {
+.el-tag__content,
+.el-dropdown-menu__item,
+.el-menu-item,
+.el-menu-item,
+.el-sub-menu__title {
   display: flex;
   flex-direction: row;
   align-items: center;
   column-gap: 10px;
 }
 .el-button > span > .material-icons,
-.el-tag > .el-tag__content > .material-icons,
-.el-dropdown-menu > .el-dropdown-menu__item > .material-icons,
-.el-menu.el-menu--horizontal > .el-menu-item > .material-icons,
-.el-menu--horizontal > .el-menu > .el-menu-item > .material-icons,
-.el-sub-menu > .el-sub-menu__title > .material-icons {
+.el-tag__content > .material-icons,
+.el-dropdown-menu__item > .material-icons,
+.el-menu-item > .material-icons,
+.el-menu-item > .material-icons,
+.el-sub-menu__title > .material-icons {
   font-size: larger;
 }
 
@@ -178,7 +178,7 @@ div.center {
   font-size: 2em;
 }
 .treetime-app > .body {
-  padding: 40px 40px 60px;
+  padding: 40px 40px 80px;
 }
 .treetime-app.is-mobile > header {
   padding: 10px;
@@ -187,24 +187,12 @@ div.center {
   font-size: 1.5em;
 }
 .treetime-app.is-mobile > .body {
-  padding: 20px 20px 40px;
-}
-/*!*****************************************************************************************************************************************************************************************************************************************************************************************************************************************!*\
-  !*** css ./node_modules/css-loader/dist/cjs.js??clonedRuleSet-2.use[1]!./node_modules/vue-loader/dist/stylePostLoader.js!./node_modules/sass-loader/dist/cjs.js??clonedRuleSet-2.use[2]!./node_modules/vue-loader/dist/index.js??ruleSet[1].rules[5].use[0]!./src/widgets/node-header.vue?vue&type=style&index=0&id=0f86730f&lang=scss ***!
-  \*****************************************************************************************************************************************************************************************************************************************************************************************************************************************/
-.node-header {
-  padding: 20px;
-  border: 2px solid gray;
-  border-radius: 10px;
-  box-shadow: 0 0 10px rgba(0, 0, 0, 0.1);
-}
-.node-header > .link-to {
-  cursor: pointer;
+  padding: 20px 20px 60px;
 }
 /*!*****************************************************************************************************************************************************************************************************************************************************************************************************************************************!*\
   !*** css ./node_modules/css-loader/dist/cjs.js??clonedRuleSet-2.use[1]!./node_modules/vue-loader/dist/stylePostLoader.js!./node_modules/sass-loader/dist/cjs.js??clonedRuleSet-2.use[2]!./node_modules/vue-loader/dist/index.js??ruleSet[1].rules[5].use[0]!./src/widgets/parent-path.vue?vue&type=style&index=0&id=51488c82&lang=scss ***!
   \*****************************************************************************************************************************************************************************************************************************************************************************************************************************************/
-.parent-path {
+.node-parent-path {
   border: 1px solid gray;
   background-color: gray;
   border-radius: 10px;
@@ -213,17 +201,46 @@ div.center {
   flex-direction: column;
   row-gap: 1px;
 }
-.parent-path > div {
-  padding: 10px 20px;
+.node-parent-path > .node-parent {
+  padding: 5px 20px;
   background-color: #eee;
+  font-size: smaller;
 }
-.parent-path > div:first-child {
+.node-parent-path > .node-parent:first-child {
   border-top-left-radius: 10px;
   border-top-right-radius: 10px;
 }
-.parent-path > div:last-child {
+.node-parent-path > .node-parent:last-child {
   border-bottom-left-radius: 10px;
   border-bottom-right-radius: 10px;
+}
+/*!*****************************************************************************************************************************************************************************************************************************************************************************************************************************************!*\
+  !*** css ./node_modules/css-loader/dist/cjs.js??clonedRuleSet-2.use[1]!./node_modules/vue-loader/dist/stylePostLoader.js!./node_modules/sass-loader/dist/cjs.js??clonedRuleSet-2.use[2]!./node_modules/vue-loader/dist/index.js??ruleSet[1].rules[5].use[0]!./src/widgets/node-header.vue?vue&type=style&index=0&id=0f86730f&lang=scss ***!
+  \*****************************************************************************************************************************************************************************************************************************************************************************************************************************************/
+.node-header-wrapper > .node-parent-path {
+  border-bottom: none;
+  border-bottom-left-radius: 0;
+  border-bottom-right-radius: 0;
+}
+.node-header-wrapper > .node-parent-path > .node-parent:last-child {
+  border-bottom-left-radius: 0;
+  border-bottom-right-radius: 0;
+}
+.node-header-wrapper > .node-header {
+  padding: 20px;
+  border: 2px solid gray;
+  border-radius: 10px;
+  box-shadow: 0 0 10px rgba(0, 0, 0, 0.1);
+}
+.node-header-wrapper > .node-header > .link-to {
+  cursor: pointer;
+}
+.node-header-wrapper > .node-header > .owner-info {
+  font-size: smaller;
+}
+.node-header-wrapper > .node-parent-path + .node-header {
+  border-top-left-radius: 0;
+  border-top-right-radius: 0;
 }
 /*!*********************************************************************************************************************************************************************************************************************************************************************************************************************************************!*\
   !*** css ./node_modules/css-loader/dist/cjs.js??clonedRuleSet-2.use[1]!./node_modules/vue-loader/dist/stylePostLoader.js!./node_modules/sass-loader/dist/cjs.js??clonedRuleSet-2.use[2]!./node_modules/vue-loader/dist/index.js??ruleSet[1].rules[5].use[0]!./src/pages/nodes/create-post.vue?vue&type=style&index=0&id=7d7a5d1f&lang=scss ***!

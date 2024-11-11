@@ -12,6 +12,10 @@
 </template>
 
 <script>
+import {getStorage, setStorage} from '@/utils/storage.js';
+
+const STORAGE_KEY = 'last-lang-select';
+
 export default {
 	emits: ['update:modelValue'],
 	props: {
@@ -24,6 +28,19 @@ export default {
 		langs() {
 			return this.$store.state.langs;
 		},
+	},
+	watch: {
+		modelValue(value) {
+			setStorage(STORAGE_KEY, value);
+		},
+	},
+	mounted() {
+		if (!this.modelValue) {
+			const lastLang = getStorage(STORAGE_KEY);
+			if (lastLang) {
+				this.$emit('update:modelValue', lastLang);
+			}
+		}
 	},
 };
 </script>

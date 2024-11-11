@@ -24,10 +24,6 @@ export default {
 					return 'label';
 				case NODE_CLASS.LANG:
 					return 'translate';
-				case NODE_CLASS.TYPE:
-					return 'category';
-				case NODE_CLASS.FIELD:
-					return 'variables';
 				case NODE_CLASS.CATEGORY:
 					return 'folder';
 				case NODE_CLASS.POST:

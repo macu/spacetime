@@ -1,7 +1,7 @@
 <template>
-<div class="parent-path">
+<div class="node-parent-path">
 
-	<div v-for="n in pathWithTitles" :key="n.id" class="flex-row-md nowrap">
+	<div v-for="n in pathWithTitles" :key="n.id" class="node-parent flex-row-md nowrap">
 
 		<node-icon :node="n"/>
 
@@ -38,8 +38,6 @@ export default {
 					case NODE_CLASS.LANG:
 					case NODE_CLASS.TAG:
 					case NODE_CLASS.CATEGORY:
-					case NODE_CLASS.TYPE:
-					case NODE_CLASS.FIELD:
 					case NODE_CLASS.POST:
 						return {
 							...n,
@@ -62,7 +60,7 @@ export default {
 
 $border-width: 1px;
 
-.parent-path {
+.node-parent-path {
 	border: $border-width solid gray;
 	background-color: gray;
 	border-radius: $border-radius;
@@ -72,9 +70,10 @@ $border-width: 1px;
 	flex-direction: column;
 	row-gap: $border-width;
 
-	>div {
-		padding: 10px 20px;
+	>.node-parent {
+		padding: 5px 20px;
 		background-color: #eee;
+		font-size: smaller;
 
 		&:first-child {
 			border-top-left-radius: $border-radius;

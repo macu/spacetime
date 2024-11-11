@@ -1,6 +1,9 @@
 package treetime
 
-import "strings"
+import (
+	"strings"
+	"time"
+)
 
 type NodePostBlock struct {
 	Type      string  `json:"type"`                // "text" or "link"
@@ -12,18 +15,26 @@ type NodePostBlock struct {
 type NodeContent struct {
 	Title       *string          `json:"title,omitempty"`       // categories, types, fields, tags, langs
 	Description *string          `json:"description,omitempty"` // categories, types, and fields
-	Text        *string          `json:"content,omitempty"`     // comments
+	Text        *string          `json:"text,omitempty"`        // comments
 	Blocks      *[]NodePostBlock `json:"blocks,omitempty"`      // posts
+	LangNodeID  *uint            `json:"langNodeID"`            // translation
+}
+
+type NodeCreator struct {
+	ID          uint    `json:"id"`
+	DisplayName *string `json:"displayName,omitempty"`
 }
 
 type NodeHeader struct {
-	ID        uint        `json:"id"`
-	Class     string      `json:"class"`
-	Content   NodeContent `json:"content"`
-	Tags      *[]NodeTag  `json:"tags,omitempty"`
-	OwnerType *string     `json:"ownerType,omitempty"`
-	CreatedBy *uint       `json:"createdBy,omitempty"`
-	IsDeleted *bool       `json:"isDeleted,omitempty"`
+	ID        uint          `json:"id"`
+	Class     string        `json:"class"`
+	Content   NodeContent   `json:"content"`
+	Path      *[]NodeHeader `json:"path,omitempty"`
+	Tags      *[]NodeTag    `json:"tags,omitempty"`
+	OwnerType *string       `json:"ownerType,omitempty"`
+	Creator   *NodeCreator  `json:"creator,omitempty"`
+	CreatedAt *time.Time    `json:"createdAt,omitempty"`
+	IsDeleted *bool         `json:"isDeleted,omitempty"`
 }
 
 type LangHeader struct {

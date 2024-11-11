@@ -83,7 +83,7 @@ export default {
 	}
 
 	>.body {
-		padding: 40px 40px 60px;
+		padding: 40px 40px 80px;
 	}
 
 	&.is-mobile {
@@ -94,7 +94,7 @@ export default {
 			}
 		}
 		>.body {
-			padding: 20px 20px 40px;
+			padding: 20px 20px 60px;
 		}
 	}
 

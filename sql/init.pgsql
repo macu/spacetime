@@ -123,8 +123,6 @@ CREATE TYPE owner_type AS ENUM (
 CREATE TYPE tree_node_class AS ENUM (
 	'lang',
 	'tag',
-	'type',
-	'field',
 	'category',
 	'post', -- posts are always user-owned
 	'comment' -- comments are always user-owned

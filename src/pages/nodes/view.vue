@@ -5,11 +5,6 @@
 
 	<template v-else-if="node">
 
-		<div v-if="path.length" class="flex-column">
-			<strong>Path</strong>
-			<parent-path :path="path"/>
-		</div>
-
 		<h2>
 			<template v-if="node.class === NODE_CLASS.CATEGORY">
 				Category
@@ -19,12 +14,6 @@
 			</template>
 			<template v-else-if="node.class === NODE_CLASS.TAG">
 				Tag
-			</template>
-			<template v-else-if="node.class === NODE_CLASS.TYPE">
-				Type
-			</template>
-			<template v-else-if="node.class === NODE_CLASS.FIELD">
-				Field
 			</template>
 			<template v-else-if="node.class === NODE_CLASS.POST">
 				Post
@@ -40,24 +29,7 @@
 		<node-header :node="node" show-all/>
 
 		<horizontal-controls>
-			<el-dropdown @command="gotoCreate" placement="bottom-start">
-				<el-button type="primary">
-					<span>Add subcontent</span>
-					<material-icon icon="arrow_drop_down"/>
-				</el-button>
-				<template #dropdown>
-					<el-dropdown-menu>
-						<el-dropdown-item command="create-category">
-							<material-icon icon="folder"/>
-							<span>Category</span>
-						</el-dropdown-item>
-						<el-dropdown-item command="create-post">
-							<material-icon icon="description"/>
-							<span>Post</span>
-						</el-dropdown-item>
-					</el-dropdown-menu>
-				</template>
-			</el-dropdown>
+			<create-dropdown :parent-id="node.id" :disabled="disableCreate"/>
 		</horizontal-controls>
 
 		<loading-message v-if="loadingChildren"/>
@@ -85,17 +57,13 @@
 </template>
 
 <script>
-import ParentPath from '@/widgets/parent-path.vue';
 import NodeHeader from '@/widgets/node-header.vue';
 import NodeList from '@/widgets/node-list.vue';
+import CreateDropdown from '@/widgets/create-dropdown.vue';
 
 import {
 	ajaxGet,
 } from '@/utils/ajax.js';
-
-import {
-	getPathKeyScope,
-} from '@/utils/tree.js';
 
 import {
 	NODE_CLASS,
@@ -104,9 +72,9 @@ import {
 
 export default {
 	components: {
-		ParentPath,
 		NodeHeader,
 		NodeList,
+		CreateDropdown,
 	},
 	data() {
 		return {
@@ -125,11 +93,11 @@ export default {
 		NODE_CLASS() {
 			return NODE_CLASS;
 		},
-		keyScope() {
-			return getPathKeyScope([...(this.path || []), this.node]);
+		authenticated() {
+			return this.$store.getters.userIsAuthenticated;
 		},
-		depth() {
-			return this.path.length + 1;
+		disableCreate() {
+			return !this.authenticated;
 		},
 	},
 	beforeRouteEnter(to, from, next) {
@@ -140,7 +108,6 @@ export default {
 	beforeRouteUpdate(to, from, next) {
 		this.loadingNode = true;
 		this.node = null;
-		this.path = [];
 		this.children = [];
 
 		next();
@@ -152,9 +119,8 @@ export default {
 			this.loadingNode = true;
 			ajaxGet('/ajax/node/view', {
 				id,
-			}).then(response => {
-				this.node = response.node;
-				this.path = response.path;
+			}).then(node => {
+				this.node = node;
 				this.loadChildren();
 			}).finally(() => {
 				this.loadingNode = false;
@@ -173,12 +139,16 @@ export default {
 				this.loadingChildren = false;
 			});
 		},
-		gotoCreate(routeName) {
+		gotoCreateCategory() {
 			this.$router.push({
-				name: routeName,
-				query: {
-					parentId: this.node.id,
-				},
+				name: 'create-category',
+				query: {parentId: this.node.id},
+			});
+		},
+		gotoCreatePost() {
+			this.$router.push({
+				name: 'create-post',
+				query: {parentId: this.node.id},
 			});
 		},
 	},

@@ -18,11 +18,11 @@ div.center {
 }
 
 .el-button>span,
-.el-tag>.el-tag__content,
-.el-dropdown-menu>.el-dropdown-menu__item,
-.el-menu.el-menu--horizontal>.el-menu-item,
-.el-menu--horizontal>.el-menu>.el-menu-item,
-.el-sub-menu>.el-sub-menu__title {
+.el-tag__content,
+.el-dropdown-menu__item,
+.el-menu-item,
+.el-menu-item,
+.el-sub-menu__title {
 	// add spacing for material icons
 	display: flex;
 	flex-direction: row;

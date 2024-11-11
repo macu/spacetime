@@ -1,38 +1,10 @@
 package treetime
 
 import (
+	"fmt"
 	"treetime/pkg/utils/ajax"
 	"treetime/pkg/utils/db"
 )
-
-func IsValidNodeCreatePath(db db.DBConn, parentID *uint, createClass string) (bool, error) {
-
-	switch createClass {
-
-	case NodeClassLang:
-		// Language nodes cannot be created by the user
-		return false, nil
-
-	case NodeClassCategory, NodeClassTag, NodeClassType, NodeClassPost, NodeClassComment:
-		// Can be created anywhere
-		return true, nil
-
-	case NodeClassField:
-		// Fields can only be created under types
-		if parentID == nil {
-			return false, nil
-		}
-		parentClass, err := LoadNodeClass(db, *parentID)
-		if err != nil {
-			return false, err
-		}
-		return parentClass == NodeClassType, nil
-
-	}
-
-	return false, nil
-
-}
 
 func LoadNodePath(db db.DBConn, auth *ajax.Auth, id uint, orderRootFirst bool) ([]NodeHeader, error) {
 	var path = make([]NodeHeader, 0)
@@ -78,17 +50,19 @@ func LoadNodePath(db db.DBConn, auth *ajax.Auth, id uint, orderRootFirst bool) (
 	)
 
 	if err != nil {
-		return nil, err
+		return nil, fmt.Errorf("loading node path: %w", err)
 	}
 
 	defer rows.Close()
 
 	for rows.Next() {
-		var node = NodeHeader{}
+		var node = NodeHeader{
+			Creator: &NodeCreator{},
+		}
 		err = rows.Scan(&node.ID, &node.Class,
-			&node.IsDeleted, &node.OwnerType, &node.CreatedBy)
+			&node.IsDeleted, &node.OwnerType, &node.Creator.ID)
 		if err != nil {
-			return nil, err
+			return nil, fmt.Errorf("scanning node path: %w", err)
 		}
 		path = append(path, node)
 	}
@@ -102,7 +76,7 @@ func LoadNodePath(db db.DBConn, auth *ajax.Auth, id uint, orderRootFirst bool) (
 
 	err = LoadContentForNodes(db, auth, path)
 	if err != nil {
-		return nil, err
+		return nil, fmt.Errorf("loading content for nodes: %w", err)
 	}
 
 	return path, nil
@@ -110,6 +84,7 @@ func LoadNodePath(db db.DBConn, auth *ajax.Auth, id uint, orderRootFirst bool) (
 }
 
 func LoadNodeParentPath(db db.DBConn, auth *ajax.Auth, id uint, orderRootFirst bool) ([]NodeHeader, error) {
+
 	var path = make([]NodeHeader, 0)
 
 	rows, err := db.Query(`WITH RECURSIVE parent_nodes AS (
@@ -155,17 +130,19 @@ func LoadNodeParentPath(db db.DBConn, auth *ajax.Auth, id uint, orderRootFirst b
 	)
 
 	if err != nil {
-		return nil, err
+		return nil, fmt.Errorf("loading parent nodes: %w", err)
 	}
 
 	defer rows.Close()
 
 	for rows.Next() {
-		var node = NodeHeader{}
+		var node = NodeHeader{
+			Creator: &NodeCreator{},
+		}
 		err = rows.Scan(&node.ID, &node.Class,
-			&node.IsDeleted, &node.OwnerType, &node.CreatedBy)
+			&node.IsDeleted, &node.OwnerType, &node.Creator.ID)
 		if err != nil {
-			return nil, err
+			return nil, fmt.Errorf("scanning parent nodes: %w", err)
 		}
 		path = append(path, node)
 	}
@@ -179,7 +156,7 @@ func LoadNodeParentPath(db db.DBConn, auth *ajax.Auth, id uint, orderRootFirst b
 
 	err = LoadContentForNodes(db, auth, path)
 	if err != nil {
-		return nil, err
+		return nil, fmt.Errorf("loading content for parent nodes: %w", err)
 	}
 
 	return path, nil

@@ -6,6 +6,7 @@ import (
 	"fmt"
 	"net/http"
 	"strings"
+
 	"treetime/pkg/treetime"
 	"treetime/pkg/utils/ajax"
 	"treetime/pkg/utils/logging"
@@ -24,27 +25,21 @@ func AjaxLoadCreateNode(db *sql.DB, auth ajax.Auth, w http.ResponseWriter, r *ht
 		return nil, http.StatusBadRequest
 	}
 
-	path := []treetime.NodeHeader{}
+	var parent *treetime.NodeHeader
 	if parentID != nil {
-		path, err = treetime.LoadNodePath(db, &auth, *parentID, true)
+		parent, err = treetime.LoadNodeHeaderByID(db, &auth, *parentID)
 		if err != nil {
 			logging.LogError(r, &auth, fmt.Errorf("loading node path: %w", err))
 			return nil, http.StatusInternalServerError
 		}
 	}
 
-	createAllowed, err := treetime.IsValidNodeCreatePath(db, parentID, class)
-	if err != nil {
-		logging.LogError(r, &auth, fmt.Errorf("verifying create node allowed: %w", err))
-		return nil, http.StatusInternalServerError
-	}
-
 	return struct {
-		Path          []treetime.NodeHeader `json:"path"`
-		CreateAllowed bool                  `json:"createAllowed"`
+		Parent        *treetime.NodeHeader `json:"parent"`
+		CreateAllowed bool                 `json:"createAllowed"`
 	}{
-		Path:          path,
-		CreateAllowed: createAllowed,
+		Parent:        parent,
+		CreateAllowed: true,
 	}, http.StatusOK
 
 }
@@ -88,8 +83,21 @@ func AjaxCreateNode(conn *sql.DB, auth ajax.Auth, w http.ResponseWriter, r *http
 		return nil, http.StatusBadRequest
 	}
 
-	class := strings.TrimSpace(r.FormValue("class"))
+	class := r.FormValue("class")
 	if !treetime.IsValidNodeClass(class) {
+		return nil, http.StatusBadRequest
+	}
+
+	if class == treetime.NodeClassLang {
+		// Do not allow direct creation of language nodes
+		return nil, http.StatusBadRequest
+	}
+
+	ownerType := r.FormValue("ownerType")
+	if !treetime.IsValidOwnerType(ownerType) {
+		return nil, http.StatusBadRequest
+	}
+	if !treetime.IsValidOwnerTypeForClass(class, ownerType) {
 		return nil, http.StatusBadRequest
 	}
 
@@ -106,7 +114,7 @@ func AjaxCreateNode(conn *sql.DB, auth ajax.Auth, w http.ResponseWriter, r *http
 		return nil, http.StatusBadRequest
 	}
 
-	node, err := treetime.CreateNode(conn, auth, parentID, langNodeID, class, content)
+	node, err := treetime.CreateNode(conn, auth, parentID, langNodeID, class, ownerType, content)
 	if err != nil {
 		logging.LogError(r, &auth, fmt.Errorf("creating node: %w", err))
 		return nil, http.StatusInternalServerError
