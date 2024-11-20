@@ -1,27 +1,9 @@
 -- Clean up previous instance
 
-DROP TRIGGER IF EXISTS on_user_account_insert ON user_account;
-
-DROP FUNCTION IF EXISTS set_first_user_to_admin;
-
-DROP TABLE IF EXISTS tag_vote_status CASCADE;
-DROP TABLE IF EXISTS tag CASCADE;
-DROP TABLE IF EXISTS tag_vote CASCADE;
-DROP TABLE IF EXISTS tree_node_graft_vote_status CASCADE;
-DROP TABLE IF EXISTS tree_node_graft_vote CASCADE;
-DROP TABLE IF EXISTS tree_node_vote CASCADE;
-DROP TABLE IF EXISTS tree_node_vote_status CASCADE;
-DROP TABLE IF EXISTS tree_node_text_version CASCADE;
-DROP TABLE IF EXISTS tree_node CASCADE;
-
-DROP TYPE IF EXISTS tree_node_class;
-DROP TYPE IF EXISTS vote_type;
-
 DROP TABLE IF EXISTS user_signup_request CASCADE;
 DROP TABLE IF EXISTS password_reset_request CASCADE;
 DROP TABLE IF EXISTS user_session CASCADE;
 DROP TABLE IF EXISTS user_account CASCADE;
-
 DROP TYPE IF EXISTS user_role_type;
 
 DROP COLLATION IF EXISTS case_insensitive;
@@ -86,103 +68,96 @@ CREATE COLLATION case_insensitive (
 );
 
 --------------------------------------------------
--- Create content tables
 
-CREATE TYPE vote_type AS ENUM (
-	'up',
-	'down'
+CREATE TYPE space_type ENUM (
+	'space', -- (nameless; contains titles and other spaces)
+	'user', -- (user's personal space)
+	'naked-tag', -- per-character-time-data text without a double newline
+	'tag', -- plaintext without a double newline
+	'title', -- plaintext with a newline
+	'view', -- (tag intersection)
+	'user-checkin', -- user checking themselves in personally to a space
+	'space-checkin', -- user checking in a space to another space
+	'json-attribute', -- URL and json path and refresh rate
+	'picture',
+	'audio',
+	'video',
+	'stream-of-consciousness',
+	'posted-note'
 );
 
-CREATE TYPE tree_node_class AS ENUM (
-	'plaintext',
-	'markdown',
-	'html',
-	'image'
-);
-
-CREATE TABLE tree_node (
+CREATE TABLE space (
 	id SERIAL PRIMARY KEY,
-	parent_id INTEGER REFERENCES tree_node (id) ON DELETE CASCADE, -- null for root
-	node_class tree_node_class NOT NULL,
+	space_type space_type NOT NULL,
 	created_at TIMESTAMPTZ NOT NULL,
 	created_by INTEGER REFERENCES user_account (id) ON DELETE SET NULL
 );
 
-CREATE INDEX tree_node_parent_idx ON tree_node (parent_id);
-
-CREATE TABLE tree_node_vote (
-	node_id INTEGER NOT NULL REFERENCES tree_node (id) ON DELETE CASCADE,
-	vote vote_type NOT NULL,
-	created_at TIMESTAMPTZ NOT NULL,
-	created_by INTEGER NOT NULL REFERENCES user_account (id) ON DELETE CASCADE,
-	PRIMARY KEY (node_id, created_by)
+CREATE TABLE user_space (
+	space_id INTEGER PRIMARY KEY REFERENCES space (id) ON DELETE CASCADE,
+	user_id INTEGER NOT NULL REFERENCES user_account (id) ON DELETE CASCADE
 );
 
-CREATE INDEX tree_node_vote_idx ON tree_node_vote (node_id, vote);
-
-CREATE TABLE tree_node_vote_status (
-	node_id INTEGER NOT NULL REFERENCES tree_node (id) ON DELETE CASCADE,
-	up_votes INTEGER NOT NULL DEFAULT 0,
-	down_votes INTEGER NOT NULL DEFAULT 0,
-	sum INTEGER NOT NULL DEFAULT 0,
-	PRIMARY KEY (node_id)
+CREATE TABLE tag_space (
+	space_id INTEGER PRIMARY KEY REFERENCES space (id) ON DELETE CASCADE,
+	tag_text TEXT COLLATE case_insensitive NOT NULL
 );
 
-CREATE TABLE tree_node_text_version (
-	node_id INTEGER NOT NULL REFERENCES tree_node (id) ON DELETE CASCADE,
-	text_content TEXT NOT NULL,
-	created_at TIMESTAMPTZ NOT NULL,
-	PRIMARY KEY (node_id, created_at)
+CREATE TABLE naked_tag_space (
+	space_id INTEGER PRIMARY KEY REFERENCES space (id) ON DELETE CASCADE,
+	tag_text TEXT NOT NULL,
+	replay_data JSON NOT NULL
 );
 
-CREATE TABLE tag (
-	id SERIAL PRIMARY KEY,
-	parent_id INTEGER REFERENCES tag (id) ON DELETE CASCADE, -- null for root
-	tag_name VARCHAR(50) COLLATE case_insensitive NOT NULL,
-	created_at TIMESTAMPTZ NOT NULL,
-	created_by INTEGER REFERENCES user_account (id)
+CREATE TABLE title_space (
+	space_id INTEGER PRIMARY KEY REFERENCES space (id) ON DELETE CASCADE,
+	title_text TEXT NOT NULL,
+	replay_data JSON
 );
 
-CREATE TABLE tag_vote (
-	tag_id INTEGER NOT NULL REFERENCES tag (id) ON DELETE CASCADE,
-	vote vote_type NOT NULL,
-	created_at TIMESTAMPTZ NOT NULL,
-	created_by INTEGER NOT NULL REFERENCES user_account (id) ON DELETE CASCADE,
-	PRIMARY KEY (tag_id, created_by)
+CREATE TABLE view_space (
+	space_id INTEGER PRIMARY KEY REFERENCES space (id) ON DELETE CASCADE,
+	component_space_ids INTEGER[] NOT NULL
 );
 
-CREATE INDEX tree_node_tag_vote_idx ON tag_vote (tag_id, vote);
-
-CREATE TABLE tag_vote_status (
-	tag_id INTEGER NOT NULL REFERENCES tag (id) ON DELETE CASCADE,
-	up_votes INTEGER NOT NULL DEFAULT 0,
-	down_votes INTEGER NOT NULL DEFAULT 0,
-	sum INTEGER NOT NULL DEFAULT 0,
-	PRIMARY KEY (tag_id)
+CREATE TYPE checkin_time (
+	'past',
+	'now',
+	'future'
 );
 
---------------------------------------------------
--- set first user to admin
+CREATE TABLE user_checkin_space (
+	space_id INTEGER PRIMARY KEY REFERENCES space (id) ON DELETE CASCADE,
+	user_id INTEGER NOT NULL REFERENCES user_account (id) ON DELETE CASCADE,
+	checkin_time checkin_time NOT NULL
+);
 
-CREATE FUNCTION set_first_user_to_admin ()
-RETURNS TRIGGER
-LANGUAGE PLPGSQL
-AS $$
-BEGIN
-	PERFORM 1 FROM user_account WHERE user_role = 'admin' LIMIT 1;
-	IF FOUND THEN
-		RETURN NULL;
-	END IF;
+CREATE TABLE space_checkin_space (
+	space_id INTEGER PRIMARY KEY REFERENCES space (id) ON DELETE CASCADE,
+	checkin_space_id INTEGER NOT NULL REFERENCES space (id) ON DELETE CASCADE,
+	user_id INTEGER NOT NULL REFERENCES user_account (id) ON DELETE CASCADE,
+	checkin_time checkin_time NOT NULL
+);
 
-	NEW.user_role := 'admin';
+CREATE TABLE json_attribute_space (
+	space_id INTEGER PRIMARY KEY REFERENCES space (id) ON DELETE CASCADE,
+	url TEXT NOT NULL,
+	json_path TEXT NOT NULL,
+	refresh_rate INTERVAL
+);
 
-	-- delete trigger and function
-	DROP TRIGGER on_user_account_insert ON user_account;
-	DROP FUNCTION set_first_user_to_admin;
+CREATE TYPE stream_of_consciousness_mode (
+	'naked',
+	'clothed'
+);
 
-	RETURN NULL;
-END;
-$$;
+CREATE TABLE stream_of_consciousness_space (
+	space_id INTEGER PRIMARY KEY REFERENCES space (id) ON DELETE CASCADE,
+	clothing stream_of_consciousness_mode NOT NULL,
+	final_text TEXT NOT NULL
+);
 
-CREATE TRIGGER on_user_account_insert AFTER INSERT ON user_account
-	FOR EACH ROW EXECUTE PROCEDURE set_first_user_to_admin();
+CREATE TABLE posted_note_space (
+	space_id INTEGER PRIMARY KEY REFERENCES space (id) ON DELETE CASCADE,
+	note_text TEXT NOT NULL
+);
