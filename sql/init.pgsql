@@ -84,7 +84,14 @@ CREATE TYPE space_type ENUM (
 	'audio',
 	'video',
 	'stream-of-consciousness',
-	'posted-note'
+	'posted-note',
+
+	-- monetization -- fee is 1¢. per second
+	'rental-space',
+	'rental-payment',
+	'rental-donor',
+	'rental-payee',
+	'rental-payout'
 );
 
 CREATE TABLE space (
@@ -161,4 +168,26 @@ CREATE TABLE stream_of_consciousness_space (
 CREATE TABLE posted_note_space (
 	space_id INTEGER PRIMARY KEY REFERENCES space (id) ON DELETE CASCADE,
 	note_text TEXT NOT NULL
+);
+
+CREATE TYPE rental_space_payout_type (
+	'creators',
+	'public',
+	'platform',
+	'none'
+);
+
+CREATE TABLE rental_space (
+	space_id INTEGER PRIMARY KEY REFERENCES space (id) ON DELETE CASCADE,
+	creator_ids INTEGER[] NOT NULL,
+	payout_type rental_space_payout_type NOT NULL,
+	private BOOLEAN NOT NULL,
+	approved BOOLEAN NOT NULL,
+	release_payment BOOLEAN NOT NULL DEFAULT FALSE,
+	payout_deadline TIMESTAMPTZ -- required for platform payouts - no abuse
+);
+
+CREATE TABLE rental_space_payee (
+	space_id INTEGER PRIMARY KEY REFERENCES space (id) ON DELETE CASCADE,
+	payee_id INTEGER NOT NULL
 );
