@@ -74,7 +74,7 @@ CREATE TYPE space_type ENUM (
 	'user', -- (user's personal space)
 	'naked-tag', -- per-character-time-data text without a double newline
 	'tag', -- plaintext without a double newline
-	'title', -- plaintext without a newline
+	'title', -- plaintext allowing a newline
 	'view', -- (tag intersection)
 	'user-checkin', -- user checking themselves in personally to a space
 	'space-checkin', -- user checking in a space to another space
