@@ -173,7 +173,7 @@ CREATE TABLE posted_note_space (
 CREATE TYPE rental_space_payout_type (
 	'creators',
 	'public',
-	'platform',
+	'platform', -- basically a donation to my company
 	'none'
 );
 
@@ -181,10 +181,9 @@ CREATE TABLE rental_space (
 	space_id INTEGER PRIMARY KEY REFERENCES space (id) ON DELETE CASCADE,
 	creator_ids INTEGER[] NOT NULL,
 	payout_type rental_space_payout_type NOT NULL,
-	private BOOLEAN NOT NULL,
-	approved BOOLEAN NOT NULL,
-	release_payment BOOLEAN NOT NULL DEFAULT FALSE,
-	payout_deadline TIMESTAMPTZ -- required for platform payouts - no abuse
+	private BOOLEAN NOT NULL DEFAULT FALSE, -- platform payouts cannot be private
+	approved BOOLEAN NOT NULL, -- private spaces must be approved before publishing
+	release_payment BOOLEAN NOT NULL DEFAULT FALSE
 );
 
 CREATE TABLE rental_space_payee (
