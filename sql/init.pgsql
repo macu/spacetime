@@ -9,6 +9,8 @@ DROP TABLE IF EXISTS tag CASCADE;
 DROP TABLE IF EXISTS tag_vote CASCADE;
 DROP TABLE IF EXISTS tree_node_graft_vote_status CASCADE;
 DROP TABLE IF EXISTS tree_node_graft_vote CASCADE;
+DROP TABLE IF EXISTS tree_node_vote CASCADE;
+DROP TABLE IF EXISTS tree_node_vote_status CASCADE;
 DROP TABLE IF EXISTS tree_node_text_version CASCADE;
 DROP TABLE IF EXISTS tree_node CASCADE;
 
@@ -108,24 +110,22 @@ CREATE TABLE tree_node (
 
 CREATE INDEX tree_node_parent_idx ON tree_node (parent_id);
 
-CREATE TABLE tree_node_graft_vote (
-	parent_id INTEGER REFERENCES tree_node (id) ON DELETE CASCADE, -- null for root
+CREATE TABLE tree_node_vote (
 	node_id INTEGER NOT NULL REFERENCES tree_node (id) ON DELETE CASCADE,
 	vote vote_type NOT NULL,
 	created_at TIMESTAMPTZ NOT NULL,
 	created_by INTEGER NOT NULL REFERENCES user_account (id) ON DELETE CASCADE,
-	PRIMARY KEY (parent_id, node_id, created_by)
+	PRIMARY KEY (node_id, created_by)
 );
 
-CREATE INDEX tree_node_graft_vote_idx ON tree_node_graft_vote (parent_id, node_id, vote);
+CREATE INDEX tree_node_vote_idx ON tree_node_vote (node_id, vote);
 
-CREATE TABLE tree_node_graft_vote_status (
-	parent_id INTEGER REFERENCES tree_node (id) ON DELETE CASCADE, -- null for root
+CREATE TABLE tree_node_vote_status (
 	node_id INTEGER NOT NULL REFERENCES tree_node (id) ON DELETE CASCADE,
 	up_votes INTEGER NOT NULL DEFAULT 0,
 	down_votes INTEGER NOT NULL DEFAULT 0,
 	sum INTEGER NOT NULL DEFAULT 0,
-	PRIMARY KEY (parent_id, node_id)
+	PRIMARY KEY (node_id)
 );
 
 CREATE TABLE tree_node_text_version (
