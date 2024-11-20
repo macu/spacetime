@@ -77,8 +77,7 @@ CREATE TYPE space_type ENUM (
 	'tag', -- plaintext without a double newline
 	'title', -- plaintext allowing a newline
 	'view', -- (tag intersection)
-	'user-checkin', -- user checking themselves in personally to a space
-	'space-checkin', -- user checking in a space to another space
+	'checkin', -- user checking in a space to another space
 	'json-attribute', -- URL and json path and refresh rate
 	'picture',
 	'audio',
@@ -98,12 +97,7 @@ CREATE TABLE space (
 	id SERIAL PRIMARY KEY,
 	space_type space_type NOT NULL,
 	created_at TIMESTAMPTZ NOT NULL,
-	created_by INTEGER REFERENCES user_account (id) ON DELETE SET NULL
-);
-
-CREATE TABLE user_space (
-	space_id INTEGER PRIMARY KEY REFERENCES space (id) ON DELETE CASCADE,
-	user_id INTEGER NOT NULL REFERENCES user_account (id) ON DELETE CASCADE
+	created_by INTEGER NOT NULL REFERENCES user_account (id) ON DELETE CASCADE,
 );
 
 CREATE TABLE tag_space (
@@ -120,7 +114,7 @@ CREATE TABLE naked_tag_space (
 CREATE TABLE title_space (
 	space_id INTEGER PRIMARY KEY REFERENCES space (id) ON DELETE CASCADE,
 	title_text TEXT NOT NULL,
-	replay_data JSON
+	replay_data JSON -- whether included or not
 );
 
 CREATE TABLE view_space (
@@ -134,16 +128,9 @@ CREATE TYPE checkin_time (
 	'future'
 );
 
-CREATE TABLE user_checkin_space (
-	space_id INTEGER PRIMARY KEY REFERENCES space (id) ON DELETE CASCADE,
-	user_id INTEGER NOT NULL REFERENCES user_account (id) ON DELETE CASCADE,
-	checkin_time checkin_time NOT NULL
-);
-
-CREATE TABLE space_checkin_space (
+CREATE TABLE checkin_space (
 	space_id INTEGER PRIMARY KEY REFERENCES space (id) ON DELETE CASCADE,
 	checkin_space_id INTEGER NOT NULL REFERENCES space (id) ON DELETE CASCADE,
-	user_id INTEGER NOT NULL REFERENCES user_account (id) ON DELETE CASCADE,
 	checkin_time checkin_time NOT NULL
 );
 
