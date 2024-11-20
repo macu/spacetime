@@ -71,6 +71,7 @@ CREATE COLLATION case_insensitive (
 
 CREATE TYPE space_type ENUM (
 	'space', -- (nameless; contains titles and other spaces)
+	'book', -- (nameless; contains everythimg)
 	'user', -- (user's personal space)
 	'naked-tag', -- per-character-time-data text without a double newline
 	'tag', -- plaintext without a double newline
