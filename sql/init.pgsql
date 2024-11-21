@@ -69,6 +69,11 @@ CREATE COLLATION case_insensitive (
 
 --------------------------------------------------
 
+CREATE TABLE unique_text (
+	id SERIAL PRIMARY KEY,
+	text_value TEXT UNIQUE NOT NULL
+);
+
 CREATE TYPE space_type ENUM (
 	'space', -- (nameless; contains titles and other spaces)
 	'checkin', -- user checking in a space to another space
@@ -111,28 +116,23 @@ CREATE TABLE checkin_space ( -- a link to another space somewhere else
 
 CREATE TABLE title_space (
 	space_id INTEGER PRIMARY KEY REFERENCES space (id) ON DELETE CASCADE,
-	title_text TEXT NOT NULL
+	unique_text_id TEXT NOT NULL
 );
 
 CREATE TABLE tag_space (
 	space_id INTEGER PRIMARY KEY REFERENCES space (id) ON DELETE CASCADE,
-	tag_text TEXT NOT NULL
+	unique_text_id TEXT NOT NULL
 );
 
 CREATE TABLE text_space (
 	space_id INTEGER PRIMARY KEY REFERENCES space (id) ON DELETE CASCADE,
-	tag_text TEXT COLLATE case_insensitive NOT NULL
+	unique_text_id TEXT COLLATE case_insensitive NOT NULL
 );
 
 CREATE TABLE naked_text_space (
 	space_id INTEGER PRIMARY KEY REFERENCES space (id) ON DELETE CASCADE,
-	tag_text TEXT NOT NULL,
+	final_unique_text_id INTEGER NOT NULL,
 	replay_data JSON NOT NULL
-);
-
-CREATE TABLE stream_of_consciousness_space (
-	space_id INTEGER PRIMARY KEY REFERENCES space (id) ON DELETE CASCADE,
-	final_text TEXT NOT NULL
 );
 
 CREATE TABLE json_attribute_space (
@@ -172,7 +172,7 @@ CREATE TABLE space_activity (
 
 CREATE TABLE space_title_activity (
 	space_id INTEGER NOT NULL REFERENCES space (id) ON DELETE CASCADE,
-	title_text TEXT NOT NULL,
+	unique_text_id TEXT NOT NULL,
 	overall_total INTEGER NOT NULL,
 	remaining_count INTEGER NOT NULL, -- decrements by 1 per second
 	last_update TIMESTAMPTZ NOT NULL
@@ -180,7 +180,7 @@ CREATE TABLE space_title_activity (
 
 CREATE TABLE space_tag_activity (
 	space_id INTEGER NOT NULL REFERENCES space (id) ON DELETE CASCADE,
-	tag_text TEXT NOT NULL,
+	unique_text_id TEXT NOT NULL,
 	overall_total INTEGER NOT NULL,
 	remaining_count INTEGER NOT NULL, -- decrements by 1 per second
 	last_update TIMESTAMPTZ NOT NULL
