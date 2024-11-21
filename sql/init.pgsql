@@ -72,7 +72,8 @@ CREATE COLLATION case_insensitive (
 CREATE TYPE space_type ENUM (
 	'space', -- (nameless; contains titles and other spaces)
 	'checkin', -- user checking in a space to another space
-	'title', -- plain text (no newlines), special handling to give a space a title
+	'title', -- plain text (no newlines), special handling to give a space an active title
+	'tag', -- plain text (no newlines), special handling to give a space a set of active tags
 	'text', -- plain text entered by a user
 	'naked-text', -- text with realtime replay data
 	'picture',
@@ -111,6 +112,11 @@ CREATE TABLE checkin_space ( -- a link to another space somewhere else
 CREATE TABLE title_space (
 	space_id INTEGER PRIMARY KEY REFERENCES space (id) ON DELETE CASCADE,
 	title_text TEXT NOT NULL
+);
+
+CREATE TABLE tag_space (
+	space_id INTEGER PRIMARY KEY REFERENCES space (id) ON DELETE CASCADE,
+	tag_text TEXT NOT NULL
 );
 
 CREATE TABLE text_space (
