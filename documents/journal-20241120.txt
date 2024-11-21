@@ -40,3 +40,116 @@ This is a trust issue of lacking the proper vision at the present moment.
 I don't want a confusing reality where God is obscured through an information complex. Where we don't know the nature of the spirit we are perceiving. This is an acceptance/belonging issue, and again, in some way everything that happened in time was meant to. Some things are just very painful, or very weird.
 
 Our own minds (like mine) are like these AI images -- deep, impossible to understand, yet structured with reason. I guess we can just say that God specializes in making extremely complex things.
+
+-----
+
+The above, in response to this bizarre schema:
+
+CREATE TYPE space_type ENUM (
+	'space', -- (nameless; contains titles and other spaces)
+	'book', -- (nameless; contains everythimg)
+	'user', -- (user's personal space)
+	'naked-tag', -- per-character-time-data text without a double newline
+	'tag', -- plaintext without a double newline
+	'title', -- plaintext allowing a newline
+	'view', -- (tag intersection)
+	'checkin', -- user checking in a space to another space
+	'json-attribute', -- URL and json path and refresh rate
+	'picture',
+	'audio',
+	'video',
+	'stream-of-consciousness',
+	'posted-note',
+
+	-- monetization -- fee is 1¢. per second
+	'rental-space',
+	'rental-payment',
+	'rental-donor',
+	'rental-payee',
+	'rental-payout'
+);
+
+CREATE TABLE space (
+	id SERIAL PRIMARY KEY,
+	space_type space_type NOT NULL,
+	created_at TIMESTAMPTZ NOT NULL,
+	created_by INTEGER NOT NULL REFERENCES user_account (id) ON DELETE CASCADE,
+);
+
+CREATE TABLE tag_space (
+	space_id INTEGER PRIMARY KEY REFERENCES space (id) ON DELETE CASCADE,
+	tag_text TEXT COLLATE case_insensitive NOT NULL
+);
+
+CREATE TABLE naked_tag_space (
+	space_id INTEGER PRIMARY KEY REFERENCES space (id) ON DELETE CASCADE,
+	tag_text TEXT NOT NULL,
+	replay_data JSON NOT NULL
+);
+
+CREATE TABLE title_space (
+	space_id INTEGER PRIMARY KEY REFERENCES space (id) ON DELETE CASCADE,
+	title_text TEXT NOT NULL,
+	replay_data JSON -- whether included or not
+);
+
+CREATE TABLE view_space (
+	space_id INTEGER PRIMARY KEY REFERENCES space (id) ON DELETE CASCADE,
+	component_space_ids INTEGER[] NOT NULL
+);
+
+CREATE TYPE checkin_time (
+	'past',
+	'now',
+	'future'
+);
+
+CREATE TABLE checkin_space (
+	space_id INTEGER PRIMARY KEY REFERENCES space (id) ON DELETE CASCADE,
+	checkin_space_id INTEGER NOT NULL REFERENCES space (id) ON DELETE CASCADE,
+	checkin_time checkin_time NOT NULL
+);
+
+CREATE TABLE json_attribute_space (
+	space_id INTEGER PRIMARY KEY REFERENCES space (id) ON DELETE CASCADE,
+	url TEXT NOT NULL,
+	json_path TEXT NOT NULL,
+	refresh_rate INTERVAL
+);
+
+CREATE TYPE stream_of_consciousness_mode (
+	'naked',
+	'clothed'
+);
+
+CREATE TABLE stream_of_consciousness_space (
+	space_id INTEGER PRIMARY KEY REFERENCES space (id) ON DELETE CASCADE,
+	clothing stream_of_consciousness_mode NOT NULL,
+	final_text TEXT NOT NULL
+);
+
+CREATE TABLE posted_note_space (
+	space_id INTEGER PRIMARY KEY REFERENCES space (id) ON DELETE CASCADE,
+	note_text TEXT NOT NULL
+);
+
+CREATE TYPE rental_space_payout_type (
+	'creators',
+	'public',
+	'platform', -- basically a donation to my company
+	'none'
+);
+
+CREATE TABLE rental_space (
+	space_id INTEGER PRIMARY KEY REFERENCES space (id) ON DELETE CASCADE,
+	creator_ids INTEGER[] NOT NULL,
+	payout_type rental_space_payout_type NOT NULL,
+	private BOOLEAN NOT NULL DEFAULT FALSE, -- platform payouts cannot be private
+	approved BOOLEAN NOT NULL, -- private spaces must be approved before publishing
+	release_payment BOOLEAN NOT NULL DEFAULT FALSE
+);
+
+CREATE TABLE rental_space_payee (
+	space_id INTEGER PRIMARY KEY REFERENCES space (id) ON DELETE CASCADE,
+	payee_id INTEGER NOT NULL
+);

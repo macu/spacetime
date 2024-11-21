@@ -71,19 +71,15 @@ CREATE COLLATION case_insensitive (
 
 CREATE TYPE space_type ENUM (
 	'space', -- (nameless; contains titles and other spaces)
-	'book', -- (nameless; contains everythimg)
-	'user', -- (user's personal space)
-	'naked-tag', -- per-character-time-data text without a double newline
-	'tag', -- plaintext without a double newline
-	'title', -- plaintext allowing a newline
-	'view', -- (tag intersection)
 	'checkin', -- user checking in a space to another space
-	'json-attribute', -- URL and json path and refresh rate
+	'title', -- plain text (no newlines), special handling to give a space a title
+	'text', -- plain text entered by a user
+	'naked-text', -- text with realtime replay data
 	'picture',
 	'audio',
 	'video',
-	'stream-of-consciousness',
-	'posted-note',
+	'stream-of-consciousness', -- contains a stream of text checkins
+	'json-attribute', -- URL and json path and refresh rate
 
 	-- monetization -- fee is 1¢. per second
 	'rental-space',
@@ -93,33 +89,12 @@ CREATE TYPE space_type ENUM (
 	'rental-payout'
 );
 
-CREATE TABLE space (
+CREATE TABLE space ( -- a domain that contains subspaces
 	id SERIAL PRIMARY KEY,
+	parent_id INTEGER REFERENCES space (id) ON DELETE CASCADE,
 	space_type space_type NOT NULL,
 	created_at TIMESTAMPTZ NOT NULL,
 	created_by INTEGER NOT NULL REFERENCES user_account (id) ON DELETE CASCADE,
-);
-
-CREATE TABLE tag_space (
-	space_id INTEGER PRIMARY KEY REFERENCES space (id) ON DELETE CASCADE,
-	tag_text TEXT COLLATE case_insensitive NOT NULL
-);
-
-CREATE TABLE naked_tag_space (
-	space_id INTEGER PRIMARY KEY REFERENCES space (id) ON DELETE CASCADE,
-	tag_text TEXT NOT NULL,
-	replay_data JSON NOT NULL
-);
-
-CREATE TABLE title_space (
-	space_id INTEGER PRIMARY KEY REFERENCES space (id) ON DELETE CASCADE,
-	title_text TEXT NOT NULL,
-	replay_data JSON -- whether included or not
-);
-
-CREATE TABLE view_space (
-	space_id INTEGER PRIMARY KEY REFERENCES space (id) ON DELETE CASCADE,
-	component_space_ids INTEGER[] NOT NULL
 );
 
 CREATE TYPE checkin_time (
@@ -128,10 +103,30 @@ CREATE TYPE checkin_time (
 	'future'
 );
 
-CREATE TABLE checkin_space (
-	space_id INTEGER PRIMARY KEY REFERENCES space (id) ON DELETE CASCADE,
+CREATE TABLE checkin_space ( -- a link to another space somewhere else
 	checkin_space_id INTEGER NOT NULL REFERENCES space (id) ON DELETE CASCADE,
 	checkin_time checkin_time NOT NULL
+);
+
+CREATE TABLE title_space (
+	space_id INTEGER PRIMARY KEY REFERENCES space (id) ON DELETE CASCADE,
+	title_text TEXT NOT NULL
+);
+
+CREATE TABLE text_space (
+	space_id INTEGER PRIMARY KEY REFERENCES space (id) ON DELETE CASCADE,
+	tag_text TEXT COLLATE case_insensitive NOT NULL
+);
+
+CREATE TABLE naked_text_space (
+	space_id INTEGER PRIMARY KEY REFERENCES space (id) ON DELETE CASCADE,
+	tag_text TEXT NOT NULL,
+	replay_data JSON NOT NULL
+);
+
+CREATE TABLE stream_of_consciousness_space (
+	space_id INTEGER PRIMARY KEY REFERENCES space (id) ON DELETE CASCADE,
+	final_text TEXT NOT NULL
 );
 
 CREATE TABLE json_attribute_space (
@@ -139,22 +134,6 @@ CREATE TABLE json_attribute_space (
 	url TEXT NOT NULL,
 	json_path TEXT NOT NULL,
 	refresh_rate INTERVAL
-);
-
-CREATE TYPE stream_of_consciousness_mode (
-	'naked',
-	'clothed'
-);
-
-CREATE TABLE stream_of_consciousness_space (
-	space_id INTEGER PRIMARY KEY REFERENCES space (id) ON DELETE CASCADE,
-	clothing stream_of_consciousness_mode NOT NULL,
-	final_text TEXT NOT NULL
-);
-
-CREATE TABLE posted_note_space (
-	space_id INTEGER PRIMARY KEY REFERENCES space (id) ON DELETE CASCADE,
-	note_text TEXT NOT NULL
 );
 
 CREATE TYPE rental_space_payout_type (
