@@ -162,3 +162,26 @@ CREATE TABLE rental_space_payee (
 	space_id INTEGER PRIMARY KEY REFERENCES space (id) ON DELETE CASCADE,
 	payee_id INTEGER NOT NULL
 );
+
+CREATE TABLE space_activity (
+	space_id INTEGER NOT NULL REFERENCES space (id) ON DELETE CASCADE,
+	overall_total INTEGER NOT NULL,
+	remaining_count INTEGER NOT NULL, -- decrements by 1 per second
+	last_update TIMESTAMPTZ NOT NULL
+);
+
+CREATE TABLE space_title_activity (
+	space_id INTEGER NOT NULL REFERENCES space (id) ON DELETE CASCADE,
+	title_text TEXT NOT NULL,
+	overall_total INTEGER NOT NULL,
+	remaining_count INTEGER NOT NULL, -- decrements by 1 per second
+	last_update TIMESTAMPTZ NOT NULL
+);
+
+CREATE TABLE space_tag_activity (
+	space_id INTEGER NOT NULL REFERENCES space (id) ON DELETE CASCADE,
+	tag_text TEXT NOT NULL,
+	overall_total INTEGER NOT NULL,
+	remaining_count INTEGER NOT NULL, -- decrements by 1 per second
+	last_update TIMESTAMPTZ NOT NULL
+);
