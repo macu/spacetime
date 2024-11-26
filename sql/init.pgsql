@@ -110,7 +110,7 @@ CREATE TYPE checkin_time (
 );
 
 CREATE TABLE checkin_space ( -- a link to another space somewhere else
-	checkin_space_id INTEGER NOT NULL REFERENCES space (id) ON DELETE CASCADE,
+	checkin_space_id INTEGER REFERENCES space (id) ON DELETE CASCADE,
 	checkin_time checkin_time NOT NULL
 );
 

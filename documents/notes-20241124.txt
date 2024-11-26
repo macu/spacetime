@@ -1,0 +1,5 @@
+Each space has a row at the top of all time top titles and a row of most active current titles
+Same for tags at the bottom
+Then inside of the space is top subspaces and currently active subspaces
+
+Check ins can have a null checkin space, simply where the user adds their presence to the space itself rather than linking in another space
