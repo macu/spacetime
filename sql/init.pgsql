@@ -71,7 +71,7 @@ CREATE COLLATION case_insensitive (
 
 CREATE TABLE unique_text (
 	id SERIAL PRIMARY KEY,
-	text_value TEXT UNIQUE NOT NULL
+	text_value TEXT COLLATE case_insensitive UNIQUE NOT NULL
 );
 
 CREATE TYPE space_type ENUM (
@@ -102,6 +102,8 @@ CREATE TABLE space ( -- a domain that contains subspaces
 	created_at TIMESTAMPTZ NOT NULL,
 	created_by INTEGER NOT NULL REFERENCES user_account (id) ON DELETE CASCADE,
 );
+
+CREATE INDEX space_time_idx ON space (parent_id, created_at);
 
 CREATE TABLE checkin_space ( -- a link to another space somewhere else
 	space_id INTEGER PRIMARY KEY REFERENCES space (id) ON DELETE CASCADE,
@@ -142,6 +144,14 @@ CREATE TABLE json_attribute_space (
 	UNIQUE (space_id, url, json_path, refresh_rate)
 );
 
+-- track current and total checkin activity
+CREATE TABLE space_checkin_activity (
+	space_id INTEGER PRIMARY KEY REFERENCES space (id) ON DELETE CASCADE,
+	overall_total INTEGER NOT NULL,
+	remaining_count INTEGER NOT NULL, -- decrements by 1 per second
+	last_update TIMESTAMPTZ NOT NULL
+);
+
 CREATE TYPE rental_space_payout_type (
 	'creators',
 	'public',
@@ -161,27 +171,4 @@ CREATE TABLE rental_space (
 CREATE TABLE rental_space_payee (
 	space_id INTEGER PRIMARY KEY REFERENCES space (id) ON DELETE CASCADE,
 	payee_id INTEGER NOT NULL
-);
-
-CREATE TABLE space_activity (
-	space_id INTEGER NOT NULL REFERENCES space (id) ON DELETE CASCADE,
-	overall_total INTEGER NOT NULL,
-	remaining_count INTEGER NOT NULL, -- decrements by 1 per second
-	last_update TIMESTAMPTZ NOT NULL
-);
-
-CREATE TABLE space_title_activity (
-	space_id INTEGER NOT NULL REFERENCES space (id) ON DELETE CASCADE,
-	unique_text_id TEXT NOT NULL,
-	overall_total INTEGER NOT NULL,
-	remaining_count INTEGER NOT NULL, -- decrements by 1 per second
-	last_update TIMESTAMPTZ NOT NULL
-);
-
-CREATE TABLE space_tag_activity (
-	space_id INTEGER NOT NULL REFERENCES space (id) ON DELETE CASCADE,
-	unique_text_id TEXT NOT NULL,
-	overall_total INTEGER NOT NULL,
-	remaining_count INTEGER NOT NULL, -- decrements by 1 per second
-	last_update TIMESTAMPTZ NOT NULL
 );
