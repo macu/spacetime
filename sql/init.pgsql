@@ -103,43 +103,43 @@ CREATE TABLE space ( -- a domain that contains subspaces
 	created_by INTEGER NOT NULL REFERENCES user_account (id) ON DELETE CASCADE,
 );
 
-CREATE TYPE checkin_time (
-	'past',
-	'now',
-	'future'
-);
-
 CREATE TABLE checkin_space ( -- a link to another space somewhere else
-	checkin_space_id INTEGER REFERENCES space (id) ON DELETE CASCADE,
-	checkin_time checkin_time NOT NULL
+	space_id INTEGER PRIMARY KEY REFERENCES space (id) ON DELETE CASCADE,
+	checkin_space_id INTEGER REFERENCES space (id) ON DELETE CASCADE, -- null for direct checkins on parent space
+	UNIQUE (space_id, checkin_space_id)
 );
 
 CREATE TABLE title_space (
 	space_id INTEGER PRIMARY KEY REFERENCES space (id) ON DELETE CASCADE,
-	unique_text_id TEXT NOT NULL
+	unique_text_id TEXT NOT NULL,
+	UNIQUE (space_id, unique_text_id)
 );
 
 CREATE TABLE tag_space (
 	space_id INTEGER PRIMARY KEY REFERENCES space (id) ON DELETE CASCADE,
-	unique_text_id TEXT NOT NULL
+	unique_text_id TEXT NOT NULL,
+	UNIQUE (space_id, unique_text_id)
 );
 
 CREATE TABLE text_space (
 	space_id INTEGER PRIMARY KEY REFERENCES space (id) ON DELETE CASCADE,
-	unique_text_id TEXT COLLATE case_insensitive NOT NULL
+	unique_text_id TEXT COLLATE case_insensitive NOT NULL,
+	UNIQUE (space_id, unique_text_id)
 );
 
 CREATE TABLE naked_text_space (
 	space_id INTEGER PRIMARY KEY REFERENCES space (id) ON DELETE CASCADE,
 	final_unique_text_id INTEGER NOT NULL,
 	replay_data JSON NOT NULL
+	-- every naked text will be considered unique
 );
 
 CREATE TABLE json_attribute_space (
 	space_id INTEGER PRIMARY KEY REFERENCES space (id) ON DELETE CASCADE,
 	url TEXT NOT NULL,
 	json_path TEXT NOT NULL,
-	refresh_rate INTERVAL
+	refresh_rate INTERVAL,
+	UNIQUE (space_id, url, json_path, refresh_rate)
 );
 
 CREATE TYPE rental_space_payout_type (
