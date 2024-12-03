@@ -6,7 +6,7 @@
 <meta http-equiv="X-UA-Compatible" content="IE=edge" />
 <meta name="viewport" content="width=device-width, initial-scale=1" />
 
-<title>TreeTime</title>
+<title>Spacetime</title>
 
 <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/element-plus/2.8.2/theme-chalk/index.min.css" integrity="sha512-Kpaxv77wr+LmDnHMPDhcyl3VgtrvR6n7Lw17PaD8VVzzHE0RMd8/sGrACS/BetY4LM4foQKBQEtlUNxyYa/wYA==" crossorigin="anonymous" referrerpolicy="no-referrer" />
 
@@ -20,17 +20,9 @@ window.appConstants = {
 	local: {{.Local}},
 	appVersion: "{{.VersionStamp}}", // version stamp at load time
 	passwordMinLength: {{.PasswordMinLength}},
-	treeMaxDepth: {{.TreeMaxDepth}},
-	maxLengths: {
-		categoryTitle: {{.CategoryTitleMaxLength}},
-		categoryDescription: {{.CategoryDescriptionMaxLength}},
-		tagTitle: {{.TagTitleMaxLength}},
-		postTitle: {{.PostTitleMaxLength}},
-		postBlock: {{.PostBlockMaxLength}},
-		postBlockCount: {{.PostBlockCount}},
-		postUrl: {{.PostURLMaxLength}},
-		commentBody: {{.CommentMaxLength}},
-	},
+	titleMaxLength: {{.TitleMaxLength}},
+	tagMaxLength: {{.TagMaxLength}},
+	textMaxLength: {{.TextMaxLength}},
 };
 </script>
 

@@ -1,4 +1,4 @@
-module treetime
+module spacetime
 
 go 1.23.0
 

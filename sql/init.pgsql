@@ -1,5 +1,21 @@
 -- Clean up previous instance
 
+DROP INDEX IF EXISTS space_time_idx;
+DROP INDEX IF EXISTS space_type_time_idx;
+DROP TABLE IF EXISTS user_space_bookmark CASCADE;
+DROP TABLE IF EXISTS space_checkin_activity CASCADE;
+DROP TABLE IF EXISTS json_attribute_space CASCADE;
+DROP TABLE IF EXISTS naked_text_space CASCADE;
+DROP TABLE IF EXISTS text_space CASCADE;
+DROP TABLE IF EXISTS tag_space CASCADE;
+DROP TABLE IF EXISTS title_space CASCADE;
+DROP TABLE IF EXISTS checkin_space CASCADE;
+DROP TABLE IF EXISTS space CASCADE;
+DROP TABLE IF EXISTS unique_text CASCADE;
+DROP TYPE IF EXISTS space_type;
+
+DROP INDEX IF EXISTS user_account_handle_idx;
+DROP INDEX IF EXISTS user_account_email_idx;
 DROP TABLE IF EXISTS user_signup_request CASCADE;
 DROP TABLE IF EXISTS password_reset_request CASCADE;
 DROP TABLE IF EXISTS user_session CASCADE;
@@ -74,25 +90,26 @@ CREATE TABLE unique_text (
 	text_value TEXT COLLATE case_insensitive UNIQUE NOT NULL
 );
 
-CREATE TYPE space_type ENUM (
+CREATE TYPE space_type AS ENUM (
 	'space', -- (nameless; contains titles and other spaces)
 	'checkin', -- user checking in a space to another space
 	'title', -- plain text (no newlines), special handling to give a space an active title
 	'tag', -- plain text (no newlines), special handling to give a space a set of active tags
 	'text', -- plain text entered by a user
 	'naked-text', -- text with realtime replay data
-	'picture',
-	'audio',
-	'video',
 	'stream-of-consciousness', -- contains a stream of text checkins
-	'json-attribute', -- URL and json path and refresh rate
+	'json-attribute' -- URL and json path and refresh rate
+
+	-- 'picture',
+	-- 'audio',
+	-- 'video',
 
 	-- monetization -- fee is 1¢. per second
-	'rental-space',
-	'rental-payment',
-	'rental-donor',
-	'rental-payee',
-	'rental-payout'
+	-- 'rental-space',
+	-- 'rental-payment',
+	-- 'rental-donor',
+	-- 'rental-payee',
+	-- 'rental-payout'
 );
 
 CREATE TABLE space ( -- a domain that contains subspaces
@@ -100,10 +117,11 @@ CREATE TABLE space ( -- a domain that contains subspaces
 	parent_id INTEGER REFERENCES space (id) ON DELETE CASCADE,
 	space_type space_type NOT NULL,
 	created_at TIMESTAMPTZ NOT NULL,
-	created_by INTEGER NOT NULL REFERENCES user_account (id) ON DELETE CASCADE,
+	created_by INTEGER NOT NULL REFERENCES user_account (id) ON DELETE CASCADE
 );
 
 CREATE INDEX space_time_idx ON space (parent_id, created_at);
+CREATE INDEX space_type_time_idx ON space (parent_id, space_type, created_at);
 
 CREATE TABLE checkin_space ( -- a link to another space somewhere else
 	space_id INTEGER PRIMARY KEY REFERENCES space (id) ON DELETE CASCADE,
@@ -132,8 +150,12 @@ CREATE TABLE text_space (
 CREATE TABLE naked_text_space (
 	space_id INTEGER PRIMARY KEY REFERENCES space (id) ON DELETE CASCADE,
 	final_unique_text_id INTEGER NOT NULL,
-	replay_data JSON NOT NULL
-	-- every naked text will be considered unique
+	replay_data TEXT NOT NULL
+);
+
+CREATE TABLE stream_of_consciousness_space (
+	space_id INTEGER PRIMARY KEY REFERENCES space (id) ON DELETE CASCADE,
+	closed BOOLEAN NOT NULL DEFAULT FALSE -- user closed session
 );
 
 CREATE TABLE json_attribute_space (
@@ -144,31 +166,36 @@ CREATE TABLE json_attribute_space (
 	UNIQUE (space_id, url, json_path, refresh_rate)
 );
 
--- track current and total checkin activity
+-- track total checkin activity
 CREATE TABLE space_checkin_activity (
 	space_id INTEGER PRIMARY KEY REFERENCES space (id) ON DELETE CASCADE,
-	overall_total INTEGER NOT NULL,
-	remaining_count INTEGER NOT NULL, -- decrements by 1 per second
-	last_update TIMESTAMPTZ NOT NULL
+	overall_total INTEGER NOT NULL
 );
 
-CREATE TYPE rental_space_payout_type (
-	'creators',
-	'public',
-	'platform', -- basically a donation to my company
-	'none'
+CREATE TABLE user_space_bookmark (
+	user_id INTEGER NOT NULL REFERENCES user_account (id) ON DELETE CASCADE,
+	space_id INTEGER NOT NULL REFERENCES space (id) ON DELETE CASCADE,
+	created_at TIMESTAMPTZ NOT NULL,
+	PRIMARY KEY (user_id, space_id)
 );
 
-CREATE TABLE rental_space (
-	space_id INTEGER PRIMARY KEY REFERENCES space (id) ON DELETE CASCADE,
-	creator_ids INTEGER[] NOT NULL,
-	payout_type rental_space_payout_type NOT NULL,
-	private BOOLEAN NOT NULL DEFAULT FALSE, -- platform payouts cannot be private
-	approved BOOLEAN NOT NULL, -- private spaces must be approved before publishing
-	release_payment BOOLEAN NOT NULL DEFAULT FALSE
-);
+-- CREATE TYPE rental_space_payout_type (
+-- 	'creators',
+-- 	'public',
+-- 	'platform', -- basically a donation to my company
+-- 	'none'
+-- );
 
-CREATE TABLE rental_space_payee (
-	space_id INTEGER PRIMARY KEY REFERENCES space (id) ON DELETE CASCADE,
-	payee_id INTEGER NOT NULL
-);
+-- CREATE TABLE rental_space (
+-- 	space_id INTEGER PRIMARY KEY REFERENCES space (id) ON DELETE CASCADE,
+-- 	creator_ids INTEGER[] NOT NULL,
+-- 	payout_type rental_space_payout_type NOT NULL,
+-- 	private BOOLEAN NOT NULL DEFAULT FALSE, -- platform payouts cannot be private
+-- 	approved BOOLEAN NOT NULL, -- private spaces must be approved before publishing
+-- 	release_payment BOOLEAN NOT NULL DEFAULT FALSE
+-- );
+
+-- CREATE TABLE rental_space_payee (
+-- 	space_id INTEGER PRIMARY KEY REFERENCES space (id) ON DELETE CASCADE,
+-- 	payee_id INTEGER NOT NULL
+-- );
