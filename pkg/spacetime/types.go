@@ -10,8 +10,8 @@ type Space struct {
 
 	Text *string `json:"text,omitempty"` // tag, title, text
 
-	FinalText  *string `json:"final_text,omitempty"`  // naked-text
-	ReplayData *string `json:"replay_data,omitempty"` // naked-text
+	FinalText  *string                 `json:"final_text,omitempty"`  // naked-text
+	ReplayData *map[string]interface{} `json:"replay_data,omitempty"` // naked-text
 
 	CheckinSpaceID *uint   `json:"checkin_space_id,omitempty"` // checkin
 	CheckinSpace   **Space `json:"checkin_space,omitempty"`    // checkin
