@@ -2,6 +2,7 @@
 
 DROP INDEX IF EXISTS space_time_idx;
 DROP INDEX IF EXISTS space_type_time_idx;
+DROP INDEX IF EXISTS space_checkin_total_idx;
 DROP TABLE IF EXISTS user_space_bookmark CASCADE;
 DROP TABLE IF EXISTS space_checkin_activity CASCADE;
 DROP TABLE IF EXISTS json_attribute_space CASCADE;
@@ -117,11 +118,13 @@ CREATE TABLE space ( -- a domain that contains subspaces
 	parent_id INTEGER REFERENCES space (id) ON DELETE CASCADE,
 	space_type space_type NOT NULL,
 	created_at TIMESTAMPTZ NOT NULL,
-	created_by INTEGER NOT NULL REFERENCES user_account (id) ON DELETE CASCADE
+	created_by INTEGER NOT NULL REFERENCES user_account (id) ON DELETE CASCADE,
+	overall_checkin_total INTEGER NOT NULL DEFAULT 0
 );
 
 CREATE INDEX space_time_idx ON space (parent_id, created_at);
 CREATE INDEX space_type_time_idx ON space (parent_id, space_type, created_at);
+CREATE INDEX space_checkin_total_idx ON space (parent_id, overall_checkin_total);
 
 CREATE TABLE checkin_space ( -- a link to another space somewhere else
 	space_id INTEGER PRIMARY KEY REFERENCES space (id) ON DELETE CASCADE,
@@ -155,7 +158,7 @@ CREATE TABLE naked_text_space (
 
 CREATE TABLE stream_of_consciousness_space (
 	space_id INTEGER PRIMARY KEY REFERENCES space (id) ON DELETE CASCADE,
-	closed BOOLEAN NOT NULL DEFAULT FALSE -- user closed session
+	closed_at TIMESTAMPTZ -- null until closed
 );
 
 CREATE TABLE json_attribute_space (
@@ -164,12 +167,6 @@ CREATE TABLE json_attribute_space (
 	json_path TEXT NOT NULL,
 	refresh_rate INTERVAL,
 	UNIQUE (space_id, url, json_path, refresh_rate)
-);
-
--- track total checkin activity
-CREATE TABLE space_checkin_activity (
-	space_id INTEGER PRIMARY KEY REFERENCES space (id) ON DELETE CASCADE,
-	overall_total INTEGER NOT NULL
 );
 
 CREATE TABLE user_space_bookmark (

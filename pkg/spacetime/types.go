@@ -3,10 +3,11 @@ package spacetime
 import "time"
 
 type Space struct {
-	ID        uint      `json:"id"`
-	SpaceType string    `json:"space_type"`
-	CreatedAt time.Time `json:"created_at"`
-	CreatedBy uint      `json:"created_by"`
+	ID           uint      `json:"id"`
+	SpaceType    string    `json:"space_type"`
+	CreatedAt    time.Time `json:"created_at"`
+	CreatedBy    uint      `json:"created_by"`
+	CheckinTotal uint      `json:"checkin_total"`
 
 	Text *string `json:"text,omitempty"` // tag, title, text
 
