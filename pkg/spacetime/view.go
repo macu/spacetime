@@ -8,7 +8,7 @@ import (
 	"spacetime/pkg/utils/ajax"
 )
 
-const SubspacesPageLimit = 20
+const MaxSubspacesPageLimit = 20
 
 func LoadSpaceTopCheckinsAllTime(conn *sql.DB, auth *ajax.Auth,
 	spaceID uint) (*Space, error) {
@@ -42,11 +42,14 @@ func LoadSpaceTopCheckinsAllTime(conn *sql.DB, auth *ajax.Auth,
 	}
 
 	// Load space content
-	loadSpaceDetails(conn, auth, []*Space{&space}, nil, 0)
+	err = loadSpaceDetails(conn, auth, []*Space{&space}, nil, 0)
+	if err != nil {
+		return nil, fmt.Errorf("loading space details: %w", err)
+	}
 
-	// Load user's bookmarked titles
+	// Load user's last bookmarked title
 	if auth != nil {
-		bookmarkedTitles, err := loadBookmarkedTitles(conn, *auth, spaceID)
+		bookmarkedTitles, err := loadLastBookmarkedTitlesByDate(conn, *auth, spaceID, nil, 1)
 		if err != nil {
 			return nil, fmt.Errorf("loading bookmarked titles: %w", err)
 		}
@@ -57,8 +60,8 @@ func LoadSpaceTopCheckinsAllTime(conn *sql.DB, auth *ajax.Auth,
 
 	// Load all-time top tags
 
-	// Load top content
-	// Load current top content
+	// Load all-time top content (not inlcuding tags and titles)
+	// Load user-bookmarked title and all-time top title for each subspace
 
 	return &space, nil
 
@@ -74,44 +77,80 @@ func LoadSpaceMostRecentUserCheckinsByDate(conn *sql.DB, auth *ajax.Auth,
 	// Load a specific user's checkins ordered by most recent up to date
 }
 
+func LoadSpaceBookmarkedTitlesByDate(conn *sql.DB, auth *ajax.Auth,
+	spaceID uint, date *time.Time, limit uint) {
+
+}
+
 // --------------------------------------------------
 // bath load content from joined tables
 
-func loadBookmarkedTitles(conn *sql.DB, auth ajax.Auth, spaceID uint) ([]*Space, error) {
-	rows, err := conn.Query(`SELECT space.id, space.space_type, space.created_at, space.created_by
+// call to load user's bookmarked titles ("view all")
+func loadLastBookmarkedTitlesByDate(conn *sql.DB, auth ajax.Auth,
+	spaceID uint,
+	date *time.Time, // optional
+	limit uint,
+) ([]*Space, error) {
+
+	if limit > MaxSubspacesPageLimit {
+		limit = MaxSubspacesPageLimit
+	}
+
+	var args = []interface{}{auth.UserID, spaceID, SpaceTypeTitle, limit}
+
+	var dateClause string
+	if date != nil {
+		dateClause = `AND user_space_bookmark.created_at < $5`
+		args = append(args, date)
+	}
+
+	rows, err := conn.Query(`SELECT
+		space.id, space.space_type, space.created_at, space.created_by, unique_text.text
 		FROM space
-		JOIN user_space_bookmark ON user_space_bookmark.space_id = space.id
+		INNER JOIN title_space ON title_space.space_id = space.id
+		INNER JOIN unique_text ON unique_text.id = title_space.unique_text_id
+		INNER JOIN user_space_bookmark ON user_space_bookmark.space_id = space.id
 		WHERE user_space_bookmark.user_id = $1
 		AND user_space_bookmark.space_id = $2
 		AND space.space_type = $3
+		`+dateClause+`
 		ORDER BY user_space_bookmark.created_at DESC
 		LIMIT $4`,
-		auth.UserID, spaceID, SpaceTypeTitle, SubspacesPageLimit,
+		args...,
 	)
 
-	if err != nil {
+	var spaces = []*Space{}
+
+	if err == sql.ErrNoRows {
+		return spaces, nil
+	} else if err != nil {
 		return nil, fmt.Errorf("loading bookmarked titles: %w", err)
 	}
 
-	var spaces = []*Space{}
 	for rows.Next() {
 		var space = Space{}
-		err = rows.Scan(&space.ID, &space.SpaceType, &space.CreatedAt, &space.CreatedBy)
+		err = rows.Scan(&space.ID, &space.SpaceType, &space.CreatedAt, &space.CreatedBy,
+			&space.Text)
 		if err != nil {
 			return nil, fmt.Errorf("loading bookmarked titles: %w", err)
 		}
 		spaces = append(spaces, &space)
 	}
 
-	loadSpaceDetails(conn, &auth, spaces, nil, 0)
-
 	return spaces, nil
 
 }
 
-func loadSpacesContent(conn *sql.DB, auth *ajax.Auth,
+// load for a page of subspaces
+func loadLastBookmarkedTitles(conn *sql.DB, auth *ajax.Auth, spaces []*Space) error {
+	// Load last bookmarked titles for multiple spaces
+	return nil
+}
+
+func loadSpaceDetails(conn *sql.DB, auth *ajax.Auth,
 	spaces []*Space,
-	date *time.Time, interval time.Duration) {
+	date *time.Time, interval time.Duration,
+) error {
 	// Load content for multiple spaces
 
 	if hasSpaceOfType(spaces, SpaceTypeTitle) {
@@ -169,6 +208,8 @@ func loadSpacesContent(conn *sql.DB, auth *ajax.Auth,
 			date, interval)
 	}
 
+	return nil
+
 }
 
 func hasSpaceOfType(spaces []*Space, spaceType string) bool {
@@ -209,7 +250,7 @@ func loadNakedTextSpacesContent(conn *sql.DB, auth *ajax.Auth,
 
 }
 
-func loadSpaceDetails(conn *sql.DB, auth *ajax.Auth,
+func loadCheckinSpaceDetails(conn *sql.DB, auth *ajax.Auth,
 	spaces []*Space,
 	date *time.Time, interval time.Duration) {
 	// Load checkin content for multiple spaces
