@@ -8,9 +8,9 @@ import (
 
 	"golang.org/x/crypto/bcrypt"
 
-	"treetime/pkg/user"
-	"treetime/pkg/utils/ajax"
-	"treetime/pkg/utils/logging"
+	"spacetime/pkg/user"
+	"spacetime/pkg/utils/ajax"
+	"spacetime/pkg/utils/logging"
 )
 
 func AjaxLogin(db *sql.DB, auth *ajax.Auth, w http.ResponseWriter, r *http.Request) (interface{}, int) {

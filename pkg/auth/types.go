@@ -4,7 +4,7 @@ import (
 	"database/sql"
 	"net/http"
 
-	"treetime/pkg/utils/ajax"
+	"spacetime/pkg/utils/ajax"
 )
 
 type AuthOptionalHandler func(

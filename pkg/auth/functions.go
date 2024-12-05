@@ -5,8 +5,9 @@ import (
 	"fmt"
 	"net/http"
 	"time"
-	"treetime/pkg/utils/db"
-	"treetime/pkg/utils/random"
+
+	"spacetime/pkg/utils/db"
+	"spacetime/pkg/utils/random"
 )
 
 // Returns a random session ID that includes current Unix time in nanoseconds.

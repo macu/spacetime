@@ -6,8 +6,8 @@ import (
 	"net/http"
 	"os"
 
-	"treetime/pkg/utils/logging"
-	"treetime/pkg/utils/net"
+	"spacetime/pkg/utils/logging"
+	"spacetime/pkg/utils/net"
 )
 
 func maintenanceMode() {

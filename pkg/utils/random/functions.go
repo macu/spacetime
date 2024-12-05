@@ -9,7 +9,7 @@ import (
 
 	crypto_rand "crypto/rand"
 
-	"treetime/pkg/utils/logging"
+	"spacetime/pkg/utils/logging"
 )
 
 func RandomToken(length uint) string {

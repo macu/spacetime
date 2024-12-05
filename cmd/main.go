@@ -10,12 +10,12 @@ import (
 	"github.com/gorilla/mux"
 	_ "github.com/lib/pq"
 
-	"treetime/pkg/ajax"
-	"treetime/pkg/auth"
-	"treetime/pkg/env"
-	"treetime/pkg/utils/logging"
-	"treetime/pkg/utils/secrets"
-	"treetime/pkg/utils/types"
+	"spacetime/pkg/ajax"
+	"spacetime/pkg/auth"
+	"spacetime/pkg/env"
+	"spacetime/pkg/utils/logging"
+	"spacetime/pkg/utils/secrets"
+	"spacetime/pkg/utils/types"
 )
 
 func main() {

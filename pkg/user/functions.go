@@ -1,7 +1,7 @@
 package user
 
 import (
-	"treetime/pkg/utils/db"
+	"spacetime/pkg/utils/db"
 )
 
 func CheckAdmin(db db.DBConn, userID uint) bool {

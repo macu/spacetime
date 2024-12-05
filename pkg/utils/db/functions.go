@@ -7,7 +7,7 @@ import (
 	"strconv"
 	"strings"
 
-	"treetime/pkg/utils/types"
+	"spacetime/pkg/utils/types"
 )
 
 // Returns a placeholder representing the given arg in args,

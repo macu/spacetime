@@ -8,9 +8,9 @@ import (
 	"os"
 	"time"
 
-	"treetime/pkg/env"
-	"treetime/pkg/utils/net"
-	"treetime/pkg/utils/secrets"
+	"spacetime/pkg/env"
+	"spacetime/pkg/utils/net"
+	"spacetime/pkg/utils/secrets"
 )
 
 func VerifyRecaptcha(r *http.Request) (bool, error) {

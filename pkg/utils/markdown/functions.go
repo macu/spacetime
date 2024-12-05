@@ -10,7 +10,7 @@ import (
 	"github.com/microcosm-cc/bluemonday"
 	"github.com/russross/blackfriday/v2"
 
-	"treetime/pkg/utils/types"
+	"spacetime/pkg/utils/types"
 )
 
 var htmlPolicy *bluemonday.Policy

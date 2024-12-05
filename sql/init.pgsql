@@ -3,6 +3,7 @@
 DROP INDEX IF EXISTS space_time_idx;
 DROP INDEX IF EXISTS space_type_time_idx;
 DROP INDEX IF EXISTS space_checkin_total_idx;
+DROP INDEX IF EXISTS space_user_throttle;
 DROP TABLE IF EXISTS user_space_bookmark CASCADE;
 DROP TABLE IF EXISTS space_checkin_activity CASCADE;
 DROP TABLE IF EXISTS json_attribute_space CASCADE;
@@ -125,6 +126,7 @@ CREATE TABLE space ( -- a domain that contains subspaces
 CREATE INDEX space_time_idx ON space (parent_id, created_at);
 CREATE INDEX space_type_time_idx ON space (parent_id, space_type, created_at);
 CREATE INDEX space_checkin_total_idx ON space (parent_id, overall_checkin_total);
+CREATE INDEX space_user_throttle ON space (created_by, created_at);
 
 CREATE TABLE checkin_space ( -- a link to another space somewhere else
 	space_id INTEGER PRIMARY KEY REFERENCES space (id) ON DELETE CASCADE,

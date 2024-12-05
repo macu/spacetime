@@ -8,11 +8,11 @@ import (
 	"strings"
 	"time"
 
-	"treetime/pkg/env"
-	"treetime/pkg/utils/ajax"
-	"treetime/pkg/utils/logging"
-	"treetime/pkg/utils/random"
-	"treetime/pkg/utils/types"
+	"spacetime/pkg/env"
+	"spacetime/pkg/utils/ajax"
+	"spacetime/pkg/utils/logging"
+	"spacetime/pkg/utils/random"
+	"spacetime/pkg/utils/types"
 
 	"golang.org/x/crypto/bcrypt"
 )

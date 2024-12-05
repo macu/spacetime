@@ -6,9 +6,9 @@ import (
 	"net/http"
 	"time"
 
-	"treetime/pkg/user"
-	"treetime/pkg/utils/ajax"
-	"treetime/pkg/utils/logging"
+	"spacetime/pkg/user"
+	"spacetime/pkg/utils/ajax"
+	"spacetime/pkg/utils/logging"
 )
 
 // Returns a function that wraps a handler in an authentication intercept that loads

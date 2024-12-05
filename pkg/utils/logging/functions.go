@@ -10,9 +10,9 @@ import (
 	"cloud.google.com/go/errorreporting"
 	"cloud.google.com/go/logging"
 
-	"treetime/pkg/env"
-	"treetime/pkg/utils/ajax"
-	"treetime/pkg/utils/types"
+	"spacetime/pkg/env"
+	"spacetime/pkg/utils/ajax"
+	"spacetime/pkg/utils/types"
 )
 
 var (

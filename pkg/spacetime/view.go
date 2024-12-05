@@ -12,7 +12,36 @@ import (
 
 const MaxSubspacesPageLimit = 20
 
-func LoadTopSpaces(conn *sql.DB, auth *ajax.Auth,
+func LoadSpace(conn *sql.DB, auth *ajax.Auth, id uint) (*Space, error) {
+	// Load a single space
+
+	var space = Space{
+		ID: id,
+	}
+
+	err := conn.QueryRow(`SELECT
+		space.space_type, space.created_at, space.created_by
+		FROM space
+		WHERE space.id = $1`,
+		id,
+	).Scan(&space.SpaceType, &space.CreatedAt, &space.CreatedBy)
+
+	if err == sql.ErrNoRows {
+		return nil, nil
+	} else if err != nil {
+		return nil, fmt.Errorf("loading space details: %w", err)
+	}
+
+	err = loadSpaceContent(conn, auth, []*Space{&space}, nil, 0, true)
+	if err != nil {
+		return nil, fmt.Errorf("loading space details: %w", err)
+	}
+
+	return &space, nil
+
+}
+
+func LoadSubspacesByCheckinTotal(conn *sql.DB, auth *ajax.Auth,
 	parentID *uint, // optional
 	offset uint, limit uint, // pagination
 ) ([]*Space, error) {
@@ -52,13 +81,13 @@ func LoadTopSpaces(conn *sql.DB, auth *ajax.Auth,
 		args...,
 	)
 
-	defer rows.Close()
-
 	if err == sql.ErrNoRows {
 		return spaces, nil
 	} else if err != nil {
 		return nil, fmt.Errorf("loading top spaces: %w", err)
 	}
+
+	defer rows.Close()
 
 	for rows.Next() {
 		var space = Space{}

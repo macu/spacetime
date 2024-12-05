@@ -7,22 +7,18 @@ import (
 	"net/http"
 	"strings"
 
-	"treetime/pkg/auth"
-	"treetime/pkg/user"
-	"treetime/pkg/utils/ajax"
-	"treetime/pkg/utils/logging"
+	"spacetime/pkg/auth"
+	"spacetime/pkg/user"
+	"spacetime/pkg/utils/ajax"
+	"spacetime/pkg/utils/logging"
 )
 
 var ajaxHandlersAuthOptional = map[string]map[string]ajax.AjaxRouteAuthOptional{
 	http.MethodGet: {
-		"/ajax/load-login": auth.AjaxLoadLogin,
+		"/ajax/space":     AjaxLoadSpace,
+		"/ajax/subspaces": AjaxLoadSubspacesByCheckinTotal,
 
-		"/ajax/load-langs": AjaxLoadLangauges,
-
-		"/ajax/dashboard":     AjaxDashboard,
-		"/ajax/node/view":     AjaxLoadNodeViewPage,
-		"/ajax/node/children": AjaxLoadNodeChildren,
-
+		"/ajax/load-login":  auth.AjaxLoadLogin,
 		"/ajax/load-signup": auth.AjaxLoadSignup,
 	},
 	http.MethodPost: {
@@ -33,12 +29,16 @@ var ajaxHandlersAuthOptional = map[string]map[string]ajax.AjaxRouteAuthOptional{
 }
 
 var ajaxHandlersAuthRequired = map[string]map[string]ajax.AjaxRouteAuthRequired{
-	http.MethodGet: {
-		"/ajax/node/load-create":   AjaxLoadCreateNode,
-		"/ajax/node/find-existing": AjaxFindExistingNode,
-	},
+	http.MethodGet: {},
 	http.MethodPost: {
-		"/ajax/node/create": AjaxCreateNode,
+		"/ajax/space/empty/create":   AjaxCreateEmptySpace,
+		"/ajax/space/checkin/create": AjaxCreateCheckinSpace,
+		"/ajax/space/title/create":   AjaxCreateTitleSpace,
+		"/ajax/space/tag/create":     AjaxCreateTagSpace,
+		"/ajax/space/text/create":    AjaxCreateTextSpace,
+		"/ajax/space/naked/create":   AjaxCreateNakedTextSpace,
+		"/ajax/space/stream/create":  AjaxCreateStreamOfConsciousnessSpace,
+		"/ajax/space/stream/close":   AjaxCloseStreamOfConsciousnessSpace,
 
 		"/ajax/logout": auth.AjaxLogout,
 	},
