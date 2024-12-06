@@ -21,6 +21,7 @@
 
 	<div class="body">
 		<router-view/>
+		<loading-message v-if="$store.state.loading"/>
 	</div>
 
 </div>

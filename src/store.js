@@ -12,6 +12,7 @@ const MOBILE_MAX = 900;
 export const store = createStore({
 	state() {
 		return {
+			loading: false,
 			user: null, // null means indeterminate
 			langs: [],
 			windowWidth: window.innerWidth,
@@ -67,6 +68,9 @@ export const store = createStore({
 		},
 		setUser(state, user) {
 			state.user = user;
+		},
+		setLoading(state, loading) {
+			state.loading = loading;
 		},
 	},
 	actions: {

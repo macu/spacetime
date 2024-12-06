@@ -9,21 +9,21 @@ import (
 
 func CheckCreateSpaceThrottleBlock(db *sql.DB, auth ajax.Auth) (bool, error) {
 
-	// Check if a space was created by the user within the window
-	// If so, return false
-	// Otherwise, return true
+	// Check if 60 or more spaces were created by the user in the last minute
+	// If so, return true
+	// Otherwise, return false
 
-	var exists bool
+	var block bool
 
-	var err = db.QueryRow(`SELECT EXISTS(SELECT 1 FROM spaces
-		WHERE created_by = ? AND created_at > NOW() - INTERVAL 1 SECOND)`,
+	var err = db.QueryRow(`SELECT COUNT(*) >= 60 FROM space
+		WHERE created_by = ? AND created_at > NOW() - INTERVAL 1 MINUTE`,
 		auth.UserID,
-	).Scan(&exists)
+	).Scan(&block)
 
 	if err != nil {
-		return true, fmt.Errorf("checkThrottleAllowed: %w", err)
+		return true, fmt.Errorf("checkCreateSpaceThrottleBlock: %w", err)
 	}
 
-	return exists, nil
+	return block, nil
 
 }

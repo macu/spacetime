@@ -1,19 +1,20 @@
 Layout ideas
 
 Dashboard
-- list top root spaces (all time checkins)
-- list top root spaces (realtime; last 24 hours; to be implemented later)
+- list all-time top root spaces (all time checkins)
+- list current top root spaces (realtime; last 24 hours; to be implemented later)
 
 Spaces list
-- list one title per space
-- order titles by checkin total, with titles the user checked in on first
+- list the title with your most recent checkin (if any)
+- list the top title by all time checkins
+- show all subspace types
 - show text on titles, tags, texts, and naked texts
 
 Space view (all time view)
 - tabs to view space/subspaces, titles, tags, realtime / last 24 hours (to be implemented later), search
-- list 10 titles (horizontal scroll) with view more (fixed top)
-- list 20 tags (flex row) with view more (fixed bottom)
-- subspaces list (shows everything by checkin total; scroll)
+- your latest checkin title, all-time top checkin title (horizontal scroll) - view more
+- all-time top tags (horizontal scroll) - view more
+- subspaces list (shows everything by checkin total; vertical scroll)
 - search input to search for immediate subspaces by title, or to create a subspace
 - add checkin on any title, tag, or subspace (checkin buttons show overall totals)
 - expand any subspace

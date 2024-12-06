@@ -3,27 +3,7 @@
 
 	<el-backtop :right="40" :bottom="40" :visibility-height="1000"/>
 
-	<h2>Dashboard</h2>
 
-	<div class="flex-row">
-		<create-dropdown :disabled="disableCreate"/>
-		<el-button @click="gotoLanguages()">
-			<material-icon icon="language"/>
-			<span>Languages</span>
-		</el-button>
-		<el-button @click="gotoTags()">
-			<material-icon icon="label"/>
-			<span>Tags</span>
-		</el-button>
-	</div>
-
-	<loading-message v-if="loading"/>
-
-	<template v-else>
-
-		<node-header v-if="treetimeNode" :node="treetimeNode" link-to/>
-
-	</template>
 
 </div>
 </template>

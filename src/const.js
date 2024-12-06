@@ -1,13 +1,10 @@
-export const NODE_CLASS = {
+export const SPACE_TYPES = {
+	SPACE: 'space',
+	CHECK_IN: 'check-in',
+	TITLE: 'title',
 	TAG: 'tag',
-	LANG: 'lang',
-	CATEGORY: 'category',
-	POST: 'post',
-	COMMENT: 'comment',
-};
-
-export const OWNER_TYPE = {
-	ADMIN: 'admin',
-	PUBLIC: 'public',
-	USER: 'user',
+	TEXT: 'text',
+	NAKED_TEXT: 'naked-text',
+	STREAM_OC: 'stream-of-consciousness',
+	JSON_AR: 'json-attribute',
 };

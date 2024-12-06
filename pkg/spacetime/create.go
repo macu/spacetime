@@ -337,7 +337,7 @@ func CreateTagCheckin(conn *sql.DB, auth ajax.Auth, parentID uint, text string) 
 
 }
 
-func CreateTextCheckin(conn *sql.DB, auth ajax.Auth, parentID uint, text string) (*Space, error) {
+func CreateTextCheckin(conn *sql.DB, auth ajax.Auth, parentID *uint, text string) (*Space, error) {
 
 	// Load unique_text ID
 	// Check for existing text space under parent
@@ -348,7 +348,7 @@ func CreateTextCheckin(conn *sql.DB, auth ajax.Auth, parentID uint, text string)
 
 }
 
-func CreateNakedText(conn *sql.DB, auth ajax.Auth, parentID uint, finalText, replayData string) (*Space, error) {
+func CreateNakedText(conn *sql.DB, auth ajax.Auth, parentID *uint, finalText, replayData string) (*Space, error) {
 
 	// Create naked text space with given replay data
 

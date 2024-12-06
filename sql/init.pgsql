@@ -94,7 +94,7 @@ CREATE TABLE unique_text (
 
 CREATE TYPE space_type AS ENUM (
 	'space', -- (nameless; contains titles and other spaces)
-	'checkin', -- user checking in a space to another space
+	'check-in', -- user checking in a space to another space
 	'title', -- plain text (no newlines), special handling to give a space an active title
 	'tag', -- plain text (no newlines), special handling to give a space a set of active tags
 	'text', -- plain text entered by a user

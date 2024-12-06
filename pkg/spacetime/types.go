@@ -4,26 +4,26 @@ import "time"
 
 type Space struct {
 	ID           uint      `json:"id"`
-	SpaceType    string    `json:"space_type"`
-	CreatedAt    time.Time `json:"created_at"`
-	CreatedBy    uint      `json:"created_by"`
-	CheckinTotal uint      `json:"checkin_total"`
+	SpaceType    string    `json:"spaceType"`
+	CreatedAt    time.Time `json:"createdAt"`
+	CreatedBy    uint      `json:"createdBy"`
+	CheckinTotal uint      `json:"checkinTotal"`
 
 	Text *string `json:"text,omitempty"` // tag, title, text
 
-	FinalText  *string                 `json:"final_text,omitempty"`  // naked-text
-	ReplayData *map[string]interface{} `json:"replay_data,omitempty"` // naked-text
+	FinalText  *string                 `json:"finalText,omitempty"`  // naked-text
+	ReplayData *map[string]interface{} `json:"replayData,omitempty"` // naked-text
 
-	CheckinSpaceID *uint   `json:"checkin_space_id,omitempty"` // checkin
-	CheckinSpace   **Space `json:"checkin_space,omitempty"`    // checkin
+	CheckinSpaceID *uint   `json:"checkinSpaceId,omitempty"` // checkin
+	CheckinSpace   **Space `json:"checkinSpace,omitempty"`   // checkin
 
-	UserBookmark *bool `json:"user_bookmark,omitempty"`
+	UserBookmark *bool `json:"userBookmark,omitempty"`
 
-	BookmarkedTitles *[]*Space `json:"tagged_titles,omitempty"`
-	TopTitles        *[]*Space `json:"top_titles,omitempty"`
-	TopTags          *[]*Space `json:"top_tags,omitempty"`
-	TopContent       *[]*Space `json:"top_content,omitempty"`
+	LastUserTitle **Space   `json:"lastUserTitle,omitempty"` // last title by user check-in
+	TopTitles     *[]*Space `json:"topTitles,omitempty"`
+	TopTags       *[]*Space `json:"topTags,omitempty"`
+	TopContent    *[]*Space `json:"topContent,omitempty"`
 
-	AllTimeCheckinCount     *uint `json:"checkin_count_all,omitempty"`
-	LastTwentyFourHourCount *uint `json:"checkin_count_24,omitempty"`
+	AllTimeCheckinCount     *uint `json:"checkinCountAll,omitempty"`
+	LastTwentyFourHourCount *uint `json:"checkinCount24,omitempty"`
 }
