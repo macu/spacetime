@@ -1,0 +1,27 @@
+Layout ideas
+
+Dashboard
+- list top root spaces (all time checkins)
+- list top root spaces (realtime; last 24 hours; to be implemented later)
+
+Spaces list
+- list one title per space
+- order titles by checkin total, with titles the user checked in on first
+- show text on titles, tags, texts, and naked texts
+
+Space view (all time view)
+- tabs to view space/subspaces, titles, tags, realtime / last 24 hours (to be implemented later), search
+- list 10 titles (horizontal scroll) with view more (fixed top)
+- list 20 tags (flex row) with view more (fixed bottom)
+- subspaces list (shows everything by checkin total; scroll)
+- search input to search for immediate subspaces by title, or to create a subspace
+- add checkin on any title, tag, or subspace (checkin buttons show overall totals)
+- expand any subspace
+
+Stream of consciousness
+- stream is created by author
+- each naked text is submitted with a start time (time the user started typing) later than the created_at of the stream space
+- naked texts are posted in the past, according to the time when they were started
+- each naked text is submitted when the enter button is hit twice
+- disable the paste function
+- once stream is closed by author, it renders the full text entered by the author when viewed; other spaces may be added by anyone, but the stream the author created is displayed specially
