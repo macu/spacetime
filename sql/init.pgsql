@@ -123,7 +123,7 @@ CREATE TABLE space ( -- a domain that contains subspaces
 	overall_checkin_total INTEGER NOT NULL DEFAULT 0
 );
 
-CREATE INDEX space_time_idx ON space (parent_id, created_at);
+CREATE INDEX space_time_idx ON space (parent_id, created_at); -- for top queries
 CREATE INDEX space_type_time_idx ON space (parent_id, space_type, created_at);
 CREATE INDEX space_checkin_total_idx ON space (parent_id, overall_checkin_total);
 CREATE INDEX space_user_throttle ON space (created_by, created_at);

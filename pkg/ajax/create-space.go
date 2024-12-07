@@ -31,10 +31,23 @@ func AjaxCreateEmptySpace(db *sql.DB, auth ajax.Auth,
 
 	title := strings.TrimSpace(r.FormValue("title")) // optional
 
-	space, err := spacetime.CreateEmptySpace(db, auth, parentId, title)
+	if len(title) > spacetime.TitleMaxLength {
+		return nil, http.StatusBadRequest
+	}
+
+	space, err := spacetime.CreateEmptySpace(db, auth, parentId)
 	if err != nil {
 		logging.LogError(r, &auth, err)
 		return nil, http.StatusInternalServerError
+	}
+
+	if title != "" {
+		titleSpace, err := spacetime.CreateTitleCheckin(db, auth, space.ID, title)
+		if err != nil {
+			logging.LogError(r, &auth, err)
+			return nil, http.StatusInternalServerError
+		}
+		space.LastUserTitle = &titleSpace
 	}
 
 	return space, http.StatusCreated

@@ -31,13 +31,13 @@ var ajaxHandlersAuthOptional = map[string]map[string]ajax.AjaxRouteAuthOptional{
 var ajaxHandlersAuthRequired = map[string]map[string]ajax.AjaxRouteAuthRequired{
 	http.MethodGet: {},
 	http.MethodPost: {
-		"/ajax/space/empty/create":   AjaxCreateEmptySpace,
-		"/ajax/space/checkin/create": AjaxCreateCheckinSpace,
-		"/ajax/space/title/create":   AjaxCreateTitleSpace,
-		"/ajax/space/tag/create":     AjaxCreateTagSpace,
-		"/ajax/space/text/create":    AjaxCreateTextSpace,
-		"/ajax/space/naked/create":   AjaxCreateNakedTextSpace,
-		"/ajax/space/stream/create":  AjaxCreateStreamOfConsciousnessSpace,
+		"/ajax/space/create/empty":   AjaxCreateEmptySpace,
+		"/ajax/space/create/checkin": AjaxCreateCheckinSpace,
+		"/ajax/space/create/title":   AjaxCreateTitleSpace,
+		"/ajax/space/create/tag":     AjaxCreateTagSpace,
+		"/ajax/space/create/text":    AjaxCreateTextSpace,
+		"/ajax/space/create/naked":   AjaxCreateNakedTextSpace,
+		"/ajax/space/create/stream":  AjaxCreateStreamOfConsciousnessSpace,
 		"/ajax/space/stream/close":   AjaxCloseStreamOfConsciousnessSpace,
 
 		"/ajax/logout": auth.AjaxLogout,

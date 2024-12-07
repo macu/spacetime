@@ -105,7 +105,7 @@ func LoadSubspacesByCheckinTotal(conn *sql.DB, auth *ajax.Auth,
 	}
 
 	if auth != nil {
-		err = loadLastBookmarkedTitleForSpaces(conn, *auth, spaces)
+		err = loadLastUserTitleForSpaces(conn, *auth, spaces)
 		if err != nil {
 			return nil, fmt.Errorf("loading bookmarked titles: %w", err)
 		}
@@ -180,11 +180,21 @@ func loadSpaceContent(conn *sql.DB, auth *ajax.Auth,
 		loadCheckinSpaceDetails(conn, auth, checkinSpaces, loadSubspaces)
 	}
 
+	if hasSpacesOfType(spaces, SpaceTypeStream) {
+		var streamSpaces []*Space
+		for _, space := range spaces {
+			if space.SpaceType == SpaceTypeStream {
+				streamSpaces = append(streamSpaces, space)
+			}
+		}
+		loadStreamSpaceDetails(conn, auth, streamSpaces)
+	}
+
 	return nil
 
 }
 
-func loadLastBookmarkedTitleForSpaces(conn *sql.DB, auth ajax.Auth, spaces []*Space) error {
+func loadLastUserTitleForSpaces(conn *sql.DB, auth ajax.Auth, spaces []*Space) error {
 	// Load the last bookmarked title for multiple spaces
 
 	if len(spaces) == 0 {
@@ -217,13 +227,13 @@ func loadLastBookmarkedTitleForSpaces(conn *sql.DB, auth ajax.Auth, spaces []*Sp
 		args...,
 	)
 
-	defer rows.Close()
-
 	if err == sql.ErrNoRows {
 		return nil
 	} else if err != nil {
 		return fmt.Errorf("loading last bookmarked titles: %w", err)
 	}
+
+	defer rows.Close()
 
 	for rows.Next() {
 		var spaceID uint
@@ -240,8 +250,8 @@ func loadLastBookmarkedTitleForSpaces(conn *sql.DB, auth ajax.Auth, spaces []*Sp
 					SpaceType: SpaceTypeTitle,
 					Text:      &text,
 				}
-				var titles = []*Space{title}
-				space.BookmarkedTitles = &titles
+				space.LastUserTitle = &title
+				break
 			}
 		}
 	}
@@ -285,13 +295,13 @@ func loadTopTitleForSpaces(conn *sql.DB, spaces []*Space, offset, limit uint) er
 		args...,
 	)
 
-	defer rows.Close()
-
 	if err == sql.ErrNoRows {
 		return nil
 	} else if err != nil {
 		return fmt.Errorf("loading top titles: %w", err)
 	}
+
+	defer rows.Close()
 
 	for rows.Next() {
 		var spaceID uint
@@ -359,13 +369,13 @@ func loadTitleSpacesContent(conn *sql.DB, auth *ajax.Auth, spaces []*Space) erro
 		args...,
 	)
 
-	defer rows.Close()
-
 	if err == sql.ErrNoRows {
 		return nil
 	} else if err != nil {
 		return fmt.Errorf("loading title spaces content: %w", err)
 	}
+
+	defer rows.Close()
 
 	for rows.Next() {
 		var spaceID uint
@@ -413,13 +423,13 @@ func loadTagSpacesContent(conn *sql.DB, auth *ajax.Auth, spaces []*Space) error 
 		args...,
 	)
 
-	defer rows.Close()
-
 	if err == sql.ErrNoRows {
 		return nil
 	} else if err != nil {
 		return fmt.Errorf("loading tag spaces content: %w", err)
 	}
+
+	defer rows.Close()
 
 	for rows.Next() {
 		var spaceID uint
@@ -467,13 +477,13 @@ func loadTextSpacesContent(conn *sql.DB, auth *ajax.Auth, spaces []*Space) error
 		args...,
 	)
 
-	defer rows.Close()
-
 	if err == sql.ErrNoRows {
 		return nil
 	} else if err != nil {
 		return fmt.Errorf("loading text spaces content: %w", err)
 	}
+
+	defer rows.Close()
 
 	for rows.Next() {
 		var spaceID uint
@@ -521,13 +531,13 @@ func loadNakedTextSpacesContent(conn *sql.DB, auth *ajax.Auth, spaces []*Space) 
 		args...,
 	)
 
-	defer rows.Close()
-
 	if err == sql.ErrNoRows {
 		return nil
 	} else if err != nil {
 		return fmt.Errorf("loading title spaces content: %w", err)
 	}
+
+	defer rows.Close()
 
 	for rows.Next() {
 		var spaceID uint
@@ -584,13 +594,13 @@ func loadCheckinSpaceDetails(conn *sql.DB, auth *ajax.Auth,
 		args...,
 	)
 
-	defer rows.Close()
-
 	if err == sql.ErrNoRows {
 		return nil
 	} else if err != nil {
 		return fmt.Errorf("loading checkin space details: %w", err)
 	}
+
+	defer rows.Close()
 
 	for rows.Next() {
 		var spaceID uint
@@ -628,6 +638,74 @@ func loadCheckinSpaceDetails(conn *sql.DB, auth *ajax.Auth,
 					space.CheckinSpace = &checkinSpace
 				}
 			}
+		}
+	}
+
+	return nil
+
+}
+
+func loadStreamSpaceDetails(conn *sql.DB, auth *ajax.Auth,
+	spaces []*Space,
+) error {
+	// Load stream-of-conscoiusness content for multiple spaces
+
+	if len(spaces) == 0 {
+		return nil
+	}
+
+	var args = []interface{}{}
+
+	var inClauseSql string
+
+	for i, space := range spaces {
+		if i > 0 {
+			inClauseSql += `, `
+		}
+		inClauseSql += db.Arg(&args, space.ID)
+		args = append(args, space.ID)
+	}
+
+	rows, err := conn.Query(`SELECT
+		space.id, stream_of_conscioussness_space.closed_at
+		FROM space
+		INNER JOIN stream_of_conscioussness_space ON stream_of_conscioussness_space.space_id = space.id
+		WHERE space.id IN (`+inClauseSql+`)`,
+		args...,
+	)
+
+	if err == sql.ErrNoRows {
+		return nil
+	} else if err != nil {
+		return fmt.Errorf("loading stream space details: %w", err)
+	}
+
+	defer rows.Close()
+
+	for rows.Next() {
+		var spaceID uint
+		var closedAt *time.Time
+		err = rows.Scan(&spaceID, &closedAt)
+		if err != nil {
+			return fmt.Errorf("loading checkin space details: %w", err)
+		}
+		for _, space := range spaces {
+			if space.ID == spaceID {
+				space.StreamClosedAt = &closedAt
+			}
+		}
+	}
+
+	// load stream texts
+	for _, space := range spaces {
+		var streamTexts []*Space
+		var limitTextCreatedAtQuery string
+		if space.StreamClosedAt != nil {
+			// Up to time closed
+			limitTextCreatedAtQuery = ``
+		} else {
+			// Up to now
+			limitTextCreatedAtQuery = ``
 		}
 	}
 

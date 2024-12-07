@@ -1,10 +1,10 @@
 <template>
-<div class="treetime-app" :class="{'is-mobile': isMobile}">
+<div class="spacetime-app" :class="{'is-mobile': isMobile}">
 
 	<header class="flex-row-md">
 		<h1 class="flex-1">
-			<span v-if="onDashboard">TreeTime</span>
-			<router-link v-else :to="{name: 'dashboard'}">TreeTime</router-link>
+			<span v-if="onDashboard">Spacetime</span>
+			<router-link v-else :to="{name: 'dashboard'}">Spacetime</router-link>
 		</h1>
 		<template v-if="showUser">
 			<span class="flex-row nowrap">
@@ -52,7 +52,6 @@ export default {
 	mounted() {
 		// Load current user
 		this.$store.dispatch('loadLogin');
-		this.$store.dispatch('loadLangs');
 	},
 	methods: {
 		logout() {
@@ -71,7 +70,7 @@ export default {
 </script>
 
 <style lang="scss">
-.treetime-app {
+.spacetime-app {
 
 	>header {
 		margin: 0;

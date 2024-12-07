@@ -26,4 +26,7 @@ type Space struct {
 
 	AllTimeCheckinCount     *uint `json:"checkinCountAll,omitempty"`
 	LastTwentyFourHourCount *uint `json:"checkinCount24,omitempty"`
+
+	StreamClosedAt **time.Time `json:"streamClosedAt,omitempty"`
+	StreamTexts    *[]*Space   `json:"streamTexts,omitempty"`
 }

@@ -32,8 +32,7 @@
 
 	<horizontal-controls class="nowrap horizontal-scroll">
 
-		<el-button>Create empty space</el-button>
-		<el-button>Create </el-button>
+		<create-dropdown :parent-id="space.id"/>
 
 		<el-input
 			class="search flex-1"

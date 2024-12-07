@@ -14,7 +14,6 @@ export const store = createStore({
 		return {
 			loading: false,
 			user: null, // null means indeterminate
-			langs: [],
 			windowWidth: window.innerWidth,
 		};
 	},
@@ -24,12 +23,6 @@ export const store = createStore({
 		},
 		passwordMinLength() {
 			return window.appConstants.passwordMinLength;
-		},
-		treeMaxDepth() {
-			return window.appConstants.treeMaxDepth;
-		},
-		maxLengths() {
-			return window.appConstants.maxLengths;
 		},
 		loginLoaded(state) {
 			return state.user !== null;
@@ -87,11 +80,6 @@ export const store = createStore({
 		logout(context) {
 			return ajaxPost('/ajax/logout').then(() => {
 				context.commit('setUser', false);
-			});
-		},
-		loadLangs(context) {
-			return ajaxGet('/ajax/load-langs').then(langs => {
-				context.state.langs = langs;
 			});
 		},
 	},
