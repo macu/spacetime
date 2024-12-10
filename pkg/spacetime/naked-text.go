@@ -43,6 +43,13 @@ func ValidateNakedText(text NakedText) bool {
 	// Ensure full data is available for each type of delta
 	for _, delta := range text {
 		if delta.Key != nil {
+			// Check valid key
+			// TODO - store text instead of keys
+			// - valid keys will be newlines and backspaces
+			if *delta.Key < 32 || *delta.Key > 126 {
+				return false
+			}
+
 			if delta.Cursor != nil || delta.SelectStart != nil || delta.SelectEnd != nil ||
 				delta.ReplaceStart != nil || delta.ReplaceEnd != nil || delta.ReplaceText != nil {
 				return false

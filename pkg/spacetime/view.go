@@ -611,34 +611,24 @@ func loadCheckinSpaceDetails(conn *sql.DB, auth *ajax.Auth,
 		}
 		for _, space := range spaces {
 			if space.ID == spaceID {
-				space.CheckinSpaceID = checkinSpaceID
+				var space = &Space{
+					ID: *checkinSpaceID,
+				}
+				space.CheckinSpace = &space
 			}
 		}
 	}
 
 	var checkinSpaces []*Space
 	for _, space := range spaces {
-		if space.CheckinSpaceID != nil {
-			var checkinSpace = Space{
-				ID: *space.CheckinSpaceID,
-			}
-			checkinSpaces = append(checkinSpaces, &checkinSpace)
+		if space.CheckinSpace != nil {
+			checkinSpaces = append(checkinSpaces, *space.CheckinSpace)
 		}
 	}
 
 	err = loadSpaceContent(conn, auth, checkinSpaces, nil, 0, false)
 	if err != nil {
 		return fmt.Errorf("loading checkin space details: %w", err)
-	}
-
-	for _, space := range spaces {
-		if space.CheckinSpaceID != nil {
-			for _, checkinSpace := range checkinSpaces {
-				if checkinSpace.ID == *space.CheckinSpaceID {
-					space.CheckinSpace = &checkinSpace
-				}
-			}
-		}
 	}
 
 	return nil
@@ -697,17 +687,17 @@ func loadStreamSpaceDetails(conn *sql.DB, auth *ajax.Auth,
 	}
 
 	// load stream texts
-	for _, space := range spaces {
-		var streamTexts []*Space
-		var limitTextCreatedAtQuery string
-		if space.StreamClosedAt != nil {
-			// Up to time closed
-			limitTextCreatedAtQuery = ``
-		} else {
-			// Up to now
-			limitTextCreatedAtQuery = ``
-		}
-	}
+	// for _, space := range spaces {
+	// 	var streamTexts []*Space
+	// 	var limitTextCreatedAtQuery string
+	// 	if space.StreamClosedAt != nil {
+	// 		// Up to time closed
+	// 		limitTextCreatedAtQuery = ``
+	// 	} else {
+	// 		// Up to now
+	// 		limitTextCreatedAtQuery = ``
+	// 	}
+	// }
 
 	return nil
 

@@ -5,9 +5,7 @@
 
 	<create-dropdown :disabled="disableCreate" sticky/>
 
-	<spaces-list :spaces="spaces" @load-more="loadMore()"/>
-
-	<loading-message v-if="loading"/>
+	<spaces-list :spaces="spaces" :loading="loading" @load-more="loadMore()"/>
 
 </div>
 </template>
@@ -23,6 +21,7 @@ import {
 export default {
 	components: {
 		CreateDropdown,
+		SpacesList,
 	},
 	data() {
 		return {
@@ -48,6 +47,17 @@ export default {
 				parentId: null, // root
 			}).then(response => {
 				this.spaces = response;
+			}).finally((error) => {
+				this.loading = false;
+			});
+		},
+		loadMode() {
+			this.loading = true;
+			ajaxGet('/ajax/subspaces', {
+				parentId: null, // root
+				offset: this.spaces.length,
+			}).then(response => {
+				this.spaces = this.spaces.concat(response);
 			}).finally((error) => {
 				this.loading = false;
 			});
