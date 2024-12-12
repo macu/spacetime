@@ -10,6 +10,8 @@ import LoginPage from '@/pages/user-account/login.vue';
 import SignupPage from '@/pages/user-account/signup.vue';
 import SignupVerifyPage from '@/pages/user-account/signup-verify.vue';
 
+import SpacePage from './pages/space.vue';
+
 const router = createRouter({
 	history: createWebHistory(),
 	routes: [
@@ -32,6 +34,11 @@ const router = createRouter({
 			path: '/verify-signup',
 			name: 'signup-verify',
 			component: SignupVerifyPage,
+		},
+		{
+			path: '/space/:spaceId',
+			name: 'space',
+			component: SpacePage,
 		},
 	],
 });

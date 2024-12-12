@@ -54,6 +54,18 @@ export const store = createStore({
 			}
 			return null;
 		},
+		titleMaxLength() {
+			return window.appConstants.titleMaxLength;
+		},
+		tagMaxLength() {
+			return window.appConstants.tagMaxLength;
+		},
+		textMaxLength() {
+			return window.appConstants.textMaxLength;
+		},
+		maxLimit() {
+			return window.appConstants.maxLimit;
+		},
 	},
 	mutations: {
 		updateWindowWidth(state) {

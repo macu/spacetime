@@ -22,6 +22,7 @@ func indexHandler(db *sql.DB, user *ajax.Auth, w http.ResponseWriter, r *http.Re
 		TitleMaxLength    uint
 		TaxMaxLength      uint
 		TextMaxLength     uint
+		MaxLimit          uint
 	}{
 		env.IsLocal(),
 		env.GetCacheControlVersionStamp(),
@@ -29,5 +30,6 @@ func indexHandler(db *sql.DB, user *ajax.Auth, w http.ResponseWriter, r *http.Re
 		spacetime.TitleMaxLength,
 		spacetime.TagMaxLength,
 		spacetime.TextMaxLength,
+		spacetime.MaxSubspacesPageLimit,
 	})
 }

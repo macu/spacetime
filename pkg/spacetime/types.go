@@ -8,6 +8,8 @@ type Space struct {
 	CreatedAt time.Time `json:"createdAt"`
 	CreatedBy uint      `json:"createdBy"`
 
+	CheckinTotal uint `json:"checkinTotal"`
+
 	Text *string `json:"text,omitempty"` // tag, title, text
 
 	FinalText  *string    `json:"finalText,omitempty"`  // naked-text
@@ -17,8 +19,6 @@ type Space struct {
 	StreamTexts    *[]*Space   `json:"streamTexts,omitempty"`
 
 	CheckinSpace **Space `json:"checkinSpace,omitempty"` // checkin
-
-	CheckinTotal uint `json:"checkinTotal"`
 
 	AuthorHandle      **string `json:"authorHandle,omitempty"`
 	AuthorDisplayName *string  `json:"authorDisplayName,omitempty"`

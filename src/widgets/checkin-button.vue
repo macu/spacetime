@@ -1,9 +1,9 @@
 <template>
 <el-button-group>
-	<el-button @click="addCheckIn()">
+	<el-button @click="addCheckIn()" :type="buttonType">
 		<material-icon icon="check"/>
 	</el-button>
-	<el-button @click="showStats()">
+	<el-button @click="showStats()" :type="buttonType">
 		<span v-text="checkinCount"/>
 	</el-button>
 </el-button-group>
@@ -11,6 +11,9 @@
 
 <script>
 export default {
+	emits: [
+		'check-in',
+	],
 	props: {
 		space: {
 			type: Object,
@@ -20,7 +23,7 @@ export default {
 	data() {
 		return {
 			hasUserCheckin: false,
-			checkinCount: this.space.checkinCountAll || 0,
+			checkinCount: this.space.checkinTotal || 0,
 		};
 	},
 	computed: {

@@ -17,6 +17,10 @@ div.center {
 	align-items: center;
 }
 
+.horizontal-scroll {
+	overflow-x: auto;
+}
+
 .el-button>span,
 .el-tag__content,
 .el-dropdown-menu__item,

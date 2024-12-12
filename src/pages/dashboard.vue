@@ -45,6 +45,7 @@ export default {
 			this.loading = true;
 			ajaxGet('/ajax/subspaces', {
 				parentId: null, // root
+				limit: this.$store.getters.maxLimit,
 			}).then(response => {
 				this.spaces = response;
 			}).finally((error) => {
@@ -56,6 +57,7 @@ export default {
 			ajaxGet('/ajax/subspaces', {
 				parentId: null, // root
 				offset: this.spaces.length,
+				limit: this.$store.getters.maxLimit,
 			}).then(response => {
 				this.spaces = this.spaces.concat(response);
 			}).finally((error) => {

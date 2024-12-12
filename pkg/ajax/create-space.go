@@ -47,7 +47,10 @@ func AjaxCreateEmptySpace(db *sql.DB, auth ajax.Auth,
 			logging.LogError(r, &auth, err)
 			return nil, http.StatusInternalServerError
 		}
-		space.LastUserTitle = &titleSpace
+		space.UserTitles = &[]*spacetime.Space{titleSpace}
+		space.TopTitles = &[]*spacetime.Space{titleSpace}
+		space.TopTags = &[]*spacetime.Space{}
+		space.TopContent = &[]*spacetime.Space{titleSpace}
 	}
 
 	return space, http.StatusCreated
