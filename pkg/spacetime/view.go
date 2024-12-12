@@ -543,7 +543,7 @@ func loadNakedTextSpacesContent(conn *sql.DB, auth *ajax.Auth, spaces []*Space) 
 		var spaceID uint
 		var text string
 		var replayJSON string
-		var replayData map[string]interface{}
+		var replayData NakedText
 		err = rows.Scan(&spaceID, &text, &replayJSON)
 		if err != nil {
 			return fmt.Errorf("loading title spaces content: %w", err)

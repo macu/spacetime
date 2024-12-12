@@ -12,8 +12,15 @@
 </template>
 
 <script>
+import SpaceOutput from './space-output.vue';
+
 export default {
-	emits: ['load-more'],
+	emits: [
+		'load-more',
+	],
+	components: {
+		SpaceOutput,
+	},
 	props: {
 		spaces: {
 			type: Array,

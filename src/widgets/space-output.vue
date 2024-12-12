@@ -43,6 +43,8 @@
 		:space="space"
 		/> -->
 
+	<slot name="subspaces"/>
+
 </div>
 </template>
 

@@ -31,7 +31,7 @@ func AjaxCreateEmptySpace(db *sql.DB, auth ajax.Auth,
 
 	title := strings.TrimSpace(r.FormValue("title")) // optional
 
-	if len(title) > spacetime.TitleMaxLength {
+	if title != "" && !spacetime.ValidateTitle(title) {
 		return nil, http.StatusBadRequest
 	}
 
@@ -49,8 +49,8 @@ func AjaxCreateEmptySpace(db *sql.DB, auth ajax.Auth,
 		}
 		space.UserTitles = &[]*spacetime.Space{titleSpace}
 		space.TopTitles = &[]*spacetime.Space{titleSpace}
-		space.TopTags = &[]*spacetime.Space{}
-		space.TopContent = &[]*spacetime.Space{titleSpace}
+		space.TopSubspaces = &[]*spacetime.Space{titleSpace}
+		space.TotalSubspaces = 1
 	}
 
 	return space, http.StatusCreated
@@ -70,7 +70,25 @@ func AjaxCreateCheckinSpace(db *sql.DB, auth ajax.Auth,
 		return nil, http.StatusTooManyRequests
 	}
 
-	return nil, http.StatusNotImplemented
+	// parent required
+	parentID, err := types.AtoUint(r.FormValue("parentId"))
+	if err != nil {
+		return nil, http.StatusBadRequest
+	}
+
+	// space optional
+	spaceID, err := types.AtoUintNilIfEmpty(r.FormValue("spaceId"))
+	if err != nil {
+		return nil, http.StatusBadRequest
+	}
+
+	space, err := spacetime.CreateCheckin(db, auth, parentID, spaceID)
+	if err != nil {
+		logging.LogError(r, &auth, err)
+		return nil, http.StatusInternalServerError
+	}
+
+	return space, http.StatusCreated
 
 }
 
@@ -87,7 +105,25 @@ func AjaxCreateTitleSpace(db *sql.DB, auth ajax.Auth,
 		return nil, http.StatusTooManyRequests
 	}
 
-	return nil, http.StatusNotImplemented
+	// parent required
+	parentID, err := types.AtoUint(r.FormValue("parentId"))
+	if err != nil {
+		return nil, http.StatusBadRequest
+	}
+
+	title := strings.TrimSpace(r.FormValue("title"))
+
+	if !spacetime.ValidateTitle(title) {
+		return nil, http.StatusBadRequest
+	}
+
+	space, err := spacetime.CreateTitleCheckin(db, auth, parentID, title)
+	if err != nil {
+		logging.LogError(r, &auth, err)
+		return nil, http.StatusInternalServerError
+	}
+
+	return space, http.StatusNotImplemented
 
 }
 
@@ -104,7 +140,25 @@ func AjaxCreateTagSpace(db *sql.DB, auth ajax.Auth,
 		return nil, http.StatusTooManyRequests
 	}
 
-	return nil, http.StatusNotImplemented
+	// parent required
+	parentID, err := types.AtoUint(r.FormValue("parentId"))
+	if err != nil {
+		return nil, http.StatusBadRequest
+	}
+
+	tag := strings.TrimSpace(r.FormValue("tag"))
+
+	if !spacetime.ValidateTag(tag) {
+		return nil, http.StatusBadRequest
+	}
+
+	space, err := spacetime.CreateTagCheckin(db, auth, parentID, tag)
+	if err != nil {
+		logging.LogError(r, &auth, err)
+		return nil, http.StatusInternalServerError
+	}
+
+	return space, http.StatusNotImplemented
 
 }
 
@@ -121,7 +175,25 @@ func AjaxCreateTextSpace(db *sql.DB, auth ajax.Auth,
 		return nil, http.StatusTooManyRequests
 	}
 
-	return nil, http.StatusNotImplemented
+	// parent optional
+	parentID, err := types.AtoUintNilIfEmpty(r.FormValue("parentId"))
+	if err != nil {
+		return nil, http.StatusBadRequest
+	}
+
+	text := strings.TrimSpace(r.FormValue("text"))
+
+	if !spacetime.ValidateText(text) {
+		return nil, http.StatusBadRequest
+	}
+
+	space, err := spacetime.CreateTextCheckin(db, auth, parentID, text)
+	if err != nil {
+		logging.LogError(r, &auth, err)
+		return nil, http.StatusInternalServerError
+	}
+
+	return space, http.StatusNotImplemented
 
 }
 

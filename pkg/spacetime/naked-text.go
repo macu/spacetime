@@ -1,22 +1,24 @@
 package spacetime
 
 type NakedTextDelta struct {
-	Timestmap uint `json:"timestamp"`
+	Timestmap uint `json:"ts"`
 
-	// keystrokes
-	Key *uint `json:"key,omitempty"`
+	// key presses (like backspace)
+	Key *uint `json:"k,omitempty"`
+
+	// added text (one char at a time)
+	AddText *string `json:"t,omitempty"`
 
 	// cursor positioning
-	Cursor *uint `json:"cursor,omitempty"`
+	Cursor *uint `json:"c,omitempty"`
 
 	// selections
-	SelectStart *uint `json:"select_start,omitempty"`
-	SelectEnd   *uint `json:"select_end,omitempty"`
+	SelectStart *uint `json:"ss,omitempty"`
+	SelectEnd   *uint `json:"se,omitempty"`
 
-	// replacements/paste
-	ReplaceStart *uint   `json:"replace_start,omitempty"`
-	ReplaceEnd   *uint   `json:"replace_end,omitempty"`
-	ReplaceText  *string `json:"replace_text,omitempty"`
+	// replacements/paste (used with text/key)
+	ReplaceStart *uint `json:"rs,omitempty"`
+	ReplaceEnd   *uint `json:"re,omitempty"`
 }
 
 type NakedText []NakedTextDelta
@@ -42,23 +44,44 @@ func ValidateNakedText(text NakedText) bool {
 
 	// Ensure full data is available for each type of delta
 	for _, delta := range text {
+		if delta.AddText != nil {
+			// Check valid text
+
+			// - valid text will be single characters
+			if len(*delta.AddText) != 1 {
+				return false
+			}
+
+			// valid text will be printable (tabs allowed)
+			if (*delta.AddText)[0] < 32 && (*delta.AddText)[0] != 9 {
+				return false
+			}
+
+			if delta.Key != nil || delta.Cursor != nil ||
+				delta.SelectStart != nil || delta.SelectEnd != nil {
+				return false
+			}
+		}
+
 		if delta.Key != nil {
 			// Check valid key
-			// TODO - store text instead of keys
+
 			// - valid keys will be newlines and backspaces
-			if *delta.Key < 32 || *delta.Key > 126 {
+			if *delta.Key != 8 && *delta.Key != 13 {
 				return false
 			}
 
 			if delta.Cursor != nil || delta.SelectStart != nil || delta.SelectEnd != nil ||
-				delta.ReplaceStart != nil || delta.ReplaceEnd != nil || delta.ReplaceText != nil {
+				delta.ReplaceStart != nil || delta.ReplaceEnd != nil ||
+				delta.AddText != nil {
 				return false
 			}
 		}
 
 		if delta.Cursor != nil {
 			if delta.Key != nil || delta.SelectStart != nil || delta.SelectEnd != nil ||
-				delta.ReplaceStart != nil || delta.ReplaceEnd != nil || delta.ReplaceText != nil {
+				delta.ReplaceStart != nil || delta.ReplaceEnd != nil ||
+				delta.AddText != nil {
 				return false
 			}
 		}
@@ -66,15 +89,17 @@ func ValidateNakedText(text NakedText) bool {
 		if delta.SelectStart != nil || delta.SelectEnd != nil {
 			if delta.Key != nil || delta.Cursor != nil ||
 				delta.SelectStart == nil || delta.SelectEnd == nil ||
-				delta.ReplaceStart != nil || delta.ReplaceEnd != nil || delta.ReplaceText != nil {
+				delta.ReplaceStart != nil || delta.ReplaceEnd != nil ||
+				delta.AddText != nil {
 				return false
 			}
 		}
 
-		if delta.ReplaceStart != nil || delta.ReplaceEnd != nil || delta.ReplaceText != nil {
-			if delta.Key != nil || delta.Cursor != nil ||
+		if delta.ReplaceStart != nil || delta.ReplaceEnd != nil {
+			if delta.Cursor != nil ||
 				delta.SelectStart != nil || delta.SelectEnd != nil ||
-				delta.ReplaceStart == nil || delta.ReplaceEnd == nil || delta.ReplaceText == nil {
+				delta.ReplaceStart == nil || delta.ReplaceEnd == nil ||
+				(delta.AddText == nil && delta.Key == nil) {
 				return false
 			}
 		}

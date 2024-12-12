@@ -8,7 +8,7 @@ type Space struct {
 	CreatedAt time.Time `json:"createdAt"`
 	CreatedBy uint      `json:"createdBy"`
 
-	CheckinTotal uint `json:"checkinTotal"`
+	TotalSubspaces uint `json:"totalSubspaces"`
 
 	Text *string `json:"text,omitempty"` // tag, title, text
 
@@ -18,15 +18,16 @@ type Space struct {
 	StreamClosedAt **time.Time `json:"streamClosedAt,omitempty"`
 	StreamTexts    *[]*Space   `json:"streamTexts,omitempty"`
 
-	CheckinSpace **Space `json:"checkinSpace,omitempty"` // checkin
+	CheckinSpaceID **uint  `json:"checkinSpaceId,omitempty"` // checkin
+	CheckinSpace   **Space `json:"checkinSpace,omitempty"`   // checkin
 
 	AuthorHandle      **string `json:"authorHandle,omitempty"`
 	AuthorDisplayName *string  `json:"authorDisplayName,omitempty"`
 
 	UserBookmark *bool `json:"userBookmark,omitempty"`
 
-	UserTitles *[]*Space `json:"userTitles,omitempty"` // last titles by user check-in
-	TopTitles  *[]*Space `json:"topTitles,omitempty"`
-	TopTags    *[]*Space `json:"topTags,omitempty"`
-	TopContent *[]*Space `json:"topContent,omitempty"`
+	UserTitles   *[]*Space `json:"userTitles,omitempty"` // last titles by user check-in
+	TopTitles    *[]*Space `json:"topTitles,omitempty"`
+	TopTags      *[]*Space `json:"topTags,omitempty"`
+	TopSubspaces *[]*Space `json:"topSubspaces,omitempty"`
 }
