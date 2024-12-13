@@ -1,3 +1,8 @@
 - It might be nice to keep the whole stream of consciousness (all individual text blocks) editable until the stream is closed. That's kind of how I write when being more serious.
 - Timestamp on an edit would need to be Unix time.
 - There is a thrill in submitting a naked text. But that thrill can belong to submitting isolated ones, while a stream of consciousness might allow back edits while it's open.
+
+---
+I was very excited when the idea of this project came to me. I was also manic and high. Some things might look a little embarassing in retrospect, but it's okay to show the madness behind your art. I feel like this project idea in its current form is a gift, so I'm glad. Life is going on, even after some dark times where I couldn't find a future.
+
+Something else I thought about tonight. We should be going for the world of our dreams. Are governments working for the world of our dreams?

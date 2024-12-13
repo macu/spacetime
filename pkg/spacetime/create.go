@@ -47,6 +47,7 @@ func CreateCheckin(conn *sql.DB, auth ajax.Auth, parentID uint, spaceID *uint) (
 	// If spaceID is nil, create user checkin on parent space
 	// Else, if spaceID is given, check if checkin space already exists
 	// Create new checkin space if not exists
+	// If space itself belongs to parent space, create checkin under the space
 
 	// Ensure referenced parent space exists
 	var parentExists, err = CheckSpaceExists(conn, parentID)
@@ -116,6 +117,20 @@ func CreateCheckin(conn *sql.DB, auth ajax.Auth, parentID uint, spaceID *uint) (
 	}
 	if !spaceExists {
 		return nil, fmt.Errorf("space to check in does not exist: %d", *spaceID)
+	}
+
+	// Check parent of existing space
+
+	existingSpaceParentID, err := GetSpaceParentID(conn, *spaceID)
+	if err != nil {
+		return nil, err
+	}
+
+	if existingSpaceParentID != nil && *existingSpaceParentID == parentID {
+
+		// Create checkin under existing space
+		return CreateCheckin(conn, auth, *spaceID, nil)
+
 	}
 
 	err = db.InTransaction(conn, func(tx *sql.Tx) error {

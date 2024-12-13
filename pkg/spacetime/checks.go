@@ -23,6 +23,22 @@ func CheckSpaceExists(conn *sql.DB, spaceID uint) (bool, error) {
 
 }
 
+func GetSpaceParentID(conn *sql.DB, spaceID uint) (*uint, error) {
+
+	var parentID *uint
+
+	var err = conn.QueryRow(`SELECT parent_id
+		FROM space
+		WHERE id = $1`, spaceID).Scan(&parentID)
+
+	if err != nil {
+		return nil, fmt.Errorf("get space parent ID: %w", err)
+	}
+
+	return parentID, nil
+
+}
+
 func ValidateTitle(title string) bool {
 	if len(title) == 0 || len(title) > TitleMaxLength {
 		return false
