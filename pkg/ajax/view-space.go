@@ -19,7 +19,9 @@ func AjaxLoadSpace(db *sql.DB, auth *ajax.Auth,
 		return nil, http.StatusBadRequest
 	}
 
-	space, err := spacetime.LoadSpace(db, auth, id)
+	includeSubspaces := types.AtoBool(r.FormValue("includeSubspaces"))
+
+	space, err := spacetime.LoadSpace(db, auth, id, includeSubspaces)
 	if err != nil {
 		logging.LogError(r, auth, err)
 		return nil, http.StatusInternalServerError

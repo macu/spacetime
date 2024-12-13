@@ -1,13 +1,27 @@
 <template>
-<form-layout title="Create empty space">
+<form-layout title="Create text">
 
 	<template v-if="parentId">
 		<parent-titles :parent-id="parentId"/>
 		<hr/>
 	</template>
 
-	<form-field title="First title" required>
-		<input v-model="title" :maxlength="$store.getters.titleMaxLength" show-word-count/>
+	<form-field title="Title" required>
+		<input
+			v-model="title"
+			:maxlength="$store.getters.titleMaxLength"
+			show-word-count
+			/>
+	</form-field>
+
+	<form-field title="Text" required>
+		<input
+			type="textarea"
+			v-model="text"
+			:maxlength="$store.getters.textMaxLength"
+			show-word-count
+			:autosize="{minRows: 3}"
+			/>
 	</form-field>
 
 	<form-actions>
@@ -30,6 +44,7 @@ export default {
 	data() {
 		return {
 			title: '',
+			text: '',
 			posting: false,
 		};
 	},
@@ -38,7 +53,7 @@ export default {
 			return this.$route.params.parentId;
 		},
 		createDisabled() {
-			return this.posting || !this.title.trim();
+			return this.posting || !this.title.trim() || !this.text.trim();
 		},
 	},
 	methods: {
@@ -47,9 +62,10 @@ export default {
 				return;
 			}
 			this.posting = true;
-			ajaxPost('/ajax/space/create/empty', {
+			ajaxPost('/ajax/space/create/text', {
 				parentId: this.parentId,
 				title: this.title.trim(),
+				text: this.text.trim(),
 			}).then(response => {
 				this.$router.replace({
 					name: 'space',

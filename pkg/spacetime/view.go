@@ -12,7 +12,7 @@ import (
 
 const MaxSubspacesPageLimit = 20
 
-func LoadSpace(conn *sql.DB, auth *ajax.Auth, id uint) (*Space, error) {
+func LoadSpace(conn *sql.DB, auth *ajax.Auth, id uint, includeSubspaces bool) (*Space, error) {
 	// Load a single space
 
 	var space = Space{
@@ -35,6 +35,10 @@ func LoadSpace(conn *sql.DB, auth *ajax.Auth, id uint) (*Space, error) {
 	err = loadSpaceContent(conn, auth, []*Space{&space}, nil, 0, true)
 	if err != nil {
 		return nil, fmt.Errorf("loading space details: %w", err)
+	}
+
+	if includeSubspaces {
+		// TODO Load a page of subspaces
 	}
 
 	return &space, nil

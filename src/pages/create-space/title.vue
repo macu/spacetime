@@ -1,20 +1,27 @@
 <template>
-<form-layout title="Create empty space">
+<form-layout title="Create title">
 
 	<template v-if="parentId">
+
 		<parent-titles :parent-id="parentId"/>
+
 		<hr/>
+
+		<form-field title="New title" required>
+			<input v-model="title" :maxlength="$store.getters.titleMaxLength" show-word-count/>
+		</form-field>
+
+		<form-actions>
+			<el-button @click="create()" type="primary" :disabled="createDisabled">
+				Create
+			</el-button>
+		</form-actions>
+
 	</template>
 
-	<form-field title="First title" required>
-		<input v-model="title" :maxlength="$store.getters.titleMaxLength" show-word-count/>
-	</form-field>
-
-	<form-actions>
-		<el-button @click="create()" type="primary" :disabled="createDisabled">
-			Create
-		</el-button>
-	</form-actions>
+	<el-alert v-else type="error" :closable="false">
+		<p>A parent space is required to create a title.</p>
+	</el-alert>
 
 </form-layout>
 </template>
@@ -47,7 +54,7 @@ export default {
 				return;
 			}
 			this.posting = true;
-			ajaxPost('/ajax/space/create/empty', {
+			ajaxPost('/ajax/space/create/title', {
 				parentId: this.parentId,
 				title: this.title.trim(),
 			}).then(response => {

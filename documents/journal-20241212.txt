@@ -1,0 +1,3 @@
+- It might be nice to keep the whole stream of consciousness (all individual text blocks) editable until the stream is closed. That's kind of how I write when being more serious.
+- Timestamp on an edit would need to be Unix time.
+- There is a thrill in submitting a naked text. But that thrill can belong to submitting isolated ones, while a stream of consciousness might allow back edits while it's open.

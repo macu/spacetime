@@ -80,7 +80,18 @@
 <script>
 export default {
 	props: {
-		space: Object,
+		spaceId: { // TODO Load space by ID
+			type: Number,
+			required: true,
+		},
+		includeTags: {
+			type: Boolean,
+			default: true,
+		},
+		includeSubspaces: {
+			type: Boolean,
+			default: true,
+		},
 	},
 	data() {
 		return {

@@ -181,6 +181,12 @@ func AjaxCreateTextSpace(db *sql.DB, auth ajax.Auth,
 		return nil, http.StatusBadRequest
 	}
 
+	title := strings.TrimSpace(r.FormValue("title"))
+
+	if title != "" && !spacetime.ValidateTitle(title) {
+		return nil, http.StatusBadRequest
+	}
+
 	text := strings.TrimSpace(r.FormValue("text"))
 
 	if !spacetime.ValidateText(text) {
@@ -188,6 +194,12 @@ func AjaxCreateTextSpace(db *sql.DB, auth ajax.Auth,
 	}
 
 	space, err := spacetime.CreateTextCheckin(db, auth, parentID, text)
+	if err != nil {
+		logging.LogError(r, &auth, err)
+		return nil, http.StatusInternalServerError
+	}
+
+	_, err = spacetime.CreateTitleCheckin(db, auth, space.ID, title)
 	if err != nil {
 		logging.LogError(r, &auth, err)
 		return nil, http.StatusInternalServerError
