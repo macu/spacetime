@@ -11,6 +11,7 @@ import (
 )
 
 const MaxSubspacesPageLimit = 20
+const DefaultTitlesLimit = 5
 
 func LoadSpace(conn *sql.DB, auth *ajax.Auth, id uint, includeSubspaces bool) (*Space, error) {
 	// Load a single space
@@ -20,11 +21,23 @@ func LoadSpace(conn *sql.DB, auth *ajax.Auth, id uint, includeSubspaces bool) (*
 	}
 
 	err := conn.QueryRow(`SELECT
-		space.space_type, space.created_at, space.created_by
+		space.space_type, space.created_at, space.created_by,
+		user_account.handle, user_account.display_name,
+		EXISTS(SELECT * FROM user_space_bookmark
+			WHERE user_space_bookmark.space_id=space.id
+			AND user_space_bookmark.user_id = $2) AS user_bookmark,
+		COUNT(subspace.id) AS subspace_count
 		FROM space
-		WHERE space.id = $1`,
-		id,
-	).Scan(&space.SpaceType, &space.CreatedAt, &space.CreatedBy)
+		LEFT JOIN user_account ON user_account.id = space.created_by
+		LEFT JOIN space AS subspace ON subspace.parent_id = space.id
+		WHERE space.id = $1
+		GROUP BY space.space_type, space.created_at, space.created_by, user_account.handle, user_account.display_name, user_bookmark
+		LIMIT 1`,
+		id, auth.UserID,
+	).Scan(&space.SpaceType, &space.CreatedAt, &space.CreatedBy,
+		&space.AuthorHandle, &space.AuthorDisplayName,
+		&space.UserBookmark,
+	)
 
 	if err == sql.ErrNoRows {
 		return nil, nil
@@ -32,20 +45,37 @@ func LoadSpace(conn *sql.DB, auth *ajax.Auth, id uint, includeSubspaces bool) (*
 		return nil, fmt.Errorf("loading space details: %w", err)
 	}
 
-	err = loadSpaceContent(conn, auth, []*Space{&space}, nil, 0, true)
+	err = loadSpaceContent(conn, auth, []*Space{&space}, nil, nil, true)
 	if err != nil {
 		return nil, fmt.Errorf("loading space details: %w", err)
 	}
 
+	if auth != nil {
+		err = loadBookmarkedTitles(conn, *auth, []*Space{&space})
+		if err != nil {
+			return nil, fmt.Errorf("loading bookmarked titles: %w", err)
+		}
+	}
+
+	err = loadTopTitles(conn, []*Space{&space}, 0, DefaultTitlesLimit)
+	if err != nil {
+		return nil, fmt.Errorf("loading top titles: %w", err)
+	}
+
 	if includeSubspaces {
-		// TODO Load a page of subspaces
+		content, err := LoadTopSubspaces(conn, auth,
+			&id, 0, MaxSubspacesPageLimit)
+		if err != nil {
+			return nil, fmt.Errorf("loading subspaces: %w", err)
+		}
+		space.TopSubspaces = &content
 	}
 
 	return &space, nil
 
 }
 
-func LoadSubspacesByCheckinTotal(conn *sql.DB, auth *ajax.Auth,
+func LoadTopSubspaces(conn *sql.DB, auth *ajax.Auth,
 	parentID *uint, // optional
 	offset uint, limit uint, // pagination
 ) ([]*Space, error) {
@@ -65,23 +95,26 @@ func LoadSubspacesByCheckinTotal(conn *sql.DB, auth *ajax.Auth,
 
 	var parentClauseSql string
 	if parentID != nil {
-		parentClauseSql = `AND space.parent_id = ` + db.Arg(&args, *parentID)
+		parentClauseSql = `space.parent_id = ` + db.Arg(&args, *parentID)
 	} else {
-		parentClauseSql = `AND space.parent_id IS NULL`
+		parentClauseSql = `space.parent_id IS NULL`
 	}
 
 	rows, err := conn.Query(`SELECT space.id,
 		space.space_type, space.created_at, space.created_by,
-		`+bookmarkFieldSql+`, space.overall_checkin_total
+		user_account.handle, user_account.display_name,
+		`+bookmarkFieldSql+`,
+		COUNT(subspace.id) AS subspace_count
 		FROM space
-		WHERE space.space_type NOT IN (
-			'`+db.Arg(&args, SpaceTypeTitle)+`',
-			'`+db.Arg(&args, SpaceTypeTag)+`'
-		)
-		`+parentClauseSql+`
-		ORDER BY space.overall_checkin_total DESC
-		OFFSET `+db.Arg(&args, offset)+`
-		LIMIT `+db.Arg(&args, limit),
+		LEFT JOIN user_account ON user_account.id = space.created_by
+		LEFT JOIN spacew AS subspace ON subspace.parent_id = space.id
+		WHERE `+parentClauseSql+`
+		ORDER BY SELECT COUNT(*) FROM space AS subspace
+		WHERE subspace.parent_id = space.id
+		GROUP BY space.id, space.space_type, space.created_at, space.created_by, user_account.handle, user_account.display_name, user_bookmark
+		ORDER BY subspace_count DESC
+		LIMIT `+db.Arg(&args, limit)+`
+		OFFSET `+db.Arg(&args, offset),
 		args...,
 	)
 
@@ -96,26 +129,29 @@ func LoadSubspacesByCheckinTotal(conn *sql.DB, auth *ajax.Auth,
 	for rows.Next() {
 		var space = Space{}
 		err = rows.Scan(&space.ID, &space.SpaceType, &space.CreatedAt, &space.CreatedBy,
-			&space.UserBookmark, &space.CheckinTotal)
+			&space.AuthorHandle, &space.AuthorDisplayName,
+			&space.UserBookmark,
+			&space.TotalSubspaces,
+		)
 		if err != nil {
 			return nil, fmt.Errorf("loading top spaces: %w", err)
 		}
 		spaces = append(spaces, &space)
 	}
 
-	err = loadSpaceContent(conn, auth, spaces, nil, 0, true)
+	err = loadSpaceContent(conn, auth, spaces, nil, nil, true)
 	if err != nil {
 		return nil, fmt.Errorf("loading space details: %w", err)
 	}
 
 	if auth != nil {
-		err = loadLastUserTitleForSpaces(conn, *auth, spaces)
+		err = loadBookmarkedTitles(conn, *auth, spaces)
 		if err != nil {
 			return nil, fmt.Errorf("loading bookmarked titles: %w", err)
 		}
 	}
 
-	err = loadTopTitleForSpaces(conn, spaces, 0, MaxSubspacesPageLimit)
+	err = loadTopTitles(conn, spaces, 0, DefaultTitlesLimit)
 	if err != nil {
 		return nil, fmt.Errorf("loading top titles: %w", err)
 	}
@@ -127,10 +163,142 @@ func LoadSubspacesByCheckinTotal(conn *sql.DB, auth *ajax.Auth,
 // --------------------------------------------------
 // batch load functions
 
+func loadBookmarkedTitles(conn *sql.DB, auth ajax.Auth,
+	spaces []*Space,
+) error {
+
+	if len(spaces) == 0 {
+		return nil
+	}
+
+	var args = []interface{}{}
+
+	var inClauseSql string
+
+	for i, space := range spaces {
+		if i > 0 {
+			inClauseSql += `, `
+		}
+		inClauseSql += db.Arg(&args, space.ID)
+	}
+
+	rows, err := conn.Query(`SELECT space.id, space.parent_id, unique_text.text
+		FROM space
+		INNER JOIN title_space ON title_space.space_id = space.id
+		INNER JOIN unique_text ON unique_text.id = title_space.unique_text_id
+		WHERE space.space_type = `+db.Arg(&args, SpaceTypeTitle)+`
+		AND EXISTS(SELECT 1 FROM user_space_bookmark
+			WHERE user_space_bookmark.user_id = `+db.Arg(&args, auth.UserID)+`
+			AND user_space_bookmark.space_id = space.id)
+		AND space.parent_id IN (`+inClauseSql+`)
+		GROUP BY space.id, space.parent_id
+		ORDER BY user_space_bookmark.created_at DESC`,
+		args...,
+	)
+
+	if err == sql.ErrNoRows {
+		return nil
+	} else if err != nil {
+		return fmt.Errorf("loading bookmarked titles: %w", err)
+	}
+
+	defer rows.Close()
+
+	for rows.Next() {
+		var spaceID uint
+		var parentID uint
+		var text string
+		err = rows.Scan(&spaceID, &parentID, &text)
+		if err != nil {
+			return fmt.Errorf("loading bookmarked titles: %w", err)
+		}
+		for _, space := range spaces {
+			if space.ID == parentID {
+				var title = &Space{
+					ID:        spaceID,
+					SpaceType: SpaceTypeTitle,
+					Text:      &text,
+				}
+				if space.UserTitles == nil {
+					space.UserTitles = &[]*Space{title}
+				} else {
+					*space.UserTitles = append(*space.UserTitles, title)
+				}
+				break
+			}
+		}
+	}
+
+	return nil
+
+}
+
+func loadTopTitles(conn *sql.DB, spaces []*Space,
+	offset, limit uint,
+) error {
+
+	if len(spaces) == 0 {
+		return nil
+	}
+
+	if limit > MaxSubspacesPageLimit {
+		limit = MaxSubspacesPageLimit
+	}
+
+	for _, space := range spaces {
+
+		rows, err := conn.Query(`SELECT space.id, space.parent_id, unique_text.text
+			FROM space
+			INNER JOIN title_space ON title_space.space_id = space.id
+			INNER JOIN unique_text ON unique_text.id = title_space.unique_text_id
+			WHERE space.space_type = $1
+			AND space.parent_id = $2
+			GROUP BY space.id, space.parent_id
+			ORDER BY space.overall_checkin_total DESC
+			OFFSET $3
+			LIMIT $4`,
+			SpaceTypeTitle, space.ID, offset, limit,
+		)
+
+		if err == sql.ErrNoRows {
+			space.TopTitles = &[]*Space{}
+			continue
+		} else if err != nil {
+			return fmt.Errorf("loading top titles: %w", err)
+		}
+
+		defer rows.Close()
+
+		var titles = []*Space{}
+
+		for rows.Next() {
+			var spaceID uint
+			var parentID uint
+			var text string
+			err = rows.Scan(&spaceID, &parentID, &text)
+			if err != nil {
+				return fmt.Errorf("loading top titles: %w", err)
+			}
+			var title = &Space{
+				ID:        spaceID,
+				SpaceType: SpaceTypeTitle,
+				Text:      &text,
+			}
+			titles = append(titles, title)
+		}
+
+		space.TopTitles = &titles
+
+	}
+
+	return nil
+
+}
+
 func loadSpaceContent(conn *sql.DB, auth *ajax.Auth,
 	spaces []*Space,
-	date *time.Time, interval time.Duration,
-	loadSubspaces bool,
+	date *time.Time, interval *time.Duration,
+	loadCheckinSpace bool,
 ) error {
 	// Load content for multiple spaces
 
@@ -174,14 +342,14 @@ func loadSpaceContent(conn *sql.DB, auth *ajax.Auth,
 		loadNakedTextSpacesContent(conn, auth, nakedTextSpaces)
 	}
 
-	if hasSpacesOfType(spaces, SpaceTypeCheckin) {
+	if hasSpacesOfType(spaces, SpaceTypeCheckin) && loadCheckinSpace {
 		var checkinSpaces []*Space
 		for _, space := range spaces {
 			if space.SpaceType == SpaceTypeCheckin {
 				checkinSpaces = append(checkinSpaces, space)
 			}
 		}
-		loadCheckinSpaceDetails(conn, auth, checkinSpaces, loadSubspaces)
+		loadCheckinSpaceDetails(conn, auth, checkinSpaces)
 	}
 
 	if hasSpacesOfType(spaces, SpaceTypeStream) {
@@ -192,140 +360,6 @@ func loadSpaceContent(conn *sql.DB, auth *ajax.Auth,
 			}
 		}
 		loadStreamSpaceDetails(conn, auth, streamSpaces)
-	}
-
-	return nil
-
-}
-
-func loadLastUserTitleForSpaces(conn *sql.DB, auth ajax.Auth, spaces []*Space) error {
-	// Load the last bookmarked title for multiple spaces
-
-	if len(spaces) == 0 {
-		return nil
-	}
-
-	var inClauseSql string
-
-	var args = []interface{}{}
-
-	for i, space := range spaces {
-		if i > 0 {
-			inClauseSql += `, `
-		}
-		inClauseSql += db.Arg(&args, space.ID)
-	}
-
-	rows, err := conn.Query(`SELECT space.id, spare.parent_id, unique_text.text
-		FROM space
-		INNER JOIN title_space ON title_space.space_id = space.id
-		INNER JOIN unique_text ON unique_text.id = title_space.unique_text_id
-		WHERE space.space_type = `+db.Arg(&args, SpaceTypeTitle)+`
-		AND EXISTS(SELECT 1 FROM user_space_bookmark
-			WHERE user_space_bookmark.user_id = `+db.Arg(&args, auth.UserID)+`
-			AND user_space_bookmark.space_id = space.id)
-		AND space.parent_id IN (`+inClauseSql+`)
-		GROUP BY space.id, space.parent_id
-		ORDER BY user_space_bookmark.created_at DESC
-		LIMIT 1`,
-		args...,
-	)
-
-	if err == sql.ErrNoRows {
-		return nil
-	} else if err != nil {
-		return fmt.Errorf("loading last bookmarked titles: %w", err)
-	}
-
-	defer rows.Close()
-
-	for rows.Next() {
-		var spaceID uint
-		var parentID uint
-		var text string
-		err = rows.Scan(&spaceID, &parentID, &text)
-		if err != nil {
-			return fmt.Errorf("loading last bookmarked titles: %w", err)
-		}
-		for _, space := range spaces {
-			if space.ID == parentID {
-				var title = &Space{
-					ID:        spaceID,
-					SpaceType: SpaceTypeTitle,
-					Text:      &text,
-				}
-				space.LastUserTitle = &title
-				break
-			}
-		}
-	}
-
-	return nil
-
-}
-
-func loadTopTitleForSpaces(conn *sql.DB, spaces []*Space, offset, limit uint) error {
-	// Load the top title for multiple spaces
-
-	if len(spaces) == 0 {
-		return nil
-	}
-
-	if limit > MaxSubspacesPageLimit {
-		limit = MaxSubspacesPageLimit
-	}
-
-	var inClauseSql string
-
-	var args = []interface{}{}
-
-	for i, space := range spaces {
-		if i > 0 {
-			inClauseSql += `, `
-		}
-		inClauseSql += db.Arg(&args, space.ID)
-	}
-
-	rows, err := conn.Query(`SELECT space.id, spare.parent_id, unique_text.text
-		FROM space
-		INNER JOIN title_space ON title_space.space_id = space.id
-		INNER JOIN unique_text ON unique_text.id = title_space.unique_text_id
-		WHERE space.space_type = `+db.Arg(&args, SpaceTypeTitle)+`
-		AND space.parent_id IN (`+inClauseSql+`)
-		GROUP BY space.id
-		ORDER BY space.overall_checkin_total DESC
-		OFFSET `+db.Arg(&args, offset)+`
-		LIMIT `+db.Arg(&args, limit),
-		args...,
-	)
-
-	if err == sql.ErrNoRows {
-		return nil
-	} else if err != nil {
-		return fmt.Errorf("loading top titles: %w", err)
-	}
-
-	defer rows.Close()
-
-	for rows.Next() {
-		var spaceID uint
-		var parentID uint
-		var text string
-		err = rows.Scan(&spaceID, &parentID, &text)
-		if err != nil {
-			return fmt.Errorf("loading top titles: %w", err)
-		}
-		for _, space := range spaces {
-			if space.ID == parentID {
-				var title = &Space{
-					ID:        spaceID,
-					SpaceType: SpaceTypeTitle,
-					Text:      &text,
-				}
-				var titles = []*Space{title}
-				space.TopTitles = &titles
-			}
-		}
 	}
 
 	return nil
@@ -570,7 +604,6 @@ func loadNakedTextSpacesContent(conn *sql.DB, auth *ajax.Auth, spaces []*Space) 
 
 func loadCheckinSpaceDetails(conn *sql.DB, auth *ajax.Auth,
 	spaces []*Space,
-	loadSubSpaces bool,
 ) error {
 	// Load checkin content for multiple spaces
 
@@ -590,10 +623,12 @@ func loadCheckinSpaceDetails(conn *sql.DB, auth *ajax.Auth,
 		args = append(args, space.ID)
 	}
 
-	rows, err := conn.Query(`SELECT
-		space.id, check_space.checkin_space_id
+	rows, err := conn.Query(`SELECT space.id,
+		check_space.checkin_space_id,
+		checked_space.space_type, checked_space.created_at, checked_space.created_by
 		FROM space
 		INNER JOIN checkin_space check_space ON check_space.space_id = space.id
+		INNER JOIN space AS checked_space ON checked_space.id = check_space.checkin_space_id
 		WHERE space.id IN (`+inClauseSql+`)`,
 		args...,
 	)
@@ -609,14 +644,21 @@ func loadCheckinSpaceDetails(conn *sql.DB, auth *ajax.Auth,
 	for rows.Next() {
 		var spaceID uint
 		var checkinSpaceID *uint
-		err = rows.Scan(&spaceID, &checkinSpaceID)
+		var checkedSpaceType string
+		var checkedSpaceCreatedAt time.Time
+		var checkedSpaceCreatedBy uint
+		err = rows.Scan(&spaceID, &checkinSpaceID,
+			&checkedSpaceType, &checkedSpaceCreatedAt, &checkedSpaceCreatedBy)
 		if err != nil {
 			return fmt.Errorf("loading checkin space details: %w", err)
 		}
 		for _, space := range spaces {
 			if space.ID == spaceID {
 				var space = &Space{
-					ID: *checkinSpaceID,
+					ID:        *checkinSpaceID,
+					SpaceType: checkedSpaceType,
+					CreatedAt: checkedSpaceCreatedAt,
+					CreatedBy: checkedSpaceCreatedBy,
 				}
 				space.CheckinSpace = &space
 			}
@@ -630,7 +672,7 @@ func loadCheckinSpaceDetails(conn *sql.DB, auth *ajax.Auth,
 		}
 	}
 
-	err = loadSpaceContent(conn, auth, checkinSpaces, nil, 0, false)
+	err = loadSpaceContent(conn, auth, checkinSpaces, nil, nil, false)
 	if err != nil {
 		return fmt.Errorf("loading checkin space details: %w", err)
 	}
@@ -642,7 +684,7 @@ func loadCheckinSpaceDetails(conn *sql.DB, auth *ajax.Auth,
 func loadStreamSpaceDetails(conn *sql.DB, auth *ajax.Auth,
 	spaces []*Space,
 ) error {
-	// Load stream-of-conscoiusness content for multiple spaces
+	// Load stream content for multiple spaces
 
 	if len(spaces) == 0 {
 		return nil
@@ -660,10 +702,10 @@ func loadStreamSpaceDetails(conn *sql.DB, auth *ajax.Auth,
 		args = append(args, space.ID)
 	}
 
-	rows, err := conn.Query(`SELECT
-		space.id, stream_of_conscioussness_space.closed_at
+	rows, err := conn.Query(`SELECT space.id,
+		stream_space.stream_closed_at
 		FROM space
-		INNER JOIN stream_of_conscioussness_space ON stream_of_conscioussness_space.space_id = space.id
+		INNER JOIN stream_space ON stream_space.space_id = space.id
 		WHERE space.id IN (`+inClauseSql+`)`,
 		args...,
 	)
@@ -678,30 +720,17 @@ func loadStreamSpaceDetails(conn *sql.DB, auth *ajax.Auth,
 
 	for rows.Next() {
 		var spaceID uint
-		var closedAt *time.Time
-		err = rows.Scan(&spaceID, &closedAt)
+		var streamClosedAt *time.Time
+		err = rows.Scan(&spaceID, &streamClosedAt)
 		if err != nil {
-			return fmt.Errorf("loading checkin space details: %w", err)
+			return fmt.Errorf("loading stream space details: %w", err)
 		}
 		for _, space := range spaces {
 			if space.ID == spaceID {
-				space.StreamClosedAt = &closedAt
+				space.StreamClosedAt = &streamClosedAt
 			}
 		}
 	}
-
-	// load stream texts
-	// for _, space := range spaces {
-	// 	var streamTexts []*Space
-	// 	var limitTextCreatedAtQuery string
-	// 	if space.StreamClosedAt != nil {
-	// 		// Up to time closed
-	// 		limitTextCreatedAtQuery = ``
-	// 	} else {
-	// 		// Up to now
-	// 		limitTextCreatedAtQuery = ``
-	// 	}
-	// }
 
 	return nil
 

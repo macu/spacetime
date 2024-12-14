@@ -161,7 +161,7 @@ CREATE TABLE naked_text_space (
 
 CREATE TABLE stream_of_consciousness_space (
 	space_id INTEGER PRIMARY KEY REFERENCES space (id) ON DELETE CASCADE,
-	closed_at TIMESTAMPTZ -- null until closed
+	stream_closed_at TIMESTAMPTZ -- null until closed
 );
 
 CREATE TABLE json_attribute_space (

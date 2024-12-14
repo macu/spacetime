@@ -51,7 +51,7 @@ func AjaxLoadSubspacesByCheckinTotal(db *sql.DB, auth *ajax.Auth,
 		return nil, http.StatusBadRequest
 	}
 
-	spaces, err := spacetime.LoadSubspacesByCheckinTotal(db, auth, parentId, offset, limit)
+	spaces, err := spacetime.LoadTopSubspaces(db, auth, parentId, offset, limit)
 	if err != nil {
 		logging.LogError(r, auth, err)
 		return nil, http.StatusInternalServerError

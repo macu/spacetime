@@ -1,5 +1,7 @@
 package spacetime
 
+import "unicode"
+
 type NakedTextDelta struct {
 	Timestmap uint `json:"ts"`
 
@@ -7,7 +9,7 @@ type NakedTextDelta struct {
 	Key *uint `json:"k,omitempty"`
 
 	// added text (one char at a time)
-	AddText *string `json:"t,omitempty"`
+	AddText *rune `json:"t,omitempty"`
 
 	// cursor positioning
 	Cursor *uint `json:"c,omitempty"`
@@ -47,13 +49,9 @@ func ValidateNakedText(text NakedText) bool {
 		if delta.AddText != nil {
 			// Check valid text
 
-			// - valid text will be single characters
-			if len(*delta.AddText) != 1 {
-				return false
-			}
-
-			// valid text will be printable (tabs allowed)
-			if (*delta.AddText)[0] < 32 && (*delta.AddText)[0] != 9 {
+			// Check rune, allow tab
+			if !unicode.IsPrint(*delta.AddText) &&
+				*delta.AddText != 9 {
 				return false
 			}
 
