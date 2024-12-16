@@ -15,7 +15,9 @@ export default ajax;
 export function ajaxPost(url, params = {}, errorCodeMessages = {}) {
 	let formData = new FormData();
 	for (let key in params) {
-		formData.append(key, params[key]);
+		if (params[key] !== null && params[key] !== undefined) {
+			formData.append(key, params[key]);
+		}
 	}
 	return ajax.post(url, formData).then(response => {
 		return response.data;
@@ -95,7 +97,7 @@ export function alertError(error, errorCodeMessages = {}) {
 						message = "The server is currently unavailable. It may be down for database upgrades. Please try again.";
 						break;
 					default:
-						message = "Request failed with HTTP error code " + jqXHR.status + ".";
+						message = "Request failed with HTTP error code " + error.response.status + ".";
 				}
 			}
 

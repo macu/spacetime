@@ -8,27 +8,37 @@
 				<material-icon icon="arrow_drop_down"/>
 			</el-button>
 			<template #dropdown>
-				<el-dropdown-item :command="SPACE_TYPES.SPACE">
+				<el-dropdown-item command="create-empty-space">
 					<material-icon icon="folder"/>
 					<span>Create empty space</span>
 				</el-dropdown-item>
-				<el-dropdown-item v-if="hasParentId" :command="SPACE_TYPES.CHECK_IN">
-					<material-icon icon="folder"/>
-					<span>Create check-in</span>
-				</el-dropdown-item>
-				<el-dropdown-item :command="SPACE_TYPES.TEXT">
+				<template v-if="hasParentId">
+					<el-dropdown-item command="create-check-in">
+						<material-icon icon="folder"/>
+						<span>Create check-in</span>
+					</el-dropdown-item>
+					<el-dropdown-item command="create-title">
+						<material-icon icon="folder"/>
+						<span>Create title</span>
+					</el-dropdown-item>
+					<el-dropdown-item command="create-tag">
+						<material-icon icon="folder"/>
+						<span>Create tag</span>
+					</el-dropdown-item>
+				</template>
+				<el-dropdown-item command="create-text">
 					<material-icon icon="folder"/>
 					<span>Create text</span>
 				</el-dropdown-item>
-				<el-dropdown-item :command="SPACE_TYPES.NAKED_TEXT">
+				<el-dropdown-item command="create-naked-text">
 					<material-icon icon="folder"/>
 					<span>Create naked text</span>
 				</el-dropdown-item>
-				<el-dropdown-item :command="SPACE_TYPES.STREAM_OC">
+				<el-dropdown-item command="create-stream-oc">
 					<material-icon icon="folder"/>
 					<span>Create stream of consciousness</span>
 				</el-dropdown-item>
-				<el-dropdown-item :command="SPACE_TYPES.JSON_AR">
+				<el-dropdown-item command="create-json-ar">
 					<material-icon icon="folder"/>
 					<span>Create json attribute reporter</span>
 				</el-dropdown-item>
@@ -58,7 +68,7 @@ export default {
 			default: false,
 		},
 	},
-	computed() {
+	computed: {
 		SPACE_TYPES() {
 			return SPACE_TYPES;
 		},
@@ -67,12 +77,11 @@ export default {
 		},
 	},
 	methods: {
-		create(spaceType) {
+		create(routeName) {
 			this.$router.push({
-				name: 'create-space',
+				name: routeName,
 				query: {
 					parentId: this.parentId,
-					type: spaceType,
 				},
 			});
 		},

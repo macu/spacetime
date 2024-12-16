@@ -1,9 +1,9 @@
 <template>
-<el-button-group>
-	<el-button @click="addCheckIn()" :type="buttonType">
+<el-button-group :type="buttonType" :size="size">
+	<el-button @click="addCheckIn()">
 		<material-icon icon="check"/>
 	</el-button>
-	<el-button @click="showStats()" :type="buttonType">
+	<el-button @click="showStats()">
 		<span v-text="checkinCount"/>
 	</el-button>
 </el-button-group>
@@ -18,6 +18,10 @@ export default {
 		space: {
 			type: Object,
 			required: true,
+		},
+		size: {
+			type: String,
+			default: null,
 		},
 	},
 	data() {

@@ -11,6 +11,10 @@ import SignupPage from '@/pages/user-account/signup.vue';
 import SignupVerifyPage from '@/pages/user-account/signup-verify.vue';
 
 import SpacePage from './pages/space.vue';
+import CreateEmptySpacePage from './pages/create-space/empty.vue';
+import CreateTitleSpacePage from './pages/create-space/title.vue';
+import CreateTagSpacePage from './pages/create-space/tag.vue';
+import CreateTextSpacePage from './pages/create-space/text.vue';
 
 const router = createRouter({
 	history: createWebHistory(),
@@ -39,6 +43,26 @@ const router = createRouter({
 			path: '/space/:spaceId',
 			name: 'space',
 			component: SpacePage,
+		},
+		{
+			path: '/space/create/empty',
+			name: 'create-empty-space',
+			component: CreateEmptySpacePage,
+		},
+		{
+			path: '/space/create/title',
+			name: 'create-title',
+			component: CreateTitleSpacePage,
+		},
+		{
+			path: '/space/create/tag',
+			name: 'create-tag',
+			component: CreateTagSpacePage,
+		},
+		{
+			path: '/space/create/text',
+			name: 'create-text',
+			component: CreateTextSpacePage,
 		},
 	],
 });

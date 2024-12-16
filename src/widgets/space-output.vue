@@ -6,18 +6,14 @@
 		<space-type :type="space.spaceType"/>
 	</div>
 
-	<div v-if="hasUserTitles" @click.stop class="space-title-bar flex-row-md nowrap">
-		<add-title @added="titleSpace => showUserTitle(titleSpace)"/>
-		<div class="flex-row-md nowrap horizontal-scroll">
+	<div @click.stop class="space-title-bar horizontal-scroll">
+		<div class="flex-row-md nowrap">
+			<add-title
+				:parent-id="space.id"
+				@added="titleSpace => showUserTitle(titleSpace)"
+				/>
 			<space-title v-for="title in userTitles" :space="title"/>
-			<el-button>View all</el-button>
-		</div>
-	</div>
-
-	<div @click.stop class="space-title-bar flex-row-md nowrap">
-		<add-title v-if="!hasUserTitles" @added="titleSpace => showUserTitle(titleSpace)"/>
-		<div v-if="hasTopTitles" class="flex-row-md nowrap horizontal-scroll">
-			<space-title v-for="title in userTitles" :space="title"/>
+			<space-title v-for="title in topTitles" :space="title"/>
 			<el-button>View all</el-button>
 		</div>
 	</div>
@@ -53,7 +49,7 @@ import CheckinButton from './checkin-button.vue';
 import SpaceType from './space-type.vue';
 import SpaceTitle from './space-title.vue';
 import SpaceText from './space-text.vue';
-import AddTitle from './add-space-title.vue';
+import AddTitle from './add-title-button.vue';
 
 import {
 	SPACE_TYPES,
@@ -115,7 +111,7 @@ export default {
 </script>
 
 <style lang="scss">
-$border-radius: $border-radius;
+$border-radius: 12px;
 
 .space-output {
 	border: medium solid darkblue;
@@ -137,7 +133,7 @@ $border-radius: $border-radius;
 		padding: 10px;
 		cursor: default;
 
-		.space-title-text {
+		.space-title {
 			background-color: white;
 			padding: 5px;
 		}

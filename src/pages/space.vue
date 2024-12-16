@@ -1,17 +1,20 @@
 <template>
-<loading-message v-if="loading"/>
-<space-output v-else-if="space" :space="space">
-	<template #subspaces>
-		<space-list
-			:spaces="subspaces"
-			:loading="loadingSubspaces"
-			@load-more="loadMore()"
-			/>
-	</template>
-</space-output>
-<el-alert v-else type="error" show-icon :closable="false">
-	This space could not be loaded.
-</el-alert>
+<div class="space-page page-width-md">
+	<loading-message v-if="loading"/>
+	<space-output v-else-if="space" :space="space">
+		<template #subspaces>
+			<space-list
+				v-if="subspaces"
+				:spaces="subspaces"
+				:loading="loadingSubspaces"
+				@load-more="loadMore()"
+				/>
+		</template>
+	</space-output>
+	<el-alert v-else type="error" show-icon :closable="false">
+		This space could not be loaded.
+	</el-alert>
+</div>
 </template>
 
 <script>
@@ -35,7 +38,7 @@ export default {
 			loadingSubspaces: false,
 		};
 	},
-	computed() {
+	computed: {
 		spaceId() {
 			return this.$route.params.spaceId;
 		},

@@ -39,13 +39,15 @@ export default {
 
 <style lang="scss">
 .form-layout-form-field {
+	background-color: #eee;
+	padding: 10px;
+	border-radius: 8px;
 	>h3 {
 		font-weight: bold;
 	}
 	>.form-field-body {
-		padding: 20px;
-		background-color: #eee;
-		border-radius: 8px;
+		padding: 10px;
+		background-color: white;
 		>.form-value {
 			font-size: larger;
 		}

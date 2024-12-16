@@ -1,21 +1,38 @@
 <template>
-<el-input
-	v-if="adding"
-	v-model="title"
-	:maxlength="$store.getters.titleMaxLength"
-	show-word-limit>
-	<template #prepend>
-		Add title
-	</template>
-	<template #append>
-		<el-button @click="addTitle()" :disabled="addTitleDisabled" type="success">Add</el-button>
-		<el-button @click="adding=false" type="warning">Cancel</el-button>
-	</template>
-</el-input>
-<el-button v-else @click="adding=true" type="primary">Add title</el-button>
+<div>
+	<el-input
+		v-if="adding"
+		v-model="title"
+		:maxlength="$store.getters.titleMaxLength"
+		show-word-limit>
+		<template #prepend>
+			Add title
+		</template>
+		<template #append>
+			<el-button-group>
+				<el-button
+					@click="addTitle()"
+					:disabled="addTitleDisabled"
+					type="success">
+					Add
+				</el-button>
+				<el-button
+					@click="adding=false"
+					type="warning">
+					Cancel
+				</el-button>
+			</el-button-group>
+		</template>
+	</el-input>
+	<el-button v-else @click="adding=true" type="primary">Add title</el-button>
+</div>
 </template>
 
 <script>
+import {
+	ajaxPost,
+} from '@/utils/ajax.js';
+
 export default {
 	emits: [
 		'added',
@@ -43,7 +60,14 @@ export default {
 			if (this.addTitleDisabled) {
 				return;
 			}
-			// TODO
+			ajaxPost('/ajax/space/create/title', {
+				parentId: this.parentId,
+				title: this.title,
+			}).then(response => {
+				this.$emit('added', response);
+				this.adding = false;
+				this.title = '';
+			});
 		},
 	},
 };

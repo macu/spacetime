@@ -1,15 +1,20 @@
 <template>
 <div class="space-title">
-	<checkin-button :space="space" @check-in="$emit('check-in')"/>
-	<span class="space-title-text" v-text="titleOutput"/>
+	<checkin-button :space="space" @check-in="$emit('check-in')" size="small"/>
+	<span class="text" v-text="titleOutput"/>
 </div>
 </template>
 
 <script>
+import CheckinButton from './checkin-button.vue';
+
 export default {
 	emits: [
 		'check-in',
 	],
+	components: {
+		CheckinButton,
+	},
 	props: {
 		space: {
 			type: Object,
@@ -25,13 +30,14 @@ export default {
 </script>
 
 <style lang="scss">
-.title-space {
+.space-title {
 	display: flex;
 	flex-direction: row;
 	align-items: center;
 	flex-wrap: nowrap;
+	column-gap: 10px;
 
-	>.space-title-text {
+	>.text {
 		font-size: 1.5em;
 		font-weight: bold;
 		white-space: nowrap;

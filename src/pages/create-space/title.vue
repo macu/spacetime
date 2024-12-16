@@ -1,5 +1,5 @@
 <template>
-<form-layout title="Create title">
+<form-layout title="Create title" class="create-title-page page-width-md">
 
 	<template v-if="parentId">
 
@@ -8,7 +8,12 @@
 		<hr/>
 
 		<form-field title="New title" required>
-			<input v-model="title" :maxlength="$store.getters.titleMaxLength" show-word-count/>
+			<el-input
+				v-model="title"
+				:maxlength="$store.getters.titleMaxLength"
+				show-word-count
+				size="large"
+				/>
 		</form-field>
 
 		<form-actions>
@@ -34,6 +39,9 @@ import {
 } from '@/utils/ajax.js';
 
 export default {
+	components: {
+		ParentTitles,
+	},
 	data() {
 		return {
 			title: '',
@@ -42,7 +50,7 @@ export default {
 	},
 	computed: {
 		parentId() {
-			return this.$route.params.parentId;
+			return this.$route.query.parentId || null;
 		},
 		createDisabled() {
 			return this.posting || !this.title.trim();

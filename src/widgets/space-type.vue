@@ -3,6 +3,10 @@
 </template>
 
 <script>
+import {
+	SPACE_TYPES,
+} from '@/const.js';
+
 export default {
 	props: {
 		type: {

@@ -120,10 +120,8 @@ func LoadTopSubspaces(conn *sql.DB, auth *ajax.Auth,
 		COUNT(subspace.id) AS subspace_count
 		FROM space
 		LEFT JOIN user_account ON user_account.id = space.created_by
-		LEFT JOIN spacew AS subspace ON subspace.parent_id = space.id
+		LEFT JOIN space AS subspace ON subspace.parent_id = space.id
 		WHERE `+parentClauseSql+`
-		ORDER BY SELECT COUNT(*) FROM space AS subspace
-		WHERE subspace.parent_id = space.id
 		GROUP BY space.id, space.space_type, space.created_at, space.created_by, user_account.handle, user_account.display_name, user_bookmark
 		ORDER BY subspace_count DESC
 		LIMIT `+db.Arg(&args, limit)+`
@@ -188,7 +186,7 @@ func loadBookmarkedTitles(conn *sql.DB, auth ajax.Auth,
 	for _, space := range spaces {
 
 		rows, err := conn.Query(`SELECT space.id, space.created_at, space.created_by,
-			unique_text.text
+			unique_text.text_value
 			FROM space
 			INNER JOIN title_space ON title_space.space_id = space.id
 			INNER JOIN unique_text ON unique_text.id = title_space.unique_text_id
@@ -204,7 +202,7 @@ func loadBookmarkedTitles(conn *sql.DB, auth ajax.Auth,
 			space.UserTitles = &[]*Space{}
 			continue
 		} else if err != nil {
-			return fmt.Errorf("loading bookmarked titles: %w", err)
+			return fmt.Errorf("querying bookmarked titles: %w", err)
 		}
 
 		defer rows.Close()
@@ -217,9 +215,9 @@ func loadBookmarkedTitles(conn *sql.DB, auth ajax.Auth,
 			var bookmarked bool = true
 			var createdAt time.Time
 			var createdBy uint
-			err = rows.Scan(&spaceID, &text, &createdAt, &createdBy)
+			err = rows.Scan(&spaceID, &createdAt, &createdBy, &text)
 			if err != nil {
-				return fmt.Errorf("loading bookmarked titles: %w", err)
+				return fmt.Errorf("scanning bookmarked titles: %w", err)
 			}
 			var title = &Space{
 				ID:           spaceID,
@@ -254,7 +252,7 @@ func loadTopTitles(conn *sql.DB, spaces []*Space,
 
 	for _, space := range spaces {
 
-		rows, err := conn.Query(`SELECT space.id, unique_text.text,
+		rows, err := conn.Query(`SELECT space.id, unique_text.text_value,
 			COUNT(subspace.id) AS subspaces_total
 			FROM space
 			INNER JOIN title_space ON title_space.space_id = space.id
@@ -262,7 +260,7 @@ func loadTopTitles(conn *sql.DB, spaces []*Space,
 			LEFT JOIN space AS subspace ON subspace.parent_id = space.id
 			WHERE space.space_type = $1
 			AND space.parent_id = $2
-			GROUP BY space.id, unique_text.text
+			GROUP BY space.id, unique_text.text_value
 			ORDER BY subspaces_total DESC
 			OFFSET $3
 			LIMIT $4`,
@@ -283,14 +281,16 @@ func loadTopTitles(conn *sql.DB, spaces []*Space,
 		for rows.Next() {
 			var spaceID uint
 			var text string
-			err = rows.Scan(&spaceID, &text)
+			var subspacesTotal uint
+			err = rows.Scan(&spaceID, &text, &subspacesTotal)
 			if err != nil {
 				return fmt.Errorf("loading top titles: %w", err)
 			}
 			var title = &Space{
-				ID:        spaceID,
-				SpaceType: SpaceTypeTitle,
-				Text:      &text,
+				ID:             spaceID,
+				SpaceType:      SpaceTypeTitle,
+				Text:           &text,
+				TotalSubspaces: subspacesTotal,
 			}
 			titles = append(titles, title)
 		}
@@ -318,7 +318,7 @@ func loadTopTags(conn *sql.DB, spaces []*Space,
 
 	for _, space := range spaces {
 
-		rows, err := conn.Query(`SELECT space.id, unique_text.text,
+		rows, err := conn.Query(`SELECT space.id, unique_text.text_value,
 			COUNT(subspace.id) AS subspace_total
 			FROM space
 			INNER JOIN tag_space ON tag_space.space_id = space.id
@@ -326,7 +326,7 @@ func loadTopTags(conn *sql.DB, spaces []*Space,
 			LEFT JOIN space AS subspace ON subspace.parent_id = space.id
 			WHERE space.space_type = $1
 			AND space.parent_id = $2
-			GROUP BY space.id, unique_text.text
+			GROUP BY space.id, unique_text.text_value
 			ORDER BY subspace_total DESC
 			OFFSET $3
 			LIMIT $4`,
@@ -470,7 +470,7 @@ func loadTitleSpacesContent(conn *sql.DB, auth *ajax.Auth, spaces []*Space) erro
 	}
 
 	rows, err := conn.Query(`SELECT
-		space.id, unique_text.text
+		space.id, unique_text.text_value
 		FROM space
 		INNER JOIN title_space ON title_space.space_id = space.id
 		INNER JOIN unique_text ON unique_text.id = title_space.unique_text_id
@@ -524,7 +524,7 @@ func loadTagSpacesContent(conn *sql.DB, auth *ajax.Auth, spaces []*Space) error 
 	}
 
 	rows, err := conn.Query(`SELECT
-		space.id, unique_text.text
+		space.id, unique_text.text_value
 		FROM space
 		INNER JOIN tag_space ON tag_space.space_id = space.id
 		INNER JOIN unique_text ON unique_text.id = tag_space.unique_text_id
@@ -578,7 +578,7 @@ func loadTextSpacesContent(conn *sql.DB, auth *ajax.Auth, spaces []*Space) error
 	}
 
 	rows, err := conn.Query(`SELECT
-		space.id, unique_text.text
+		space.id, unique_text.text_value
 		FROM space
 		INNER JOIN text_space ON text_space.space_id = space.id
 		INNER JOIN unique_text ON unique_text.id = text_space.unique_text_id
@@ -632,7 +632,7 @@ func loadNakedTextSpacesContent(conn *sql.DB, auth *ajax.Auth, spaces []*Space) 
 	}
 
 	rows, err := conn.Query(`SELECT
-		space.id, unique_text.text, naked_text_space.replay_data
+		space.id, unique_text.text_value, naked_text_space.replay_data
 		FROM space
 		INNER JOIN naked_text_space ON naked_text_space.space_id = space.id
 		INNER JOIN unique_text ON unique_text.id = naked_text_space.final_unique_text_id

@@ -253,7 +253,7 @@ func CreateTitleCheckin(conn *sql.DB, auth ajax.Auth, parentID uint, title strin
 				VALUES ($1)
 				RETURNING id, text_value`,
 				title,
-			).Scan(&uniqueTextId, space.Text)
+			).Scan(&uniqueTextId, &space.Text)
 
 			if err != nil {
 				return fmt.Errorf("insert unique_text: %w", err)

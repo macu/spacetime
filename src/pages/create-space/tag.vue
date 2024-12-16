@@ -1,5 +1,5 @@
 <template>
-<form-layout title="Create tag">
+<form-layout title="Create tag" class="create-tag-page page-width-md">
 
 	<template v-if="parentId">
 
@@ -7,8 +7,13 @@
 
 		<hr/>
 
-		<form-field title="New tag" required>
-			<input v-model="tag" :maxlength="$store.getters.tagMaxLength" show-word-count/>
+		<form-field title="Name for new tag" required>
+			<el-input
+				v-model="tag"
+				:maxlength="$store.getters.tagMaxLength"
+				show-word-count
+				size="large"
+				/>
 		</form-field>
 
 		<form-actions>
@@ -34,6 +39,9 @@ import {
 } from '@/utils/ajax.js';
 
 export default {
+	components: {
+		ParentTitles,
+	},
 	data() {
 		return {
 			tag: '',
@@ -42,7 +50,7 @@ export default {
 	},
 	computed: {
 		parentId() {
-			return this.$route.params.parentId;
+			return this.$route.query.parentId || null;
 		},
 		createDisabled() {
 			return this.posting || !this.tag.trim();

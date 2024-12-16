@@ -20,7 +20,7 @@ func indexHandler(db *sql.DB, user *ajax.Auth, w http.ResponseWriter, r *http.Re
 		VersionStamp      string
 		PasswordMinLength uint
 		TitleMaxLength    uint
-		TaxMaxLength      uint
+		TagMaxLength      uint
 		TextMaxLength     uint
 		MaxLimit          uint
 	}{

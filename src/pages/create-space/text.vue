@@ -1,5 +1,5 @@
 <template>
-<form-layout title="Create text">
+<form-layout title="Create text" class="create-text-page page-width-md">
 
 	<template v-if="parentId">
 		<parent-titles :parent-id="parentId"/>
@@ -7,15 +7,16 @@
 	</template>
 
 	<form-field title="Title" required>
-		<input
+		<el-input
 			v-model="title"
 			:maxlength="$store.getters.titleMaxLength"
 			show-word-count
+			size="large"
 			/>
 	</form-field>
 
 	<form-field title="Text" required>
-		<input
+		<el-input
 			type="textarea"
 			v-model="text"
 			:maxlength="$store.getters.textMaxLength"
@@ -41,6 +42,9 @@ import {
 } from '@/utils/ajax.js';
 
 export default {
+	components: {
+		ParentTitles,
+	},
 	data() {
 		return {
 			title: '',
@@ -50,7 +54,7 @@ export default {
 	},
 	computed: {
 		parentId() {
-			return this.$route.params.parentId;
+			return this.$route.query.parentId || null;
 		},
 		createDisabled() {
 			return this.posting || !this.title.trim() || !this.text.trim();

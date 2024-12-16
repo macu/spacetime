@@ -16,7 +16,8 @@ func CheckCreateSpaceThrottleBlock(db *sql.DB, auth ajax.Auth) (bool, error) {
 	var block bool
 
 	var err = db.QueryRow(`SELECT COUNT(*) >= 60 FROM space
-		WHERE created_by = ? AND created_at > NOW() - INTERVAL 1 MINUTE`,
+		WHERE created_by = $1
+		AND created_at > NOW() - INTERVAL '1 MINUTE'`,
 		auth.UserID,
 	).Scan(&block)
 

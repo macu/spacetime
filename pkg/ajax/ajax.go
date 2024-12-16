@@ -16,7 +16,7 @@ import (
 var ajaxHandlersAuthOptional = map[string]map[string]ajax.AjaxRouteAuthOptional{
 	http.MethodGet: {
 		"/ajax/space":     AjaxLoadSpace,
-		"/ajax/subspaces": AjaxLoadSubspacesByCheckinTotal,
+		"/ajax/subspaces": AjaxLoadTopSubspaces,
 
 		"/ajax/load-login":  auth.AjaxLoadLogin,
 		"/ajax/load-signup": auth.AjaxLoadSignup,
