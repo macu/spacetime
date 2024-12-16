@@ -1,6 +1,9 @@
 package spacetime
 
-import "unicode"
+import (
+	"encoding/json"
+	"unicode"
+)
 
 type NakedTextDelta struct {
 	Timestmap uint `json:"ts"`
@@ -24,6 +27,41 @@ type NakedTextDelta struct {
 }
 
 type NakedText []NakedTextDelta
+
+func (d *NakedTextDelta) MarshalJSON() ([]byte, error) {
+	type Alias NakedTextDelta
+	return json.Marshal(&struct {
+		AddText *string `json:"t,omitempty"`
+		*Alias
+	}{
+		AddText: func() *string {
+			if d.AddText != nil {
+				s := string(*d.AddText)
+				return &s
+			}
+			return nil
+		}(),
+		Alias: (*Alias)(d),
+	})
+}
+
+func (d *NakedTextDelta) UnmarshalJSON(data []byte) error {
+	type Alias NakedTextDelta
+	aux := &struct {
+		AddText *string `json:"t,omitempty"`
+		*Alias
+	}{
+		Alias: (*Alias)(d),
+	}
+	if err := json.Unmarshal(data, aux); err != nil {
+		return err
+	}
+	if aux.AddText != nil && len(*aux.AddText) > 0 {
+		r := []rune(*aux.AddText)
+		d.AddText = &r[0]
+	}
+	return nil
+}
 
 func ValidateNakedText(text NakedText) bool {
 
@@ -51,7 +89,7 @@ func ValidateNakedText(text NakedText) bool {
 
 			// Check rune, allow tab
 			if !unicode.IsPrint(*delta.AddText) &&
-				*delta.AddText != 9 {
+				*delta.AddText != '\t' {
 				return false
 			}
 

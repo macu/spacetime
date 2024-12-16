@@ -23,19 +23,20 @@ func CheckSpaceExists(conn *sql.DB, spaceID uint) (bool, error) {
 
 }
 
-func GetSpaceParentID(conn *sql.DB, spaceID uint) (*uint, error) {
+func GetSpaceMeta(conn *sql.DB, spaceID uint) (*uint, string, error) {
 
 	var parentID *uint
+	var spaceType string
 
-	var err = conn.QueryRow(`SELECT parent_id
+	var err = conn.QueryRow(`SELECT parent_id, space_type
 		FROM space
-		WHERE id = $1`, spaceID).Scan(&parentID)
+		WHERE id = $1`, spaceID).Scan(&parentID, &spaceType)
 
 	if err != nil {
-		return nil, fmt.Errorf("get space parent ID: %w", err)
+		return nil, "", fmt.Errorf("get space parent ID: %w", err)
 	}
 
-	return parentID, nil
+	return parentID, spaceType, nil
 
 }
 

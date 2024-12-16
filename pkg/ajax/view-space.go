@@ -21,7 +21,7 @@ func AjaxLoadSpace(db *sql.DB, auth *ajax.Auth,
 
 	includeSubspaces := types.AtoBool(r.FormValue("includeSubspaces"))
 
-	space, err := spacetime.LoadSpace(db, auth, id, includeSubspaces)
+	space, err := spacetime.LoadSpace(db, auth, id, includeSubspaces, nil, nil)
 	if err != nil {
 		logging.LogError(r, auth, err)
 		return nil, http.StatusInternalServerError
@@ -51,7 +51,7 @@ func AjaxLoadSubspacesByCheckinTotal(db *sql.DB, auth *ajax.Auth,
 		return nil, http.StatusBadRequest
 	}
 
-	spaces, err := spacetime.LoadTopSubspaces(db, auth, parentId, offset, limit)
+	spaces, err := spacetime.LoadTopSubspaces(db, auth, parentId, offset, limit, nil, nil)
 	if err != nil {
 		logging.LogError(r, auth, err)
 		return nil, http.StatusInternalServerError

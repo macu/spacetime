@@ -93,7 +93,7 @@ func CreateCheckin(conn *sql.DB, auth ajax.Auth, parentID uint, spaceID *uint) (
 		FROM checkin_space
 		INNER JOIN space ON space.id = checkin_space.space_id
 		WHERE space.parent_id = $1 AND checkin_space.checkin_space_id = $2)`,
-		parentID, spaceID,
+		parentID, *spaceID,
 	).Scan(&existingCheckinSpaceID)
 
 	if err == sql.ErrNoRows {
@@ -121,7 +121,7 @@ func CreateCheckin(conn *sql.DB, auth ajax.Auth, parentID uint, spaceID *uint) (
 
 	// Check parent of existing space
 
-	existingSpaceParentID, err := GetSpaceParentID(conn, *spaceID)
+	existingSpaceParentID, checkinSpaceType, err := GetSpaceMeta(conn, *spaceID)
 	if err != nil {
 		return nil, err
 	}
@@ -129,6 +129,7 @@ func CreateCheckin(conn *sql.DB, auth ajax.Auth, parentID uint, spaceID *uint) (
 	if existingSpaceParentID != nil && *existingSpaceParentID == parentID {
 
 		// Create checkin under existing space
+		// rather than checking space in under its own parent
 		return CreateCheckin(conn, auth, *spaceID, nil)
 
 	}
@@ -160,7 +161,8 @@ func CreateCheckin(conn *sql.DB, auth ajax.Auth, parentID uint, spaceID *uint) (
 		space.CheckinSpaceID = &spaceID
 
 		var checkinSpace = &Space{
-			ID: *spaceID,
+			ID:        *spaceID,
+			SpaceType: checkinSpaceType,
 		}
 		space.CheckinSpace = &checkinSpace
 
