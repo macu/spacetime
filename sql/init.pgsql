@@ -130,45 +130,53 @@ CREATE INDEX space_user_throttle ON space (created_by, created_at);
 
 CREATE TABLE checkin_space ( -- a link to another space somewhere else
 	space_id INTEGER PRIMARY KEY REFERENCES space (id) ON DELETE CASCADE,
+	parent_space_id INTEGER NOT NULL REFERENCES space (id) ON DELETE CASCADE,
 	checkin_space_id INTEGER REFERENCES space (id) ON DELETE CASCADE, -- null for direct checkins on parent space
-	UNIQUE (space_id, checkin_space_id)
+	UNIQUE (parent_space_id, checkin_space_id)
 );
 
 CREATE TABLE title_space (
 	space_id INTEGER PRIMARY KEY REFERENCES space (id) ON DELETE CASCADE,
+	parent_space_id INTEGER NOT NULL REFERENCES space (id) ON DELETE CASCADE,
 	unique_text_id INTEGER NOT NULL REFERENCES unique_text (id) ON DELETE CASCADE,
-	UNIQUE (space_id, unique_text_id)
+	UNIQUE (parent_space_id, unique_text_id)
 );
 
 CREATE TABLE tag_space (
 	space_id INTEGER PRIMARY KEY REFERENCES space (id) ON DELETE CASCADE,
+	parent_space_id INTEGER NOT NULL REFERENCES space (id) ON DELETE CASCADE,
 	unique_text_id INTEGER NOT NULL REFERENCES unique_text (id) ON DELETE CASCADE,
-	UNIQUE (space_id, unique_text_id)
+	UNIQUE (parent_space_id, unique_text_id)
 );
 
 CREATE TABLE text_space (
+	-- allow duplicates
 	space_id INTEGER PRIMARY KEY REFERENCES space (id) ON DELETE CASCADE,
-	unique_text_id INTEGER NOT NULL REFERENCES unique_text (id) ON DELETE CASCADE,
-	UNIQUE (space_id, unique_text_id)
+	parent_space_id INTEGER NOT NULL REFERENCES space (id) ON DELETE CASCADE,
+	unique_text_id INTEGER NOT NULL REFERENCES unique_text (id) ON DELETE CASCADE
 );
 
 CREATE TABLE naked_text_space (
+	-- allow duplicates
 	space_id INTEGER PRIMARY KEY REFERENCES space (id) ON DELETE CASCADE,
+	parent_space_id INTEGER NOT NULL REFERENCES space (id) ON DELETE CASCADE,
 	final_unique_text_id INTEGER NOT NULL REFERENCES unique_text (id) ON DELETE CASCADE,
 	replay_data TEXT NOT NULL
 );
 
 CREATE TABLE stream_of_consciousness_space (
 	space_id INTEGER PRIMARY KEY REFERENCES space (id) ON DELETE CASCADE,
+	parent_space_id INTEGER NOT NULL REFERENCES space (id) ON DELETE CASCADE,
 	stream_closed_at TIMESTAMPTZ -- null until closed
 );
 
 CREATE TABLE json_attribute_space (
 	space_id INTEGER PRIMARY KEY REFERENCES space (id) ON DELETE CASCADE,
+	parent_space_id INTEGER NOT NULL REFERENCES space (id) ON DELETE CASCADE,
 	url TEXT NOT NULL,
 	json_path TEXT NOT NULL,
 	refresh_rate INTERVAL,
-	UNIQUE (space_id, url, json_path, refresh_rate)
+	UNIQUE (parent_space_id, url, json_path, refresh_rate)
 );
 
 CREATE TABLE user_space_bookmark (

@@ -1,4 +1,4 @@
-# TreeTime conception
+# TreeTime breakthrough / ideas
 
 Objects (not sure about the term)
 Object attributes with json source (URL and target JSON property path) with realtime updates
