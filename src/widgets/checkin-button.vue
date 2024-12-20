@@ -1,15 +1,19 @@
 <template>
-<el-button-group :type="buttonType" :size="size">
+<el-button-group :type="buttonType" :size="size" class="checkin-button">
 	<el-button @click="addCheckIn()">
 		<material-icon icon="check"/>
 	</el-button>
-	<el-button @click="showStats()">
-		<span v-text="checkinCount"/>
+	<el-button v-if="totalSubspaces > 0" @click="showStats()">
+		<span v-text="totalSubspaces"/>
 	</el-button>
 </el-button-group>
 </template>
 
 <script>
+import {
+	ajaxPost,
+} from '@/utils/ajax.js';
+
 export default {
 	emits: [
 		'check-in',
@@ -27,7 +31,7 @@ export default {
 	data() {
 		return {
 			hasUserCheckin: false,
-			checkinCount: this.space.checkinTotal || 0,
+			totalSubspaces: this.space.totalSubspaces || 0,
 		};
 	},
 	computed: {
@@ -37,7 +41,13 @@ export default {
 	},
 	methods: {
 		addCheckIn() {
-			// TODO
+			ajaxPost('/ajax/space/create/checkin', {
+				parentId: this.space.id,
+			}).then(() => {
+				this.hasUserCheckin = true;
+				this.totalSubspaces++;
+				this.$emit('check-in');
+			});
 		},
 		showStats() {
 			// TODO
@@ -45,3 +55,14 @@ export default {
 	},
 };
 </script>
+
+<style lang="scss">
+.checkin-button {
+	display: flex;
+	flex-direction: row;
+	flex-wrap: nowrap;
+	>*, >*+* {
+		margin: 0;
+	}
+}
+</style>

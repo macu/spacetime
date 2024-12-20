@@ -149,9 +149,10 @@ func CreateCheckin(conn *sql.DB, auth ajax.Auth, parentID uint, spaceID *uint) (
 		}
 
 		// Create associated checkin data
-		_, err = tx.Exec(`INSERT INTO checkin_space (space_id, checkin_space_id)
-			VALUES ($1, $2)`,
-			space.ID, spaceID,
+		_, err = tx.Exec(`INSERT INTO checkin_space
+			(space_id, parent_space_id checkin_space_id)
+			VALUES ($1, $2, $3)`,
+			space.ID, parentID, spaceID,
 		)
 
 		if err != nil {
@@ -224,9 +225,9 @@ func CreateTitleCheckin(conn *sql.DB, auth ajax.Auth, parentID uint, title strin
 
 			// Create title_space
 			_, err = tx.Exec(`INSERT INTO title_space
-				(space_id, unique_text_id)
-				VALUES ($1, $2)`,
-				space.ID, *uniqueTextId,
+				(space_id, parent_space_id, unique_text_id)
+				VALUES ($1, $2, $3)`,
+				space.ID, parentID, *uniqueTextId,
 			)
 
 			if err != nil {
@@ -359,9 +360,9 @@ func CreateTagCheckin(conn *sql.DB, auth ajax.Auth, parentID uint, tag string) (
 
 			// Create title_space
 			_, err = tx.Exec(`INSERT INTO tag_space
-				(space_id, unique_text_id)
-				VALUES ($1, $2)`,
-				space.ID, *uniqueTextId,
+				(space_id, parent_space_id, unique_text_id)
+				VALUES ($1, $2, $3)`,
+				space.ID, parentID, *uniqueTextId,
 			)
 
 			if err != nil {
@@ -495,10 +496,12 @@ func CreateTextCheckin(conn *sql.DB, auth ajax.Auth, parentID *uint, text string
 			}
 
 			// Create title_space
+			// NOTE: Because of postgres unique index behaviour,
+			// unique parent/text combinations are not enforced at the root level
 			_, err = tx.Exec(`INSERT INTO text_space
-				(space_id, unique_text_id)
-				VALUES ($1, $2)`,
-				space.ID, *uniqueTextId,
+				(space_id, parent_space_id, unique_text_id)
+				VALUES ($1, $2, $3)`,
+				space.ID, parentID, *uniqueTextId,
 			)
 
 			if err != nil {

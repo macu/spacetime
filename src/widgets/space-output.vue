@@ -10,10 +10,18 @@
 		<div class="flex-row-md nowrap">
 			<add-title
 				:parent-id="space.id"
-				@added="titleSpace => showUserTitle(titleSpace)"
+				@added="titleSpace => userTitleAdded(titleSpace)"
 				/>
-			<space-title v-for="title in userTitles" :space="title"/>
-			<space-title v-for="title in topTitles" :space="title"/>
+			<space-title
+				v-for="title in userTitles"
+				:space="title"
+				@click-title="gotoTitle(title)"
+				/>
+			<space-title
+				v-for="title in topTitles"
+				:space="title"
+				@click-title="gotoTitle(title)"
+				/>
 			<el-button>View all</el-button>
 		</div>
 	</div>
@@ -90,7 +98,7 @@ export default {
 		},
 	},
 	methods: {
-		showUserTitle(titleSpace) {
+		userTitleAdded(titleSpace) {
 			let index = this.userTitles.findIndex(t => t.id === titleSpace.id);
 			if (index >= 0) {
 				// Title already present

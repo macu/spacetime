@@ -5,7 +5,7 @@ const TagMaxLength = 128
 const TextMaxLength = 1024
 
 const SpaceTypeSpace = "space"
-const SpaceTypeCheckin = "checkin"
+const SpaceTypeCheckin = "check-in"
 const SpaceTypeTitle = "title"
 const SpaceTypeTag = "tag"
 const SpaceTypeText = "text"

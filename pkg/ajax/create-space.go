@@ -42,15 +42,11 @@ func AjaxCreateEmptySpace(db *sql.DB, auth ajax.Auth,
 	}
 
 	if title != "" {
-		titleSpace, err := spacetime.CreateTitleCheckin(db, auth, space.ID, title)
+		_, err := spacetime.CreateTitleCheckin(db, auth, space.ID, title)
 		if err != nil {
 			logging.LogError(r, &auth, err)
 			return nil, http.StatusInternalServerError
 		}
-		space.UserTitles = &[]*spacetime.Space{titleSpace}
-		space.TopTitles = &[]*spacetime.Space{titleSpace}
-		space.TopSubspaces = &[]*spacetime.Space{titleSpace}
-		space.TotalSubspaces = 1
 	}
 
 	return space, http.StatusCreated
@@ -123,7 +119,7 @@ func AjaxCreateTitleSpace(db *sql.DB, auth ajax.Auth,
 		return nil, http.StatusInternalServerError
 	}
 
-	return space, http.StatusNotImplemented
+	return space, http.StatusCreated
 
 }
 
@@ -158,7 +154,7 @@ func AjaxCreateTagSpace(db *sql.DB, auth ajax.Auth,
 		return nil, http.StatusInternalServerError
 	}
 
-	return space, http.StatusNotImplemented
+	return space, http.StatusCreated
 
 }
 
@@ -181,6 +177,7 @@ func AjaxCreateTextSpace(db *sql.DB, auth ajax.Auth,
 		return nil, http.StatusBadRequest
 	}
 
+	// title optional
 	title := strings.TrimSpace(r.FormValue("title"))
 
 	if title != "" && !spacetime.ValidateTitle(title) {
@@ -199,13 +196,15 @@ func AjaxCreateTextSpace(db *sql.DB, auth ajax.Auth,
 		return nil, http.StatusInternalServerError
 	}
 
-	_, err = spacetime.CreateTitleCheckin(db, auth, space.ID, title)
-	if err != nil {
-		logging.LogError(r, &auth, err)
-		return nil, http.StatusInternalServerError
+	if title != "" {
+		_, err = spacetime.CreateTitleCheckin(db, auth, space.ID, title)
+		if err != nil {
+			logging.LogError(r, &auth, err)
+			return nil, http.StatusInternalServerError
+		}
 	}
 
-	return space, http.StatusNotImplemented
+	return space, http.StatusCreated
 
 }
 

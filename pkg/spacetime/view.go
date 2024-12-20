@@ -58,9 +58,9 @@ func LoadSpace(conn *sql.DB, auth *ajax.Auth, id uint,
 	}
 
 	if auth != nil {
-		err = loadBookmarkedTitles(conn, *auth, []*Space{&space})
+		err = loadUserTitlesByLastCheckin(conn, *auth, []*Space{&space}, DefaultTitlesLimit)
 		if err != nil {
-			return nil, fmt.Errorf("loading bookmarked titles: %w", err)
+			return nil, fmt.Errorf("loading user's last checked titles: %w", err)
 		}
 	}
 
@@ -158,7 +158,7 @@ func LoadTopSubspaces(conn *sql.DB, auth *ajax.Auth,
 	}
 
 	if auth != nil {
-		err = loadBookmarkedTitles(conn, *auth, spaces)
+		err = loadUserTitlesByLastCheckin(conn, *auth, spaces, DefaultTitlesLimit)
 		if err != nil {
 			return nil, fmt.Errorf("loading bookmarked titles: %w", err)
 		}
@@ -192,10 +192,10 @@ func loadSubspaceCount(conn *sql.DB, spaces []*Space) error {
 			inClauseSql += `, `
 		}
 		inClauseSql += db.Arg(&args, space.ID)
-		args = append(args, space.ID)
 	}
 
-	rows, err := conn.Query(`SELECT space.id, COUNT(subspace.id) AS subspace_count
+	rows, err := conn.Query(`SELECT space.id,
+		COUNT(subspace.id) AS subspace_count
 		FROM space
 		LEFT JOIN space AS subspace ON subspace.parent_id = space.id
 		WHERE space.id IN (`+inClauseSql+`)
@@ -230,10 +230,11 @@ func loadSubspaceCount(conn *sql.DB, spaces []*Space) error {
 
 }
 
-func loadBookmarkedTitles(conn *sql.DB, auth ajax.Auth,
+func loadUserTitlesByLastCheckin(conn *sql.DB, auth ajax.Auth,
 	spaces []*Space,
+	limit uint,
 ) error {
-	// Load all bookmarked titles
+	// Load user titles by last checkin
 
 	if len(spaces) == 0 {
 		return nil
@@ -241,24 +242,32 @@ func loadBookmarkedTitles(conn *sql.DB, auth ajax.Auth,
 
 	for _, space := range spaces {
 
-		rows, err := conn.Query(`SELECT space.id, space.created_at, space.created_by,
-			unique_text.text_value
-			FROM space
+		// FIXME this isn't working. it's returning the most checked title first
+		rows, err := conn.Query(`WITH user_titles AS (
+			SELECT space.id, space.created_at, space.created_by,
+			unique_text.text_value,
+			MAX(checkin_space_space.created_at) AS last_checkin_at
+			FROM space -- the title's space
 			INNER JOIN title_space ON title_space.space_id = space.id
 			INNER JOIN unique_text ON unique_text.id = title_space.unique_text_id
-			INNER JOIN user_space_bookmark ON user_space_bookmark.space_id = space.id
-			WHERE user_space_bookmark.user_id = $1
-			AND space.space_type = $2
-			AND space.parent_id = $3
-			ORDER BY user_space_bookmark.created_at DESC`,
-			auth.UserID, SpaceTypeTitle, space.ID,
+			INNER JOIN checkin_space ON checkin_space.parent_space_id = space.id
+			INNER JOIN space AS checkin_space_space ON checkin_space_space.id = checkin_space.space_id
+			WHERE space.space_type = $1
+			AND space.parent_id = $2
+			AND checkin_space_space.created_by = $3
+			GROUP BY space.id, space.created_at, space.created_by, unique_text.text_value
+			LIMIT $4)
+			SELECT id, text_value, created_at, created_by
+			FROM user_titles
+			ORDER BY last_checkin_at DESC`,
+			SpaceTypeTitle, space.ID, auth.UserID, limit,
 		)
 
 		if err == sql.ErrNoRows {
 			space.UserTitles = &[]*Space{}
 			continue
 		} else if err != nil {
-			return fmt.Errorf("querying bookmarked titles: %w", err)
+			return fmt.Errorf("loading user titles by last checkin: %w", err)
 		}
 
 		defer rows.Close()
@@ -268,20 +277,18 @@ func loadBookmarkedTitles(conn *sql.DB, auth ajax.Auth,
 		for rows.Next() {
 			var spaceID uint
 			var text string
-			var bookmarked bool = true
 			var createdAt time.Time
 			var createdBy uint
 			err = rows.Scan(&spaceID, &createdAt, &createdBy, &text)
 			if err != nil {
-				return fmt.Errorf("scanning bookmarked titles: %w", err)
+				return fmt.Errorf("loading user titles by last checkin: %w", err)
 			}
 			var title = &Space{
-				ID:           spaceID,
-				SpaceType:    SpaceTypeTitle,
-				Text:         &text,
-				UserBookmark: &bookmarked,
-				CreatedAt:    createdAt,
-				CreatedBy:    createdBy,
+				ID:        spaceID,
+				SpaceType: SpaceTypeTitle,
+				Text:      &text,
+				CreatedAt: createdAt,
+				CreatedBy: createdBy,
 			}
 			titles = append(titles, title)
 		}
