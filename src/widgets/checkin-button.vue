@@ -10,6 +10,8 @@
 </template>
 
 <script>
+import bus from '@/utils/bus.js';
+
 import {
 	ajaxPost,
 } from '@/utils/ajax.js';
@@ -39,13 +41,26 @@ export default {
 			return this.hasUserCheckin ? 'success' : 'primary';
 		},
 	},
+	mounted() {
+		bus.on('direct-check-in', this.incrementSubspaces);
+	},
+	beforeUnmount() {
+		bus.off('direct-check-in', this.incrementSubspaces);
+	},
 	methods: {
+		incrementSubspaces({spaceId}) {
+			if (this.space.id === spaceId) {
+				this.hasUserCheckin = true;
+				this.totalSubspaces++;
+			}
+		},
 		addCheckIn() {
 			ajaxPost('/ajax/space/create/checkin', {
 				parentId: this.space.id,
 			}).then(() => {
-				this.hasUserCheckin = true;
-				this.totalSubspaces++;
+				bus.emit('direct-check-in', {
+					spaceId: this.space.id,
+				});
 				this.$emit('check-in');
 			});
 		},
