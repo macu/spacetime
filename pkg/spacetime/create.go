@@ -76,9 +76,9 @@ func CreateCheckin(conn *sql.DB, auth ajax.Auth, parentID uint, spaceID *uint) (
 			return nil, fmt.Errorf("insert space: %w", err)
 		}
 
+		// Set checkin space details to nil to indicate it is a direct checkin
 		var checkinSpaceID *uint = nil
 		space.CheckinSpaceID = &checkinSpaceID
-
 		var checkinSpace *Space = nil
 		space.CheckinSpace = &checkinSpace
 
@@ -89,22 +89,22 @@ func CreateCheckin(conn *sql.DB, auth ajax.Auth, parentID uint, spaceID *uint) (
 	// If spaceID is given, check if checkin space already exists
 
 	var existingCheckinSpaceID *uint
-	err = conn.QueryRow(`SELECT checkin_space.space_id
-		FROM checkin_space
-		INNER JOIN space ON space.id = checkin_space.space_id
-		WHERE space.parent_id = $1 AND checkin_space.checkin_space_id = $2)`,
-		parentID, *spaceID,
+	err = conn.QueryRow(`SELECT space.id
+		FROM space
+		INNER JOIN checkin_space ON checkin_space.space_id = space.id
+		WHERE space.parent_id = $1
+		AND space.space_type = $2
+		AND checkin_space.checkin_space_id = $3`,
+		parentID, SpaceTypeCheckin, *spaceID,
 	).Scan(&existingCheckinSpaceID)
 
-	if err == sql.ErrNoRows {
-		// Continue to create checkin
-	} else if err != nil {
+	if err != nil && err != sql.ErrNoRows {
 		return nil, fmt.Errorf("check checkin exists: %w", err)
 	}
 
 	if existingCheckinSpaceID != nil {
 
-		// Check-in under existing checkin
+		// Create direct check-in under existing check-in
 		return CreateCheckin(conn, auth, *existingCheckinSpaceID, nil)
 
 	}
@@ -119,8 +119,7 @@ func CreateCheckin(conn *sql.DB, auth ajax.Auth, parentID uint, spaceID *uint) (
 		return nil, fmt.Errorf("space to check in does not exist: %d", *spaceID)
 	}
 
-	// Check parent of existing space
-
+	// Get details about space to check in
 	existingSpaceParentID, checkinSpaceType, err := GetSpaceMeta(conn, *spaceID)
 	if err != nil {
 		return nil, err
@@ -128,7 +127,8 @@ func CreateCheckin(conn *sql.DB, auth ajax.Auth, parentID uint, spaceID *uint) (
 
 	if existingSpaceParentID != nil && *existingSpaceParentID == parentID {
 
-		// Create checkin under existing space
+		// Create direct checkin under existing space,
+		// becuase it was created under the target parent
 		// rather than checking space in under its own parent
 		return CreateCheckin(conn, auth, *spaceID, nil)
 
@@ -206,6 +206,7 @@ func CreateTitleCheckin(conn *sql.DB, auth ajax.Auth, parentID uint, title strin
 
 		var uniqueTextId *uint
 
+		// Create function to insert title space
 		var runInsertTitleSpace = func() error {
 
 			// Create space
@@ -236,13 +237,12 @@ func CreateTitleCheckin(conn *sql.DB, auth ajax.Auth, parentID uint, title strin
 
 		}
 
-		err := conn.QueryRow(`SELECT id FROM unique_text WHERE text_value = $1`,
+		// Check for existing unique_text
+		err := tx.QueryRow(`SELECT id FROM unique_text WHERE text_value = $1`,
 			title,
 		).Scan(&uniqueTextId)
 
-		if err == sql.ErrNoRows {
-			// Continue to create title
-		} else if err != nil {
+		if err != nil && err != sql.ErrNoRows {
 			return fmt.Errorf("load unique_text ID: %w", err)
 		}
 
@@ -259,6 +259,7 @@ func CreateTitleCheckin(conn *sql.DB, auth ajax.Auth, parentID uint, title strin
 				return fmt.Errorf("insert unique_text: %w", err)
 			}
 
+			// Create title space now that uniqueTextId is available
 			if err = runInsertTitleSpace(); err != nil {
 				return fmt.Errorf("insert title space: %w", err)
 			}
@@ -270,18 +271,14 @@ func CreateTitleCheckin(conn *sql.DB, auth ajax.Auth, parentID uint, title strin
 			err = conn.QueryRow(`SELECT space.id
 				FROM space
 				INNER JOIN title_space ON title_space.space_id = space.id
-				WHERE space.parent_id = $1 AND title_space.unique_text_id = $2`,
-				parentID, *uniqueTextId,
+				WHERE space.parent_id = $1
+				AND space.space_type = $2
+				AND title_space.unique_text_id = $3`,
+				parentID, SpaceTypeTitle, *uniqueTextId,
 			).Scan(&existingTitleSpaceID)
 
-			if err == sql.ErrNoRows {
-
-				// Continue to create title
-
-			} else if err != nil {
-
+			if err != nil && err != sql.ErrNoRows {
 				return fmt.Errorf("check title_space exists: %w", err)
-
 			}
 
 			if existingTitleSpaceID == nil {
@@ -344,6 +341,7 @@ func CreateTagCheckin(conn *sql.DB, auth ajax.Auth, parentID uint, tag string) (
 
 		var uniqueTextId *uint
 
+		// Create function to insert tag space
 		var runInsertTagSpace = func() error {
 
 			// Create space
@@ -374,13 +372,12 @@ func CreateTagCheckin(conn *sql.DB, auth ajax.Auth, parentID uint, tag string) (
 
 		}
 
+		// Check for existing unique_text
 		err := conn.QueryRow(`SELECT id FROM unique_text WHERE text_value = $1`,
 			tag,
 		).Scan(&uniqueTextId)
 
-		if err == sql.ErrNoRows {
-			// Continue to create tag
-		} else if err != nil {
+		if err != nil && err != sql.ErrNoRows {
 			return fmt.Errorf("load unique_text ID: %w", err)
 		}
 
@@ -397,6 +394,7 @@ func CreateTagCheckin(conn *sql.DB, auth ajax.Auth, parentID uint, tag string) (
 				return fmt.Errorf("insert unique_text: %w", err)
 			}
 
+			// Create tag space now that uniqueTextId is available
 			if err = runInsertTagSpace(); err != nil {
 				return fmt.Errorf("insert tag space: %w", err)
 			}
@@ -408,18 +406,14 @@ func CreateTagCheckin(conn *sql.DB, auth ajax.Auth, parentID uint, tag string) (
 			err = conn.QueryRow(`SELECT space.id
 				FROM space
 				INNER JOIN tag_space ON tag_space.space_id = space.id
-				WHERE space.parent_id = $1 AND tag_space.unique_text_id = $2`,
-				parentID, *uniqueTextId,
+				WHERE space.parent_id = $1
+				AND space.space_type = $2
+				AND tag_space.unique_text_id = $3`,
+				parentID, SpaceTypeTag, *uniqueTextId,
 			).Scan(&existingTagSpaceID)
 
-			if err == sql.ErrNoRows {
-
-				// Continue to create tag
-
-			} else if err != nil {
-
+			if err != nil && err != sql.ErrNoRows {
 				return fmt.Errorf("check tag_space exists: %w", err)
-
 			}
 
 			if existingTagSpaceID == nil {
@@ -457,9 +451,9 @@ func CreateTagCheckin(conn *sql.DB, auth ajax.Auth, parentID uint, tag string) (
 func CreateTextCheckin(conn *sql.DB, auth ajax.Auth, parentID *uint, text string) (*Space, error) {
 
 	// Load unique_text ID
-	// Check for existing text space under parent
-	// Create text space if not exists
-	// Check-in on text space
+	// Check for existing tag space under parent
+	// Create tag space if not exists
+	// Check-in on tag space
 
 	text = strings.TrimSpace(text)
 
@@ -484,6 +478,7 @@ func CreateTextCheckin(conn *sql.DB, auth ajax.Auth, parentID *uint, text string
 
 		var uniqueTextId *uint
 
+		// Create function to insert text space
 		var runInsertTextSpace = func() error {
 
 			// Create space
@@ -514,13 +509,12 @@ func CreateTextCheckin(conn *sql.DB, auth ajax.Auth, parentID *uint, text string
 
 		}
 
+		// Check for existing unique_text
 		err := conn.QueryRow(`SELECT id FROM unique_text WHERE text_value = $1`,
 			text,
 		).Scan(&uniqueTextId)
 
-		if err == sql.ErrNoRows {
-			// Continue to create text
-		} else if err != nil {
+		if err != nil && err != sql.ErrNoRows {
 			return fmt.Errorf("load unique_text ID: %w", err)
 		}
 
@@ -537,6 +531,7 @@ func CreateTextCheckin(conn *sql.DB, auth ajax.Auth, parentID *uint, text string
 				return fmt.Errorf("insert unique_text: %w", err)
 			}
 
+			// Create text space now that uniqueTextId is available
 			if err = runInsertTextSpace(); err != nil {
 				return fmt.Errorf("insert text space: %w", err)
 			}
@@ -548,18 +543,14 @@ func CreateTextCheckin(conn *sql.DB, auth ajax.Auth, parentID *uint, text string
 			err = conn.QueryRow(`SELECT space.id
 				FROM space
 				INNER JOIN text_space ON text_space.space_id = space.id
-				WHERE space.parent_id = $1 AND text_space.unique_text_id = $2`,
-				parentID, *uniqueTextId,
+				WHERE space.parent_id = $1
+				AND space.space_type = $2
+				AND text_space.unique_text_id = $3`,
+				parentID, SpaceTypeText, *uniqueTextId,
 			).Scan(&existingTextSpaceID)
 
-			if err == sql.ErrNoRows {
-
-				// Continue to create text
-
-			} else if err != nil {
-
+			if err != nil && err != sql.ErrNoRows {
 				return fmt.Errorf("check text_space exists: %w", err)
-
 			}
 
 			if existingTextSpaceID == nil {
