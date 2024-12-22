@@ -22,11 +22,11 @@
 						<span>Create check-in</span>
 					</el-dropdown-item>
 					<el-dropdown-item command="create-title">
-						<material-icon icon="folder"/>
+						<material-icon icon="label"/>
 						<span>Create title</span>
 					</el-dropdown-item>
 					<el-dropdown-item command="create-tag">
-						<material-icon icon="folder"/>
+						<material-icon icon="label"/>
 						<span>Create tag</span>
 					</el-dropdown-item>
 					<el-dropdown-item command="create-text">

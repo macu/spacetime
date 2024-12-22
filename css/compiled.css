@@ -121,6 +121,9 @@ div.center {
 .flex-row > *, .flex-row > .el-button + .el-button, .flex-row-md > *, .flex-row-md > .el-button + .el-button, .flex-row-lg > *, .flex-row-lg > .el-button + .el-button {
   margin: 0;
 }
+.flex-row > .align-end, .flex-row-md > .align-end, .flex-row-lg > .align-end {
+  align-self: flex-end;
+}
 
 .flex-row {
   row-gap: 5px;
@@ -243,8 +246,24 @@ div.center {
 /*!*****************************************************************************************************************************************************************************************************************************************************************************************************************************************!*\
   !*** css ./node_modules/css-loader/dist/cjs.js??clonedRuleSet-2.use[1]!./node_modules/vue-loader/dist/stylePostLoader.js!./node_modules/sass-loader/dist/cjs.js??clonedRuleSet-2.use[2]!./node_modules/vue-loader/dist/index.js??ruleSet[1].rules[5].use[0]!./src/widgets/space-title.vue?vue&type=style&index=0&id=658550a8&lang=scss ***!
   \*****************************************************************************************************************************************************************************************************************************************************************************************************************************************/
+.space-title {
+  padding: 5px 10px;
+  background-color: white;
+}
 .space-title > .text {
-  padding: 0 10px;
+  font-size: 1.5em;
+  font-weight: bold;
+  white-space: nowrap;
+  cursor: pointer;
+}
+/*!***************************************************************************************************************************************************************************************************************************************************************************************************************************************!*\
+  !*** css ./node_modules/css-loader/dist/cjs.js??clonedRuleSet-2.use[1]!./node_modules/vue-loader/dist/stylePostLoader.js!./node_modules/sass-loader/dist/cjs.js??clonedRuleSet-2.use[2]!./node_modules/vue-loader/dist/index.js??ruleSet[1].rules[5].use[0]!./src/widgets/space-tag.vue?vue&type=style&index=0&id=43250aea&lang=scss ***!
+  \***************************************************************************************************************************************************************************************************************************************************************************************************************************************/
+.space-tag {
+  padding: 5px 10px;
+  background-color: white;
+}
+.space-tag > .text {
   font-size: 1.5em;
   font-weight: bold;
   white-space: nowrap;
@@ -271,10 +290,6 @@ div.center {
   padding: 10px 20px;
   cursor: pointer;
 }
-.space-output > .parent-path > div .space-title {
-  background-color: white;
-  padding: 5px;
-}
 .space-output > .parent-path > div + div {
   border-top: thin solid black;
 }
@@ -300,9 +315,14 @@ div.center {
 .space-output > .container > .space-title-bar .label {
   color: white;
 }
-.space-output > .container > .space-title-bar .space-title {
+.space-output > .container > .content {
   background-color: white;
-  padding: 5px;
+  border-radius: 12px;
+  padding: 10px;
+  cursor: default;
+}
+.space-output > .container > .space-title, .space-output > .container > .space-tag, .space-output > .container > .space-text {
+  cursor: default;
 }
 .space-output > .parent-path + .container {
   border-top-left-radius: 0;

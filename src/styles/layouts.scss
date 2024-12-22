@@ -18,6 +18,10 @@
 	>*, >.el-button+.el-button {
 		margin: 0;
 	}
+
+	>.align-end {
+		align-self: flex-end;
+	}
 }
 
 .flex-row {

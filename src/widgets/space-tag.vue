@@ -1,16 +1,16 @@
 <template>
-<div class="space-title flex-row nowrap">
+<div class="space-tag flex-row nowrap">
 	<checkin-button
 		v-if="showCheckin"
 		:space="space"
 		@check-in="$emit('check-in')"
 		size="small"
 		/>
-	<material-icon icon="title"/>
+	<material-icon icon="label"/>
 	<span
-		@click="$emit('click-title')"
+		@click="$emit('click-tag')"
 		class="text"
-		v-text="titleOutput"
+		v-text="tagOutput"
 		/>
 </div>
 </template>
@@ -37,7 +37,7 @@ export default {
 		},
 	},
 	computed: {
-		titleOutput() {
+		tagOutput() {
 			return this.space.text || '';
 		},
 	},
@@ -45,7 +45,7 @@ export default {
 </script>
 
 <style lang="scss">
-.space-title {
+.space-tag {
 	padding: 5px 10px;
 	background-color: white;
 	>.text {

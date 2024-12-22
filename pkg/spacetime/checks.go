@@ -79,7 +79,7 @@ func ValidateText(text string) bool {
 	// Allow newlines and tabs
 	for _, c := range text {
 		if c < 32 {
-			if c != '\n' && c != '\t' {
+			if c != '\n' && c != '\r' && c != '\t' {
 				return false
 			}
 		}

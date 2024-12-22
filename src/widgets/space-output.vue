@@ -6,13 +6,24 @@
 			v-for="p in space.parentPath"
 			:key="p.id"
 			@click.stop="gotoSpace(p)"
-			class="flex-row-md nowrap">
+			class="flex-row-md">
 
 			<material-icon icon="arrow_right_alt"/>
 
 			<space-type :type="p.spaceType"/>
 
-			<template v-if="p.topTitles && p.topTitles.length > 0">
+			<space-title
+				v-if="p.spaceType === SPACE_TYPES.TITLE"
+				:space="p"
+				:show-checkin="false"
+				/>
+
+			<space-tag
+				v-else-if="p.spaceType === SPACE_TYPES.TAG"
+				:space="p"
+				/>
+
+			<template v-else-if="p.topTitles && p.topTitles.length > 0">
 				<space-title
 					v-for="title in p.topTitles"
 					:space="title"
@@ -20,20 +31,26 @@
 					/>
 			</template>
 
-			<em v-else>Untitled</em>
+			<space-creator
+				v-else
+				:space="p"
+				/>
 
 		</div>
 	</div>
 
-	<div class="container flex-column">
+	<div class="container flex-column-md">
 
 		<div @click.stop class="space-info-bar flex-row-md">
 			<checkin-button :space="space"/>
 			<space-type :type="space.spaceType"/>
 			<space-creator :space="space"/>
+			<el-button v-if="!showTitles" @click="expandTitles = true" class="align-end">
+				Show titles
+			</el-button>
 		</div>
 
-		<div @click.stop class="space-title-bar flex-column-sm">
+		<div v-if="showTitles" @click.stop class="space-title-bar flex-column-sm">
 			<div class="label">Title(s)</div>
 			<div :class="addingTitle ? 'flex-column' : ['flex-row', 'nowrap']">
 				<add-title
@@ -44,12 +61,7 @@
 				<div class="horizontal-scroll">
 					<div class="flex-row-md nowrap">
 						<space-title
-							v-for="title in userTitles"
-							:space="title"
-							@click-title="gotoSpace(title)"
-							/>
-						<space-title
-							v-for="title in topTitles"
+							v-for="title in titlesToShow"
 							:space="title"
 							@click-title="gotoSpace(title)"
 							/>
@@ -59,26 +71,28 @@
 			</div>
 		</div>
 
-	<!--
 		<space-output
-			v-if="spaceType === SPACE_TYPES.CHECKIN && !!space.checkinSpace"
+			v-if="space.spaceType === SPACE_TYPES.CHECK_IN && !!space.checkinSpace"
 			:space="space.checkinSpace"
+			show-path
 			/>
 
 		<space-title
-			v-else-if="spaceType === SPACE_TYPES.TITLE"
-			:title-space="space"
+			v-else-if="space.spaceType === SPACE_TYPES.TITLE"
+			:space="space"
+			:show-checkin="false"
 			/>
 
 		<space-tag
-			v-else-if="spaceType === SPACE_TYPES.TAG"
+			v-else-if="space.spaceType === SPACE_TYPES.TAG"
 			:space="space"
+			:show-checkin="false"
 			/>
 
 		<space-text
-			v-else-if="spaceType === SPACE_TYPES.TEXT"
+			v-else-if="space.spaceType === SPACE_TYPES.TEXT"
 			:space="space"
-			/> -->
+			/>
 
 		<slot v-if="showSubspaces" name="subspaces"/>
 
@@ -92,6 +106,7 @@ import CheckinButton from './checkin-button.vue';
 import SpaceType from './space-type.vue';
 import SpaceCreator from './space-creator.vue';
 import SpaceTitle from './space-title.vue';
+import SpaceTag from './space-tag.vue';
 import SpaceText from './space-text.vue';
 import AddTitle from './add-title-button.vue';
 
@@ -106,6 +121,7 @@ export default {
 		SpaceType,
 		SpaceCreator,
 		SpaceTitle,
+		SpaceTag,
 		SpaceText,
 		AddTitle,
 	},
@@ -127,6 +143,7 @@ export default {
 		return {
 			addingTitle: false,
 			userTitles: (this.space.userTitles || []).slice(),
+			expandTitles: false,
 		};
 	},
 	computed: {
@@ -144,6 +161,23 @@ export default {
 		},
 		hasParentPath() {
 			return !!this.space.parentPath && this.space.parentPath.length > 0;
+		},
+		showTitles() {
+			if (this.expandTitles) {
+				return true;
+			}
+			switch (this.space.spaceType) {
+				case SPACE_TYPES.CHECK_IN:
+				case SPACE_TYPES.TITLE:
+				case SPACE_TYPES.TAG:
+					return false;
+			}
+			// All other types show by default
+			return true;
+		},
+		titlesToShow() {
+			let all = this.userTitles.concat(this.topTitles);
+			return all.filter((t, i) => all.findIndex(t2 => t2.id === t.id) === i);
 		},
 	},
 	methods: {
@@ -179,10 +213,6 @@ $border-radius: 12px;
 		>div {
 			padding: 10px 20px;
 			cursor: pointer;
-			.space-title {
-				background-color: white;
-				padding: 5px;
-			}
 		}
 		>div+div {
 			border-top: thin solid black;
@@ -212,10 +242,17 @@ $border-radius: 12px;
 			.label {
 				color: white;
 			}
-			.space-title {
-				background-color: white;
-				padding: 5px;
-			}
+		}
+
+		>.content {
+			background-color: white;
+			border-radius: $border-radius;
+			padding: 10px;
+			cursor: default;
+		}
+
+		>.space-title, >.space-tag, >.space-text {
+			cursor: default;
 		}
 	}
 

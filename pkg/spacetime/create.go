@@ -201,7 +201,9 @@ func CreateTitleCheckin(conn *sql.DB, auth ajax.Auth, parentID uint, title strin
 		return nil, fmt.Errorf("parent space does not exist: %d", parentID)
 	}
 
-	var space = &Space{}
+	var space = &Space{
+		Text: &title,
+	}
 
 	err = db.InTransaction(conn, func(tx *sql.Tx) error {
 
@@ -252,9 +254,9 @@ func CreateTitleCheckin(conn *sql.DB, auth ajax.Auth, parentID uint, title strin
 			// Create unique_text
 			err := tx.QueryRow(`INSERT INTO unique_text (text_value)
 				VALUES ($1)
-				RETURNING id, text_value`,
+				RETURNING id`,
 				title,
-			).Scan(&uniqueTextId, &space.Text)
+			).Scan(&uniqueTextId)
 
 			if err != nil {
 				return fmt.Errorf("insert unique_text: %w", err)
@@ -336,7 +338,9 @@ func CreateTagCheckin(conn *sql.DB, auth ajax.Auth, parentID uint, tag string) (
 		return nil, fmt.Errorf("parent space does not exist: %d", parentID)
 	}
 
-	var space = &Space{}
+	var space = &Space{
+		Text: &tag,
+	}
 
 	err = db.InTransaction(conn, func(tx *sql.Tx) error {
 
@@ -387,9 +391,9 @@ func CreateTagCheckin(conn *sql.DB, auth ajax.Auth, parentID uint, tag string) (
 			// Create unique_text
 			err := tx.QueryRow(`INSERT INTO unique_text (text_value)
 				VALUES ($1)
-				RETURNING id, text_value`,
+				RETURNING id`,
 				tag,
-			).Scan(&uniqueTextId, space.Text)
+			).Scan(&uniqueTextId)
 
 			if err != nil {
 				return fmt.Errorf("insert unique_text: %w", err)
@@ -524,7 +528,7 @@ func CreateTextCheckin(conn *sql.DB, auth ajax.Auth, parentID uint, text string)
 				VALUES ($1)
 				RETURNING id, text_value`,
 				text,
-			).Scan(&uniqueTextId, space.Text)
+			).Scan(&uniqueTextId, &space.Text)
 
 			if err != nil {
 				return fmt.Errorf("insert unique_text: %w", err)

@@ -81,6 +81,22 @@ func LoadParentPath(conn *sql.DB, auth *ajax.Auth, id uint) ([]*Space, error) {
 		id = *space.ParentID
 	}
 
+	if hasSpacesOfType(spaces, SpaceTypeTitle) {
+		err := loadTitleSpacesContent(conn,
+			extractSpacesByType(spaces, SpaceTypeTitle))
+		if err != nil {
+			return nil, err
+		}
+	}
+
+	if hasSpacesOfType(spaces, SpaceTypeTag) {
+		err := loadTagSpacesContent(conn,
+			extractSpacesByType(spaces, SpaceTypeTag))
+		if err != nil {
+			return nil, err
+		}
+	}
+
 	return spaces, nil
 
 }
@@ -437,78 +453,48 @@ func LoadSpaceContent(conn *sql.DB, auth *ajax.Auth,
 	// Load content for multiple spaces
 
 	if hasSpacesOfType(spaces, SpaceTypeTitle) {
-		var titleSpaces []*Space
-		for _, space := range spaces {
-			if space.SpaceType == SpaceTypeTitle {
-				titleSpaces = append(titleSpaces, space)
-			}
-		}
-		err := loadTitleSpacesContent(conn, titleSpaces)
+		err := loadTitleSpacesContent(conn,
+			extractSpacesByType(spaces, SpaceTypeTitle))
 		if err != nil {
 			return err
 		}
 	}
 
 	if hasSpacesOfType(spaces, SpaceTypeTag) {
-		var tagSpaces []*Space
-		for _, space := range spaces {
-			if space.SpaceType == SpaceTypeTag {
-				tagSpaces = append(tagSpaces, space)
-			}
-		}
-		err := loadTagSpacesContent(conn, tagSpaces)
+		err := loadTagSpacesContent(conn,
+			extractSpacesByType(spaces, SpaceTypeTag))
 		if err != nil {
 			return err
 		}
 	}
 
 	if hasSpacesOfType(spaces, SpaceTypeText) {
-		var textSpaces []*Space
-		for _, space := range spaces {
-			if space.SpaceType == SpaceTypeText {
-				textSpaces = append(textSpaces, space)
-			}
-		}
-		err := loadTextSpacesContent(conn, textSpaces)
+		err := loadTextSpacesContent(conn,
+			extractSpacesByType(spaces, SpaceTypeText))
 		if err != nil {
 			return err
 		}
 	}
 
 	if hasSpacesOfType(spaces, SpaceTypeNaked) {
-		var nakedTextSpaces []*Space
-		for _, space := range spaces {
-			if space.SpaceType == SpaceTypeNaked {
-				nakedTextSpaces = append(nakedTextSpaces, space)
-			}
-		}
-		err := loadNakedTextSpacesContent(conn, nakedTextSpaces)
+		err := loadNakedTextSpacesContent(conn,
+			extractSpacesByType(spaces, SpaceTypeNaked))
 		if err != nil {
 			return err
 		}
 	}
 
 	if loadCheckinSpace && hasSpacesOfType(spaces, SpaceTypeCheckin) {
-		var checkinSpaces []*Space
-		for _, space := range spaces {
-			if space.SpaceType == SpaceTypeCheckin {
-				checkinSpaces = append(checkinSpaces, space)
-			}
-		}
-		err := loadCheckinSpaceDetails(conn, auth, checkinSpaces)
+		err := loadCheckinSpaceDetails(conn, auth,
+			extractSpacesByType(spaces, SpaceTypeCheckin))
 		if err != nil {
 			return err
 		}
 	}
 
 	if hasSpacesOfType(spaces, SpaceTypeStream) {
-		var streamSpaces []*Space
-		for _, space := range spaces {
-			if space.SpaceType == SpaceTypeStream {
-				streamSpaces = append(streamSpaces, space)
-			}
-		}
-		err := loadStreamSpaceDetails(conn, streamSpaces)
+		err := loadStreamSpaceDetails(conn,
+			extractSpacesByType(spaces, SpaceTypeStream))
 		if err != nil {
 			return err
 		}
@@ -528,6 +514,21 @@ func hasSpacesOfType(spaces []*Space, spaceType string) bool {
 	}
 
 	return false
+
+}
+
+func extractSpacesByType(spaces []*Space, spaceType string) []*Space {
+	// Extract spaces of a certain type from a list of spaces
+
+	var extractedSpaces = []*Space{}
+
+	for _, space := range spaces {
+		if space.SpaceType == spaceType {
+			extractedSpaces = append(extractedSpaces, space)
+		}
+	}
+
+	return extractedSpaces
 
 }
 
