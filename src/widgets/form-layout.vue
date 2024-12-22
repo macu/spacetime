@@ -20,3 +20,9 @@ export default {
 	},
 };
 </script>
+
+<style lang="scss">
+.form-layout {
+	align-items: stretch;
+}
+</style>

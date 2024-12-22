@@ -2,7 +2,7 @@
 <form-layout title="Create text" class="create-text-page page-width-md">
 
 	<template v-if="parentId">
-		<parent-titles :parent-id="parentId"/>
+		<parent-path :parent-id="parentId"/>
 		<hr/>
 	</template>
 
@@ -10,7 +10,7 @@
 		<el-input
 			v-model="title"
 			:maxlength="$store.getters.titleMaxLength"
-			show-word-count
+			show-word-limit
 			size="large"
 			/>
 	</form-field>
@@ -20,7 +20,7 @@
 			type="textarea"
 			v-model="text"
 			:maxlength="$store.getters.textMaxLength"
-			show-word-count
+			show-word-limit
 			:autosize="{minRows: 3}"
 			/>
 	</form-field>
@@ -35,7 +35,7 @@
 </template>
 
 <script>
-import ParentTitles from '@/widgets/parent-space-titles.vue';
+import ParentPath from '@/widgets/parent-path.vue';
 
 import {
 	ajaxPost,
@@ -43,7 +43,7 @@ import {
 
 export default {
 	components: {
-		ParentTitles,
+		ParentPath,
 	},
 	data() {
 		return {

@@ -1,7 +1,7 @@
 <template>
 <div class="space-page page-width-lg">
 	<loading-message v-if="loading"/>
-	<space-output v-else-if="space" :space="space">
+	<space-output v-else-if="space" :space="space" show-path show-subspaces>
 		<template #subspaces>
 			<div @click.stop class="subspaces flex-column">
 				<create-dropdown
@@ -69,6 +69,7 @@ export default {
 			ajaxGet('/ajax/space', {
 				spaceId,
 				includeSubspaces: true,
+				includeParentPath: true,
 			}).then(response => {
 				this.space = response;
 				this.subspaces = response.topSubspaces

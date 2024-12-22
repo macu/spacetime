@@ -243,13 +243,6 @@ div.center {
 /*!*****************************************************************************************************************************************************************************************************************************************************************************************************************************************!*\
   !*** css ./node_modules/css-loader/dist/cjs.js??clonedRuleSet-2.use[1]!./node_modules/vue-loader/dist/stylePostLoader.js!./node_modules/sass-loader/dist/cjs.js??clonedRuleSet-2.use[2]!./node_modules/vue-loader/dist/index.js??ruleSet[1].rules[5].use[0]!./src/widgets/space-title.vue?vue&type=style&index=0&id=658550a8&lang=scss ***!
   \*****************************************************************************************************************************************************************************************************************************************************************************************************************************************/
-.space-title {
-  display: flex;
-  flex-direction: row;
-  align-items: center;
-  flex-wrap: nowrap;
-  column-gap: 10px;
-}
 .space-title > .text {
   padding: 0 10px;
   font-size: 1.5em;
@@ -269,31 +262,51 @@ div.center {
 /*!******************************************************************************************************************************************************************************************************************************************************************************************************************************************!*\
   !*** css ./node_modules/css-loader/dist/cjs.js??clonedRuleSet-2.use[1]!./node_modules/vue-loader/dist/stylePostLoader.js!./node_modules/sass-loader/dist/cjs.js??clonedRuleSet-2.use[2]!./node_modules/vue-loader/dist/index.js??ruleSet[1].rules[5].use[0]!./src/widgets/space-output.vue?vue&type=style&index=0&id=6b8af261&lang=scss ***!
   \******************************************************************************************************************************************************************************************************************************************************************************************************************************************/
-.space-output {
+.space-output > .parent-path {
+  border-top-left-radius: 12px;
+  border-top-right-radius: 12px;
+  background-color: lightsteelblue;
+}
+.space-output > .parent-path > div {
+  padding: 10px 20px;
+  cursor: pointer;
+}
+.space-output > .parent-path > div .space-title {
+  background-color: white;
+  padding: 5px;
+}
+.space-output > .parent-path > div + div {
+  border-top: thin solid black;
+}
+.space-output > .container {
   border: medium solid darkblue;
   background-color: black;
   border-radius: 12px;
   padding: 20px;
   cursor: pointer;
 }
-.space-output > .space-info-bar {
+.space-output > .container > .space-info-bar {
   background-color: rgb(200, 200, 255);
   border-radius: 12px;
   padding: 10px;
   cursor: default;
 }
-.space-output > .space-title-bar {
+.space-output > .container > .space-title-bar {
   background-color: rgb(100, 100, 200);
   border-radius: 12px;
   padding: 10px;
   cursor: default;
 }
-.space-output > .space-title-bar .label {
+.space-output > .container > .space-title-bar .label {
   color: white;
 }
-.space-output > .space-title-bar .space-title {
+.space-output > .container > .space-title-bar .space-title {
   background-color: white;
   padding: 5px;
+}
+.space-output > .parent-path + .container {
+  border-top-left-radius: 0;
+  border-top-right-radius: 0;
 }
 /*!*********************************************************************************************************************************************************************************************************************************************************************************************************************************!*\
   !*** css ./node_modules/css-loader/dist/cjs.js??clonedRuleSet-2.use[1]!./node_modules/vue-loader/dist/stylePostLoader.js!./node_modules/sass-loader/dist/cjs.js??clonedRuleSet-2.use[2]!./node_modules/vue-loader/dist/index.js??ruleSet[1].rules[5].use[0]!./src/pages/space.vue?vue&type=style&index=0&id=68c3739c&lang=scss ***!
@@ -328,6 +341,12 @@ div.center {
 }
 .loading-message.right {
   justify-content: flex-end;
+}
+/*!*****************************************************************************************************************************************************************************************************************************************************************************************************************************************!*\
+  !*** css ./node_modules/css-loader/dist/cjs.js??clonedRuleSet-2.use[1]!./node_modules/vue-loader/dist/stylePostLoader.js!./node_modules/sass-loader/dist/cjs.js??clonedRuleSet-2.use[2]!./node_modules/vue-loader/dist/index.js??ruleSet[1].rules[5].use[0]!./src/widgets/form-layout.vue?vue&type=style&index=0&id=27e1292a&lang=scss ***!
+  \*****************************************************************************************************************************************************************************************************************************************************************************************************************************************/
+.form-layout {
+  align-items: stretch;
 }
 /*!****************************************************************************************************************************************************************************************************************************************************************************************************************************************!*\
   !*** css ./node_modules/css-loader/dist/cjs.js??clonedRuleSet-2.use[1]!./node_modules/vue-loader/dist/stylePostLoader.js!./node_modules/sass-loader/dist/cjs.js??clonedRuleSet-2.use[2]!./node_modules/vue-loader/dist/index.js??ruleSet[1].rules[5].use[0]!./src/widgets/form-field.vue?vue&type=style&index=0&id=09e9792a&lang=scss ***!

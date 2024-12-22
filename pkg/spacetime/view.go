@@ -15,19 +15,15 @@ const MaxSubspacesPageLimit = 20
 const DefaultTitlesLimit = 5
 const DefaultTagsLimit = 10
 
-func LoadSpace(conn *sql.DB, auth *ajax.Auth, id uint,
-	includeSubspaces bool,
-	includeTopTags bool,
-	date *time.Time, interval *time.Duration, // review
-) (*Space, error) {
-	// Load a single space
+func LoadSpace(conn *sql.DB, auth *ajax.Auth, id uint) (*Space, error) {
+	// Load a single space (header details) and its associated content
 
 	var space = Space{
 		ID: id,
 	}
 
-	err := conn.QueryRow(`SELECT
-		space.space_type, space.created_at, space.created_by,
+	err := conn.QueryRow(`SELECT space.parent_id, space.space_type,
+		space.created_at, space.created_by,
 		user_account.handle, user_account.display_name,
 		EXISTS(SELECT * FROM user_space_bookmark
 			WHERE user_space_bookmark.space_id=space.id
@@ -37,7 +33,8 @@ func LoadSpace(conn *sql.DB, auth *ajax.Auth, id uint,
 		WHERE space.id = $1
 		LIMIT 1`,
 		id, auth.UserID,
-	).Scan(&space.SpaceType, &space.CreatedAt, &space.CreatedBy,
+	).Scan(&space.ParentID, &space.SpaceType,
+		&space.CreatedAt, &space.CreatedBy,
 		&space.AuthorHandle, &space.AuthorDisplayName,
 		&space.UserBookmark,
 	)
@@ -48,45 +45,43 @@ func LoadSpace(conn *sql.DB, auth *ajax.Auth, id uint,
 		return nil, fmt.Errorf("loading space details: %w", err)
 	}
 
-	err = loadSpaceContent(conn, auth, []*Space{&space}, true)
+	err = LoadSpaceContent(conn, auth, []*Space{&space}, true)
 	if err != nil {
-		return nil, fmt.Errorf("loading space details: %w", err)
-	}
-
-	err = loadSubspaceCount(conn, []*Space{&space})
-	if err != nil {
-		return nil, fmt.Errorf("loading subspace count: %w", err)
-	}
-
-	if auth != nil {
-		err = loadUserTitlesByLastCheckin(conn, *auth, []*Space{&space}, DefaultTitlesLimit)
-		if err != nil {
-			return nil, fmt.Errorf("loading user's last checked titles: %w", err)
-		}
-	}
-
-	err = loadTopTitles(conn, []*Space{&space}, 0, DefaultTitlesLimit)
-	if err != nil {
-		return nil, fmt.Errorf("loading top titles: %w", err)
-	}
-
-	if includeTopTags {
-		err = loadTopTags(conn, []*Space{&space}, 0, DefaultTagsLimit)
-		if err != nil {
-			return nil, fmt.Errorf("loading top tags: %w", err)
-		}
-	}
-
-	if includeSubspaces {
-		content, err := LoadTopSubspaces(conn, auth,
-			&id, 0, MaxSubspacesPageLimit, date, interval)
-		if err != nil {
-			return nil, fmt.Errorf("loading subspaces: %w", err)
-		}
-		space.TopSubspaces = &content
+		return nil, fmt.Errorf("loading space content: %w", err)
 	}
 
 	return &space, nil
+
+}
+
+func LoadParentPath(conn *sql.DB, auth *ajax.Auth, id uint) ([]*Space, error) {
+
+	// recursively load space details following parent_id of space with given id
+	// until reaching the root space
+
+	// TODO Use recusive query
+
+	var spaces = []*Space{}
+
+	for {
+		space, err := LoadSpace(conn, auth, id)
+		if err != nil {
+			return nil, fmt.Errorf("loading parent path: %w", err)
+		}
+		if space == nil {
+			break
+		}
+
+		spaces = append([]*Space{space}, spaces...)
+
+		if space.ParentID == nil {
+			break
+		}
+
+		id = *space.ParentID
+	}
+
+	return spaces, nil
 
 }
 
@@ -151,19 +146,19 @@ func LoadTopSubspaces(conn *sql.DB, auth *ajax.Auth,
 		spaces = append(spaces, &space)
 	}
 
-	err = loadSpaceContent(conn, auth, spaces, true)
+	err = LoadSpaceContent(conn, auth, spaces, true)
 	if err != nil {
 		return nil, fmt.Errorf("loading space details: %w", err)
 	}
 
 	if auth != nil {
-		err = loadUserTitlesByLastCheckin(conn, *auth, spaces, DefaultTitlesLimit)
+		err = LoadUserTitlesByLastCheckin(conn, *auth, spaces, DefaultTitlesLimit)
 		if err != nil {
 			return nil, fmt.Errorf("loading bookmarked titles: %w", err)
 		}
 	}
 
-	err = loadTopTitles(conn, spaces, 0, DefaultTitlesLimit)
+	err = LoadTopTitles(conn, spaces, 0, DefaultTitlesLimit)
 	if err != nil {
 		return nil, fmt.Errorf("loading top titles: %w", err)
 	}
@@ -175,7 +170,7 @@ func LoadTopSubspaces(conn *sql.DB, auth *ajax.Auth,
 // --------------------------------------------------
 // batch load functions
 
-func loadSubspaceCount(conn *sql.DB, spaces []*Space) error {
+func LoadSubspaceCount(conn *sql.DB, spaces []*Space) error {
 	// Load subspace count for multiple spaces
 
 	if len(spaces) == 0 {
@@ -227,7 +222,7 @@ func loadSubspaceCount(conn *sql.DB, spaces []*Space) error {
 
 }
 
-func loadUserTitlesByLastCheckin(conn *sql.DB, auth ajax.Auth,
+func LoadUserTitlesByLastCheckin(conn *sql.DB, auth ajax.Auth,
 	spaces []*Space,
 	limit uint,
 ) error {
@@ -301,7 +296,7 @@ func loadUserTitlesByLastCheckin(conn *sql.DB, auth ajax.Auth,
 
 	}
 
-	err := loadSubspaceCount(conn, allTitles)
+	err := LoadSubspaceCount(conn, allTitles)
 	if err != nil {
 		return fmt.Errorf("loading user titles by last checkin: %w", err)
 	}
@@ -310,7 +305,7 @@ func loadUserTitlesByLastCheckin(conn *sql.DB, auth ajax.Auth,
 
 }
 
-func loadTopTitles(conn *sql.DB, spaces []*Space,
+func LoadTopTitles(conn *sql.DB, spaces []*Space,
 	offset, limit uint,
 ) error {
 
@@ -372,7 +367,7 @@ func loadTopTitles(conn *sql.DB, spaces []*Space,
 
 }
 
-func loadTopTags(conn *sql.DB, spaces []*Space,
+func LoadTopTags(conn *sql.DB, spaces []*Space,
 	offset uint, limit uint,
 ) error {
 	// Load top tags for multiple spaces
@@ -435,7 +430,7 @@ func loadTopTags(conn *sql.DB, spaces []*Space,
 
 }
 
-func loadSpaceContent(conn *sql.DB, auth *ajax.Auth,
+func LoadSpaceContent(conn *sql.DB, auth *ajax.Auth,
 	spaces []*Space,
 	loadCheckinSpace bool, // prevent recursion
 ) error {
@@ -448,7 +443,10 @@ func loadSpaceContent(conn *sql.DB, auth *ajax.Auth,
 				titleSpaces = append(titleSpaces, space)
 			}
 		}
-		loadTitleSpacesContent(conn, titleSpaces)
+		err := loadTitleSpacesContent(conn, titleSpaces)
+		if err != nil {
+			return err
+		}
 	}
 
 	if hasSpacesOfType(spaces, SpaceTypeTag) {
@@ -458,7 +456,10 @@ func loadSpaceContent(conn *sql.DB, auth *ajax.Auth,
 				tagSpaces = append(tagSpaces, space)
 			}
 		}
-		loadTagSpacesContent(conn, tagSpaces)
+		err := loadTagSpacesContent(conn, tagSpaces)
+		if err != nil {
+			return err
+		}
 	}
 
 	if hasSpacesOfType(spaces, SpaceTypeText) {
@@ -468,7 +469,10 @@ func loadSpaceContent(conn *sql.DB, auth *ajax.Auth,
 				textSpaces = append(textSpaces, space)
 			}
 		}
-		loadTextSpacesContent(conn, textSpaces)
+		err := loadTextSpacesContent(conn, textSpaces)
+		if err != nil {
+			return err
+		}
 	}
 
 	if hasSpacesOfType(spaces, SpaceTypeNaked) {
@@ -478,7 +482,10 @@ func loadSpaceContent(conn *sql.DB, auth *ajax.Auth,
 				nakedTextSpaces = append(nakedTextSpaces, space)
 			}
 		}
-		loadNakedTextSpacesContent(conn, nakedTextSpaces)
+		err := loadNakedTextSpacesContent(conn, nakedTextSpaces)
+		if err != nil {
+			return err
+		}
 	}
 
 	if loadCheckinSpace && hasSpacesOfType(spaces, SpaceTypeCheckin) {
@@ -488,7 +495,10 @@ func loadSpaceContent(conn *sql.DB, auth *ajax.Auth,
 				checkinSpaces = append(checkinSpaces, space)
 			}
 		}
-		loadCheckinSpaceDetails(conn, auth, checkinSpaces)
+		err := loadCheckinSpaceDetails(conn, auth, checkinSpaces)
+		if err != nil {
+			return err
+		}
 	}
 
 	if hasSpacesOfType(spaces, SpaceTypeStream) {
@@ -498,7 +508,10 @@ func loadSpaceContent(conn *sql.DB, auth *ajax.Auth,
 				streamSpaces = append(streamSpaces, space)
 			}
 		}
-		loadStreamSpaceDetails(conn, streamSpaces)
+		err := loadStreamSpaceDetails(conn, streamSpaces)
+		if err != nil {
+			return err
+		}
 	}
 
 	return nil
@@ -771,7 +784,7 @@ func loadCheckinSpaceDetails(conn *sql.DB, auth *ajax.Auth, spaces []*Space) err
 		`+bookmarkFieldSql+`
 		FROM space
 		INNER JOIN checkin_space ON checkin_space.space_id = space.id
-		LEFT JOIN space AS linked_space ON linked_space.id = check_space.checkin_space_id
+		LEFT JOIN space AS linked_space ON linked_space.id = checkin_space.checkin_space_id
 		LEFT JOIN user_account ON user_account.id = linked_space.created_by
 		WHERE space.id IN (`+inClauseSql+`)`,
 		args...,
@@ -809,7 +822,7 @@ func loadCheckinSpaceDetails(conn *sql.DB, auth *ajax.Auth, spaces []*Space) err
 		}
 	}
 
-	err = loadSpaceContent(conn, auth, checkinSpaces, false)
+	err = LoadSpaceContent(conn, auth, checkinSpaces, false)
 	if err != nil {
 		return fmt.Errorf("loading checkin space details: %w", err)
 	}

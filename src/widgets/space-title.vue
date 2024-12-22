@@ -1,7 +1,16 @@
 <template>
-<div class="space-title">
-	<checkin-button :space="space" @check-in="$emit('check-in')" size="small"/>
-	<span @click="$emit('click-title')" class="text" v-text="titleOutput"/>
+<div class="space-title flex-row nowrap">
+	<checkin-button
+		v-if="showCheckin"
+		:space="space"
+		@check-in="$emit('check-in')"
+		size="small"
+		/>
+	<span
+		@click="$emit('click-title')"
+		class="text"
+		v-text="titleOutput"
+		/>
 </div>
 </template>
 
@@ -21,6 +30,10 @@ export default {
 			type: Object,
 			required: true,
 		},
+		showCheckin: {
+			type: Boolean,
+			default: true,
+		},
 	},
 	computed: {
 		titleOutput() {
@@ -32,12 +45,6 @@ export default {
 
 <style lang="scss">
 .space-title {
-	display: flex;
-	flex-direction: row;
-	align-items: center;
-	flex-wrap: nowrap;
-	column-gap: 10px;
-
 	>.text {
 		padding: 0 10px;
 		font-size: 1.5em;

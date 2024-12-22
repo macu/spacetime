@@ -19,12 +19,76 @@ func AjaxLoadSpace(db *sql.DB, auth *ajax.Auth,
 		return nil, http.StatusBadRequest
 	}
 
+	includeTags := types.AtoBool(r.FormValue("includeTags"))
 	includeSubspaces := types.AtoBool(r.FormValue("includeSubspaces"))
+	includeParentPath := types.AtoBool(r.FormValue("includeParentPath"))
 
-	space, err := spacetime.LoadSpace(db, auth, id, includeSubspaces, true, nil, nil)
+	space, err := spacetime.LoadSpace(db, auth, id)
 	if err != nil {
 		logging.LogError(r, auth, err)
 		return nil, http.StatusInternalServerError
+	}
+
+	err = spacetime.LoadSubspaceCount(db, []*spacetime.Space{space})
+	if err != nil {
+		logging.LogError(r, auth, err)
+		return nil, http.StatusInternalServerError
+	}
+
+	if auth != nil {
+		err = spacetime.LoadUserTitlesByLastCheckin(db, *auth,
+			[]*spacetime.Space{space}, spacetime.DefaultTitlesLimit)
+		if err != nil {
+			logging.LogError(r, auth, err)
+			return nil, http.StatusInternalServerError
+		}
+	}
+
+	err = spacetime.LoadTopTitles(db,
+		[]*spacetime.Space{space}, 0, spacetime.DefaultTitlesLimit)
+	if err != nil {
+		logging.LogError(r, auth, err)
+		return nil, http.StatusInternalServerError
+	}
+
+	if includeTags {
+		err = spacetime.LoadTopTags(db,
+			[]*spacetime.Space{space}, 0, spacetime.DefaultTagsLimit)
+		if err != nil {
+			logging.LogError(r, auth, err)
+			return nil, http.StatusInternalServerError
+		}
+	}
+
+	if includeSubspaces {
+		content, err := spacetime.LoadTopSubspaces(db, auth,
+			&id, 0, spacetime.MaxSubspacesPageLimit, nil, nil)
+		if err != nil {
+			logging.LogError(r, auth, err)
+			return nil, http.StatusInternalServerError
+		}
+		space.TopSubspaces = &content
+	}
+
+	if includeParentPath {
+		if space.ParentID == nil {
+			space.ParentPath = &[]*spacetime.Space{}
+		} else {
+			path, err := spacetime.LoadParentPath(db, auth, *space.ParentID)
+			if err != nil {
+				logging.LogError(r, auth, err)
+				return nil, http.StatusInternalServerError
+			}
+
+			// Load 1 top title for each parent space.
+			err = spacetime.LoadTopTitles(db, path, 0, 1)
+			if err != nil {
+				logging.LogError(r, auth, err)
+				return nil, http.StatusInternalServerError
+			}
+
+			space.ParentPath = &path
+		}
 	}
 
 	return space, http.StatusOK

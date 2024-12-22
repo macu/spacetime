@@ -4,6 +4,7 @@ import "time"
 
 type Space struct {
 	ID        uint      `json:"id"`
+	ParentID  *uint     `json:"parentId"`
 	SpaceType string    `json:"spaceType"`
 	CreatedAt time.Time `json:"createdAt"`
 	CreatedBy uint      `json:"createdBy"`
@@ -30,4 +31,6 @@ type Space struct {
 	TopTitles    *[]*Space `json:"topTitles,omitempty"`
 	TopTags      *[]*Space `json:"topTags,omitempty"`
 	TopSubspaces *[]*Space `json:"topSubspaces,omitempty"`
+
+	ParentPath *[]*Space `json:"parentPath,omitempty"`
 }

@@ -1,60 +1,88 @@
 <template>
-<div class="space-output flex-column" @click.stop="gotoSpace()">
+<div class="space-output" @click.stop="gotoSpace()">
 
-	<div @click.stop class="space-info-bar flex-row-md">
-		<checkin-button :space="space"/>
-		<space-type :type="space.spaceType"/>
-		<space-creator :space="space"/>
-	</div>
+	<div v-if="showPath && hasParentPath" @click.stop class="parent-path">
+		<div
+			v-for="p in space.parentPath"
+			:key="p.id"
+			@click.stop="gotoSpace(p)"
+			class="flex-row-md nowrap">
 
-	<div @click.stop class="space-title-bar flex-column-sm">
-		<div class="label">Title(s)</div>
-		<div :class="addingTitle ? 'flex-column' : ['flex-row', 'nowrap']">
-			<add-title
-				:parent-id="space.id"
-				@added="titleSpace => userTitleAdded(titleSpace)"
-				@update:adding="addingTitle = $event"
-				/>
-			<div class="horizontal-scroll">
-				<div class="flex-row-md nowrap">
-					<space-title
-						v-for="title in userTitles"
-						:space="title"
-						@click-title="gotoTitle(title)"
-						/>
-					<space-title
-						v-for="title in topTitles"
-						:space="title"
-						@click-title="gotoTitle(title)"
-						/>
-					<el-button>View all</el-button>
-				</div>
-			</div>
+			<material-icon icon="arrow_right_alt"/>
+
+			<space-type :type="p.spaceType"/>
+
+			<template v-if="p.topTitles && p.topTitles.length > 0">
+				<space-title
+					v-for="title in p.topTitles"
+					:space="title"
+					:show-checkin="false"
+					/>
+			</template>
+
+			<em v-else>Untitled</em>
+
 		</div>
 	</div>
 
-<!--
-	<space-output
-		v-if="spaceType === SPACE_TYPES.CHECKIN && !!space.checkinSpace"
-		:space="space.checkinSpace"
-		/>
+	<div class="container flex-column">
 
-	<space-title
-		v-else-if="spaceType === SPACE_TYPES.TITLE"
-		:title-space="space"
-		/>
+		<div @click.stop class="space-info-bar flex-row-md">
+			<checkin-button :space="space"/>
+			<space-type :type="space.spaceType"/>
+			<space-creator :space="space"/>
+		</div>
 
-	<space-tag
-		v-else-if="spaceType === SPACE_TYPES.TAG"
-		:space="space"
-		/>
+		<div @click.stop class="space-title-bar flex-column-sm">
+			<div class="label">Title(s)</div>
+			<div :class="addingTitle ? 'flex-column' : ['flex-row', 'nowrap']">
+				<add-title
+					:parent-id="space.id"
+					@added="titleSpace => userTitleAdded(titleSpace)"
+					@update:adding="addingTitle = $event"
+					/>
+				<div class="horizontal-scroll">
+					<div class="flex-row-md nowrap">
+						<space-title
+							v-for="title in userTitles"
+							:space="title"
+							@click-title="gotoSpace(title)"
+							/>
+						<space-title
+							v-for="title in topTitles"
+							:space="title"
+							@click-title="gotoSpace(title)"
+							/>
+						<el-button>View all</el-button>
+					</div>
+				</div>
+			</div>
+		</div>
 
-	<space-text
-		v-else-if="spaceType === SPACE_TYPES.TEXT"
-		:space="space"
-		/> -->
+	<!--
+		<space-output
+			v-if="spaceType === SPACE_TYPES.CHECKIN && !!space.checkinSpace"
+			:space="space.checkinSpace"
+			/>
 
-	<slot name="subspaces"/>
+		<space-title
+			v-else-if="spaceType === SPACE_TYPES.TITLE"
+			:title-space="space"
+			/>
+
+		<space-tag
+			v-else-if="spaceType === SPACE_TYPES.TAG"
+			:space="space"
+			/>
+
+		<space-text
+			v-else-if="spaceType === SPACE_TYPES.TEXT"
+			:space="space"
+			/> -->
+
+		<slot v-if="showSubspaces" name="subspaces"/>
+
+	</div>
 
 </div>
 </template>
@@ -86,6 +114,14 @@ export default {
 			type: Object,
 			required: true,
 		},
+		showPath: {
+			type: Boolean,
+			default: false,
+		},
+		showSubspaces: {
+			type: Boolean,
+			default: false,
+		},
 	},
 	data() {
 		return {
@@ -106,6 +142,9 @@ export default {
 		hasTopTitles() {
 			return this.topTitles.length > 0;
 		},
+		hasParentPath() {
+			return !!this.space.parentPath && this.space.parentPath.length > 0;
+		},
 	},
 	methods: {
 		userTitleAdded(titleSpace) {
@@ -116,19 +155,11 @@ export default {
 			}
 			this.userTitles.unshift(titleSpace); // add to start
 		},
-		gotoSpace() {
+		gotoSpace(s = null) {
 			this.$router.push({
 				name: 'space',
 				params: {
-					spaceId: this.space.id,
-				},
-			});
-		},
-		gotoTitle(title) {
-			this.$router.push({
-				name: 'space',
-				params: {
-					spaceId: title.id,
+					spaceId: s ? s.id : this.space.id,
 				},
 			});
 		},
@@ -140,32 +171,57 @@ export default {
 $border-radius: 12px;
 
 .space-output {
-	border: medium solid darkblue;
-	background-color: black;
-	border-radius: $border-radius;
-	padding: 20px;
-	cursor: pointer; // clickable spaces
 
-	>.space-info-bar {
-		background-color: rgb(200, 200, 255);
-		border-radius: $border-radius;
-		padding: 10px;
-		cursor: default;
+	>.parent-path {
+		border-top-left-radius: $border-radius;
+		border-top-right-radius: $border-radius;
+		background-color: lightsteelblue;
+		>div {
+			padding: 10px 20px;
+			cursor: pointer;
+			.space-title {
+				background-color: white;
+				padding: 5px;
+			}
+		}
+		>div+div {
+			border-top: thin solid black;
+		}
 	}
 
-	>.space-title-bar {
-		background-color: rgb(100, 100, 200);
+	>.container {
+		border: medium solid darkblue;
+		background-color: black;
 		border-radius: $border-radius;
-		padding: 10px;
-		cursor: default;
+		padding: 20px;
+		cursor: pointer; // clickable spaces
 
-		.label {
-			color: white;
+		>.space-info-bar {
+			background-color: rgb(200, 200, 255);
+			border-radius: $border-radius;
+			padding: 10px;
+			cursor: default;
 		}
-		.space-title {
-			background-color: white;
-			padding: 5px;
+
+		>.space-title-bar {
+			background-color: rgb(100, 100, 200);
+			border-radius: $border-radius;
+			padding: 10px;
+			cursor: default;
+
+			.label {
+				color: white;
+			}
+			.space-title {
+				background-color: white;
+				padding: 5px;
+			}
 		}
+	}
+
+	>.parent-path + .container {
+		border-top-left-radius: 0;
+		border-top-right-radius: 0;
 	}
 
 }
