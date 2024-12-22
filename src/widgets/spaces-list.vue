@@ -1,5 +1,5 @@
 <template>
-<div class="spaces-list flex-column">
+<div class="spaces-list flex-column-md">
 
 	<space-output v-for="s in spaces" :space="s"/>
 

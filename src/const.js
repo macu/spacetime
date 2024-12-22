@@ -8,3 +8,14 @@ export const SPACE_TYPES = {
 	STREAM_OC: 'stream-of-consciousness',
 	JSON_AR: 'json-attribute',
 };
+
+export const SPACE_TYPE_ICONS = {
+	[SPACE_TYPES.SPACE]: 'orbit',
+	[SPACE_TYPES.CHECK_IN]: 'check_circle',
+	[SPACE_TYPES.TITLE]: 'title',
+	[SPACE_TYPES.TAG]: 'label',
+	[SPACE_TYPES.TEXT]: 'description',
+	[SPACE_TYPES.NAKED_TEXT]: 'sms',
+	[SPACE_TYPES.STREAM_OC]: 'stream',
+	[SPACE_TYPES.JSON_AR]: 'json',
+};

@@ -1,10 +1,14 @@
 <template>
-<span class="space-type" v-text="typeOutput"/>
+<span class="space-type flex-row nowrap">
+	<material-icon :icon="icon"/>
+	<span v-text="typeOutput"/>
+</span>
 </template>
 
 <script>
 import {
 	SPACE_TYPES,
+	SPACE_TYPE_ICONS,
 } from '@/const.js';
 
 export default {
@@ -36,6 +40,9 @@ export default {
 			}
 			return 'Unknown';
 		},
+		icon() {
+			return SPACE_TYPE_ICONS[this.type];
+		},
 	},
 };
 </script>
@@ -44,5 +51,6 @@ export default {
 .space-type {
 	color: darkblue;
 	text-shadow: 2px 2px 3px white;
+	font-size: larger;
 }
 </style>

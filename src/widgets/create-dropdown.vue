@@ -9,36 +9,36 @@
 			</el-button>
 			<template #dropdown>
 				<el-dropdown-item command="create-empty-space">
-					<material-icon icon="folder"/>
+					<material-icon :icon="SPACE_TYPE_ICONS[SPACE_TYPES.SPACE]"/>
 					<span>Create empty space</span>
 				</el-dropdown-item>
 				<el-dropdown-item disabled command="create-stream-oc">
-					<material-icon icon="folder"/>
+					<material-icon :icon="SPACE_TYPE_ICONS[SPACE_TYPES.STREAM_OC]"/>
 					<span>Create stream of consciousness</span>
 				</el-dropdown-item>
 				<template v-if="hasParentId">
 					<el-dropdown-item command="create-check-in">
-						<material-icon icon="folder"/>
+						<material-icon :icon="SPACE_TYPE_ICONS[SPACE_TYPES.CHECK_IN]"/>
 						<span>Create check-in</span>
 					</el-dropdown-item>
 					<el-dropdown-item command="create-title">
-						<material-icon icon="label"/>
+						<material-icon :icon="SPACE_TYPE_ICONS[SPACE_TYPES.TITLE]"/>
 						<span>Create title</span>
 					</el-dropdown-item>
 					<el-dropdown-item command="create-tag">
-						<material-icon icon="label"/>
+						<material-icon :icon="SPACE_TYPE_ICONS[SPACE_TYPES.TAG]"/>
 						<span>Create tag</span>
 					</el-dropdown-item>
 					<el-dropdown-item command="create-text">
-						<material-icon icon="folder"/>
+						<material-icon :icon="SPACE_TYPE_ICONS[SPACE_TYPES.TEXT]"/>
 						<span>Create text</span>
 					</el-dropdown-item>
 					<el-dropdown-item command="create-naked-text">
-						<material-icon icon="folder"/>
+						<material-icon :icon="SPACE_TYPE_ICONS[SPACE_TYPES.NAKED_TEXT]"/>
 						<span>Create naked text</span>
 					</el-dropdown-item>
 					<el-dropdown-item disabled command="create-json-ar">
-						<material-icon icon="folder"/>
+						<material-icon :icon="SPACE_TYPE_ICONS[SPACE_TYPES.JSON_AR]"/>
 						<span>Create json attribute reporter</span>
 					</el-dropdown-item>
 				</template>
@@ -51,6 +51,7 @@
 <script>
 import {
 	SPACE_TYPES,
+	SPACE_TYPE_ICONS,
 } from '@/const.js';
 
 export default {
@@ -71,6 +72,9 @@ export default {
 	computed: {
 		SPACE_TYPES() {
 			return SPACE_TYPES;
+		},
+		SPACE_TYPE_ICONS() {
+			return SPACE_TYPE_ICONS;
 		},
 		hasParentId() {
 			return !!this.parentId;

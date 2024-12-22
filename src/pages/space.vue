@@ -3,7 +3,7 @@
 	<loading-message v-if="loading"/>
 	<space-output v-else-if="space" :space="space" show-path show-subspaces>
 		<template #subspaces>
-			<div @click.stop class="subspaces flex-column">
+			<div @click.stop class="subspaces flex-column-md">
 				<create-dropdown
 					:parent-id="space.id"
 					/>

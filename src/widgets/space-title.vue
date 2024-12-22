@@ -6,7 +6,7 @@
 		@check-in="$emit('check-in')"
 		size="small"
 		/>
-	<material-icon icon="title"/>
+	<material-icon :icon="icon"/>
 	<span
 		@click="$emit('click-title')"
 		class="text"
@@ -17,6 +17,10 @@
 
 <script>
 import CheckinButton from './checkin-button.vue';
+
+import {
+	SPACE_TYPE_ICONS,
+} from '@/const.js';
 
 export default {
 	emits: [
@@ -37,6 +41,9 @@ export default {
 		},
 	},
 	computed: {
+		icon() {
+			return SPACE_TYPE_ICONS[this.space.spaceType];
+		},
 		titleOutput() {
 			return this.space.text || '';
 		},

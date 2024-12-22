@@ -242,6 +242,7 @@ div.center {
 .space-type {
   color: darkblue;
   text-shadow: 2px 2px 3px white;
+  font-size: larger;
 }
 /*!*****************************************************************************************************************************************************************************************************************************************************************************************************************************************!*\
   !*** css ./node_modules/css-loader/dist/cjs.js??clonedRuleSet-2.use[1]!./node_modules/vue-loader/dist/stylePostLoader.js!./node_modules/sass-loader/dist/cjs.js??clonedRuleSet-2.use[2]!./node_modules/vue-loader/dist/index.js??ruleSet[1].rules[5].use[0]!./src/widgets/space-title.vue?vue&type=style&index=0&id=658550a8&lang=scss ***!
@@ -303,25 +304,20 @@ div.center {
 .space-output > .container > .space-info-bar {
   background-color: rgb(200, 200, 255);
   border-radius: 12px;
-  padding: 10px;
+  padding: 10px 20px;
   cursor: default;
 }
 .space-output > .container > .space-title-bar {
   background-color: rgb(100, 100, 200);
   border-radius: 12px;
-  padding: 10px;
+  padding: 10px 20px;
   cursor: default;
 }
 .space-output > .container > .space-title-bar .label {
   color: white;
 }
-.space-output > .container > .content {
-  background-color: white;
-  border-radius: 12px;
-  padding: 10px;
-  cursor: default;
-}
 .space-output > .container > .space-title, .space-output > .container > .space-tag, .space-output > .container > .space-text {
+  padding: 40px;
   cursor: default;
 }
 .space-output > .parent-path + .container {

@@ -32,7 +32,6 @@
 			</template>
 
 			<space-creator
-				v-else
 				:space="p"
 				/>
 
@@ -42,8 +41,8 @@
 	<div class="container flex-column-md">
 
 		<div @click.stop class="space-info-bar flex-row-md">
-			<checkin-button :space="space"/>
 			<space-type :type="space.spaceType"/>
+			<checkin-button :space="space"/>
 			<space-creator :space="space"/>
 			<el-button v-if="!showTitles" @click="expandTitles = true" class="align-end">
 				Show titles
@@ -229,14 +228,14 @@ $border-radius: 12px;
 		>.space-info-bar {
 			background-color: rgb(200, 200, 255);
 			border-radius: $border-radius;
-			padding: 10px;
+			padding: 10px 20px;
 			cursor: default;
 		}
 
 		>.space-title-bar {
 			background-color: rgb(100, 100, 200);
 			border-radius: $border-radius;
-			padding: 10px;
+			padding: 10px 20px;
 			cursor: default;
 
 			.label {
@@ -244,14 +243,8 @@ $border-radius: 12px;
 			}
 		}
 
-		>.content {
-			background-color: white;
-			border-radius: $border-radius;
-			padding: 10px;
-			cursor: default;
-		}
-
 		>.space-title, >.space-tag, >.space-text {
+			padding: 40px;
 			cursor: default;
 		}
 	}
