@@ -358,7 +358,7 @@ func CreateTagCheckin(conn *sql.DB, auth ajax.Auth, parentID uint, tag string) (
 				return fmt.Errorf("insert space: %w", err)
 			}
 
-			// Create title_space
+			// Create tag_space
 			_, err = tx.Exec(`INSERT INTO tag_space
 				(space_id, parent_space_id, unique_text_id)
 				VALUES ($1, $2, $3)`,
@@ -449,7 +449,7 @@ func CreateTagCheckin(conn *sql.DB, auth ajax.Auth, parentID uint, tag string) (
 
 }
 
-func CreateTextCheckin(conn *sql.DB, auth ajax.Auth, parentID *uint, text string) (*Space, error) {
+func CreateTextCheckin(conn *sql.DB, auth ajax.Auth, parentID uint, text string) (*Space, error) {
 
 	// Load unique_text ID
 	// Check for existing tag space under parent
@@ -462,20 +462,18 @@ func CreateTextCheckin(conn *sql.DB, auth ajax.Auth, parentID *uint, text string
 		return nil, fmt.Errorf("invalid text: %s", text)
 	}
 
-	if parentID != nil {
-		// Ensure referenced parent space exists
-		var parentExists, err = CheckSpaceExists(conn, *parentID)
-		if err != nil {
-			return nil, err
-		}
-		if !parentExists {
-			return nil, fmt.Errorf("parent space does not exist: %d", parentID)
-		}
+	// Ensure referenced parent space exists
+	var parentExists, err = CheckSpaceExists(conn, parentID)
+	if err != nil {
+		return nil, err
+	}
+	if !parentExists {
+		return nil, fmt.Errorf("parent space does not exist: %d", parentID)
 	}
 
 	var space = &Space{}
 
-	err := db.InTransaction(conn, func(tx *sql.Tx) error {
+	err = db.InTransaction(conn, func(tx *sql.Tx) error {
 
 		var uniqueTextId *uint
 
@@ -495,9 +493,7 @@ func CreateTextCheckin(conn *sql.DB, auth ajax.Auth, parentID *uint, text string
 				return fmt.Errorf("insert space: %w", err)
 			}
 
-			// Create title_space
-			// NOTE: Because of postgres unique index behaviour,
-			// unique parent/text combinations are not enforced at the root level
+			// Create text_space
 			_, err = tx.Exec(`INSERT INTO text_space
 				(space_id, parent_space_id, unique_text_id)
 				VALUES ($1, $2, $3)`,
@@ -588,7 +584,7 @@ func CreateTextCheckin(conn *sql.DB, auth ajax.Auth, parentID *uint, text string
 
 }
 
-func CreateNakedText(conn *sql.DB, auth ajax.Auth, parentID *uint, finalText, replayData string) (*Space, error) {
+func CreateNakedText(conn *sql.DB, auth ajax.Auth, parentID uint, finalText, replayData string) (*Space, error) {
 
 	// Create naked text space with given replay data
 

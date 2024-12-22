@@ -15,6 +15,7 @@ import HorizontalControls from '@/widgets/horizontal-controls.vue';
 import FormLayout from '@/widgets/form-layout.vue';
 import FormField from '@/widgets/form-field.vue';
 import FormActions from '@/widgets/form-actions.vue';
+import Moment from '@/widgets/moment.vue';
 
 const app = createApp(App);
 
@@ -31,5 +32,6 @@ app.component('horizontal-controls', HorizontalControls);
 app.component('form-layout', FormLayout);
 app.component('form-field', FormField);
 app.component('form-actions', FormActions);
+app.component('moment', Moment);
 
 app.mount("#app");

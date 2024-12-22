@@ -1,30 +1,30 @@
 <template>
-<div>
-	<el-input
-		v-if="adding"
-		v-model="title"
-		:maxlength="$store.getters.titleMaxLength"
-		show-word-limit>
-		<template #prepend>
-			Add title
-		</template>
-		<template #append>
-			<el-button-group>
-				<el-button
-					@click="addTitle()"
-					:disabled="addTitleDisabled"
-					type="success">
-					Add
-				</el-button>
-				<el-button
-					@click="adding=false"
-					type="warning">
-					Cancel
-				</el-button>
-			</el-button-group>
-		</template>
-	</el-input>
-	<el-button v-else @click="adding=true" type="primary">Add title</el-button>
+<div class="add-space-title-widget">
+	<div v-if="adding" class="flex-row nowrap">
+		<el-input
+			v-model="title"
+			:maxlength="$store.getters.titleMaxLength"
+			show-word-limit
+			size="large">
+			<template #prepend>
+				Add title
+			</template>
+		</el-input>
+		<el-button
+			@click="addTitle()"
+			:disabled="addTitleDisabled"
+			size="large" type="primary">
+			Add
+		</el-button>
+		<el-button
+			@click="adding = false"
+			size="large" type="warning">
+			Cancel
+		</el-button>
+	</div>
+	<el-button v-else @click="adding = true" type="primary">
+		Add title
+	</el-button>
 </div>
 </template>
 
@@ -36,6 +36,7 @@ import {
 export default {
 	emits: [
 		'added',
+		'update:adding',
 	],
 	props: {
 		parentId: {
@@ -55,7 +56,22 @@ export default {
 			return !this.title.trim();
 		},
 	},
+	watch: {
+		adding(value) {
+			this.$emit('update:adding', value);
+			if (value) {
+				this.$nextTick(this.focusInput);
+			}
+		},
+	},
 	methods: {
+		focusInput() {
+			// focus first input element
+			const input = this.$el.querySelector('input');
+			if (input) {
+				input.focus();
+			}
+		},
 		addTitle() {
 			if (this.addTitleDisabled) {
 				return;

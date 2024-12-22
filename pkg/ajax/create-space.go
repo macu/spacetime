@@ -171,8 +171,8 @@ func AjaxCreateTextSpace(db *sql.DB, auth ajax.Auth,
 		return nil, http.StatusTooManyRequests
 	}
 
-	// parent optional
-	parentID, err := types.AtoUintNilIfEmpty(r.FormValue("parentId"))
+	// parent required
+	parentID, err := types.AtoUint(r.FormValue("parentId"))
 	if err != nil {
 		return nil, http.StatusBadRequest
 	}

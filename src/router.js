@@ -10,6 +10,7 @@ import LoginPage from '@/pages/user-account/login.vue';
 import SignupPage from '@/pages/user-account/signup.vue';
 import SignupVerifyPage from '@/pages/user-account/signup-verify.vue';
 
+import UserPage from './pages/user.vue';
 import SpacePage from './pages/space.vue';
 import CreateEmptySpacePage from './pages/create-space/empty.vue';
 import CreateTitleSpacePage from './pages/create-space/title.vue';
@@ -38,6 +39,11 @@ const router = createRouter({
 			path: '/verify-signup',
 			name: 'signup-verify',
 			component: SignupVerifyPage,
+		},
+		{
+			path: '/user/:id',
+			name: 'user',
+			component: UserPage,
 		},
 		{
 			path: '/space/:spaceId',

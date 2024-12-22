@@ -137,20 +137,24 @@ div.center {
   column-gap: 40px;
 }
 
-.flex-column, .flex-column-md, .flex-column-lg, .flex-column-xl {
+.flex-column, .flex-column-sm, .flex-column-md, .flex-column-lg, .flex-column-xl {
   display: flex;
   flex-direction: column;
   align-items: stretch;
 }
-.flex-column.flex-align-end, .flex-column-md.flex-align-end, .flex-column-lg.flex-align-end, .flex-column-xl.flex-align-end {
+.flex-column.flex-align-end, .flex-column-sm.flex-align-end, .flex-column-md.flex-align-end, .flex-column-lg.flex-align-end, .flex-column-xl.flex-align-end {
   align-items: flex-end;
 }
-.flex-column > *, .flex-column > .el-button + .el-button, .flex-column-md > *, .flex-column-md > .el-button + .el-button, .flex-column-lg > *, .flex-column-lg > .el-button + .el-button, .flex-column-xl > *, .flex-column-xl > .el-button + .el-button {
+.flex-column > *, .flex-column > .el-button + .el-button, .flex-column-sm > *, .flex-column-sm > .el-button + .el-button, .flex-column-md > *, .flex-column-md > .el-button + .el-button, .flex-column-lg > *, .flex-column-lg > .el-button + .el-button, .flex-column-xl > *, .flex-column-xl > .el-button + .el-button {
   margin: 0;
 }
 
 .flex-column {
   row-gap: 10px;
+}
+
+.flex-column-sm {
+  row-gap: 5px;
 }
 
 .flex-column-md {
@@ -172,6 +176,11 @@ div.center {
 
 .page-width-md {
   max-width: 800px;
+  margin: 0 auto;
+}
+
+.page-width-lg {
+  max-width: 1000px;
   margin: 0 auto;
 }
 /*!*************************************************************************************************************************************************************************************************************************************************************************************************************************!*\
@@ -229,7 +238,7 @@ div.center {
   \****************************************************************************************************************************************************************************************************************************************************************************************************************************************/
 .space-type {
   color: darkblue;
-  text-shadow: 1px 1px 1px blue;
+  text-shadow: 2px 2px 3px white;
 }
 /*!*****************************************************************************************************************************************************************************************************************************************************************************************************************************************!*\
   !*** css ./node_modules/css-loader/dist/cjs.js??clonedRuleSet-2.use[1]!./node_modules/vue-loader/dist/stylePostLoader.js!./node_modules/sass-loader/dist/cjs.js??clonedRuleSet-2.use[2]!./node_modules/vue-loader/dist/index.js??ruleSet[1].rules[5].use[0]!./src/widgets/space-title.vue?vue&type=style&index=0&id=658550a8&lang=scss ***!
@@ -279,9 +288,21 @@ div.center {
   padding: 10px;
   cursor: default;
 }
+.space-output > .space-title-bar .label {
+  color: white;
+}
 .space-output > .space-title-bar .space-title {
   background-color: white;
   padding: 5px;
+}
+/*!*********************************************************************************************************************************************************************************************************************************************************************************************************************************!*\
+  !*** css ./node_modules/css-loader/dist/cjs.js??clonedRuleSet-2.use[1]!./node_modules/vue-loader/dist/stylePostLoader.js!./node_modules/sass-loader/dist/cjs.js??clonedRuleSet-2.use[2]!./node_modules/vue-loader/dist/index.js??ruleSet[1].rules[5].use[0]!./src/pages/space.vue?vue&type=style&index=0&id=68c3739c&lang=scss ***!
+  \*********************************************************************************************************************************************************************************************************************************************************************************************************************************/
+.space-page .subspaces {
+  padding: 20px;
+  background-color: darkturquoise;
+  border-radius: 12px;
+  cursor: default;
 }
 /*!*******************************************************************************************************************************************************************************************************************************************************************************************************************************************!*\
   !*** css ./node_modules/css-loader/dist/cjs.js??clonedRuleSet-2.use[1]!./node_modules/vue-loader/dist/stylePostLoader.js!./node_modules/sass-loader/dist/cjs.js??clonedRuleSet-2.use[2]!./node_modules/vue-loader/dist/index.js??ruleSet[1].rules[5].use[0]!./src/widgets/material-icon.vue?vue&type=style&index=0&id=55e49714&lang=scss ***!

@@ -35,7 +35,7 @@
 	column-gap: 40px;
 }
 
-.flex-column, .flex-column-md, .flex-column-lg, .flex-column-xl {
+.flex-column, .flex-column-sm, .flex-column-md, .flex-column-lg, .flex-column-xl {
 	display: flex;
 	flex-direction: column;
 	align-items: stretch;
@@ -51,6 +51,10 @@
 
 .flex-column {
 	row-gap: 10px;
+}
+
+.flex-column-sm {
+	row-gap: 5px;
 }
 
 .flex-column-md {
@@ -72,5 +76,10 @@
 
 .page-width-md {
 	max-width: 800px;
+	margin: 0 auto;
+}
+
+.page-width-lg {
+	max-width: 1000px;
 	margin: 0 auto;
 }

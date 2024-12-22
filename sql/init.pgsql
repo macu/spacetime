@@ -152,7 +152,7 @@ CREATE TABLE tag_space (
 
 CREATE TABLE text_space (
 	space_id INTEGER PRIMARY KEY REFERENCES space (id) ON DELETE CASCADE,
-	parent_space_id INTEGER REFERENCES space (id) ON DELETE CASCADE,
+	parent_space_id INTEGER NOT NULL REFERENCES space (id) ON DELETE CASCADE,
 	unique_text_id INTEGER NOT NULL REFERENCES unique_text (id) ON DELETE CASCADE,
 	UNIQUE (parent_space_id, unique_text_id)
 );
@@ -160,7 +160,7 @@ CREATE TABLE text_space (
 CREATE TABLE naked_text_space (
 	-- allow duplicates of final text (replay data will probably always be unique)
 	space_id INTEGER PRIMARY KEY REFERENCES space (id) ON DELETE CASCADE,
-	parent_space_id INTEGER REFERENCES space (id) ON DELETE CASCADE,
+	parent_space_id INTEGER NOT NULL REFERENCES space (id) ON DELETE CASCADE,
 	final_unique_text_id INTEGER NOT NULL REFERENCES unique_text (id) ON DELETE CASCADE,
 	replay_data TEXT NOT NULL
 );

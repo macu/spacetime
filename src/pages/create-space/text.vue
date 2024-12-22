@@ -6,7 +6,7 @@
 		<hr/>
 	</template>
 
-	<form-field title="Title" required>
+	<form-field title="Title">
 		<el-input
 			v-model="title"
 			:maxlength="$store.getters.titleMaxLength"
@@ -57,7 +57,7 @@ export default {
 			return this.$route.query.parentId || null;
 		},
 		createDisabled() {
-			return this.posting || !this.title.trim() || !this.text.trim();
+			return this.posting || !this.text.trim();
 		},
 	},
 	methods: {

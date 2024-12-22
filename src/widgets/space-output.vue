@@ -1,28 +1,35 @@
 <template>
-<div class="space-output flex-column" @click="gotoSpace()">
+<div class="space-output flex-column" @click.stop="gotoSpace()">
 
 	<div @click.stop class="space-info-bar flex-row-md">
 		<checkin-button :space="space"/>
 		<space-type :type="space.spaceType"/>
+		<space-creator :space="space"/>
 	</div>
 
-	<div @click.stop class="space-title-bar horizontal-scroll">
-		<div class="flex-row-md nowrap">
+	<div @click.stop class="space-title-bar flex-column-sm">
+		<div class="label">Title(s)</div>
+		<div :class="addingTitle ? 'flex-column' : ['flex-row', 'nowrap']">
 			<add-title
 				:parent-id="space.id"
 				@added="titleSpace => userTitleAdded(titleSpace)"
+				@update:adding="addingTitle = $event"
 				/>
-			<space-title
-				v-for="title in userTitles"
-				:space="title"
-				@click-title="gotoTitle(title)"
-				/>
-			<space-title
-				v-for="title in topTitles"
-				:space="title"
-				@click-title="gotoTitle(title)"
-				/>
-			<el-button>View all</el-button>
+			<div class="horizontal-scroll">
+				<div class="flex-row-md nowrap">
+					<space-title
+						v-for="title in userTitles"
+						:space="title"
+						@click-title="gotoTitle(title)"
+						/>
+					<space-title
+						v-for="title in topTitles"
+						:space="title"
+						@click-title="gotoTitle(title)"
+						/>
+					<el-button>View all</el-button>
+				</div>
+			</div>
 		</div>
 	</div>
 
@@ -55,6 +62,7 @@
 <script>
 import CheckinButton from './checkin-button.vue';
 import SpaceType from './space-type.vue';
+import SpaceCreator from './space-creator.vue';
 import SpaceTitle from './space-title.vue';
 import SpaceText from './space-text.vue';
 import AddTitle from './add-title-button.vue';
@@ -68,6 +76,7 @@ export default {
 	components: {
 		CheckinButton,
 		SpaceType,
+		SpaceCreator,
 		SpaceTitle,
 		SpaceText,
 		AddTitle,
@@ -80,6 +89,7 @@ export default {
 	},
 	data() {
 		return {
+			addingTitle: false,
 			userTitles: (this.space.userTitles || []).slice(),
 		};
 	},
@@ -114,6 +124,14 @@ export default {
 				},
 			});
 		},
+		gotoTitle(title) {
+			this.$router.push({
+				name: 'space',
+				params: {
+					spaceId: title.id,
+				},
+			});
+		},
 	},
 };
 </script>
@@ -141,6 +159,9 @@ $border-radius: 12px;
 		padding: 10px;
 		cursor: default;
 
+		.label {
+			color: white;
+		}
 		.space-title {
 			background-color: white;
 			padding: 5px;

@@ -43,6 +43,6 @@ export default {
 <style lang="scss">
 .space-type {
 	color: darkblue;
-	text-shadow: 1px 1px 1px blue;
+	text-shadow: 2px 2px 3px white;
 }
 </style>
