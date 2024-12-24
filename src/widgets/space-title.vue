@@ -53,7 +53,7 @@ export default {
 
 <style lang="scss">
 .space-title {
-	padding: 5px 10px;
+	padding: 5px 20px;
 	background-color: white;
 	>.text {
 		font-size: 1.5em;

@@ -137,16 +137,13 @@ export default {
 	data() {
 		return {
 			addingTitle: false,
-			userTitles: (this.space.userTitles || []).slice(),
+			userTitles: this.space.userTitle ? [this.space.userTitle] : [],
 			expandTitles: false,
 		};
 	},
 	computed: {
 		SPACE_TYPES() {
 			return SPACE_TYPES;
-		},
-		hasUserTitles() {
-			return this.userTitles.length > 0;
 		},
 		topTitles() {
 			return this.space.topTitles || [];
@@ -177,11 +174,6 @@ export default {
 	},
 	methods: {
 		userTitleAdded(titleSpace) {
-			let index = this.userTitles.findIndex(t => t.id === titleSpace.id);
-			if (index >= 0) {
-				// Title already present
-				this.userTitles.splice(index, 1); // remove
-			}
 			this.userTitles.unshift(titleSpace); // add to start
 		},
 		gotoSpace(s = null) {

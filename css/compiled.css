@@ -50,6 +50,21 @@ div.center {
   overflow-wrap: anywhere;
 }
 
+.el-checkbox-group {
+  display: flex;
+  flex-direction: row;
+  row-gap: 10px;
+  column-gap: 5px;
+}
+.el-checkbox-group .el-checkbox {
+  flex-wrap: nowrap;
+}
+.el-checkbox-group .el-checkbox > .el-checkbox__label {
+  display: flex;
+  flex-direction: row;
+  flex-wrap: nowrap;
+}
+
 .el-alert > .el-alert__content {
   width: 100%;
   padding-top: 10px;
@@ -248,7 +263,7 @@ div.center {
   !*** css ./node_modules/css-loader/dist/cjs.js??clonedRuleSet-2.use[1]!./node_modules/vue-loader/dist/stylePostLoader.js!./node_modules/sass-loader/dist/cjs.js??clonedRuleSet-2.use[2]!./node_modules/vue-loader/dist/index.js??ruleSet[1].rules[5].use[0]!./src/widgets/space-title.vue?vue&type=style&index=0&id=658550a8&lang=scss ***!
   \*****************************************************************************************************************************************************************************************************************************************************************************************************************************************/
 .space-title {
-  padding: 5px 10px;
+  padding: 5px 20px;
   background-color: white;
 }
 .space-title > .text {

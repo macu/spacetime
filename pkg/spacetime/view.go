@@ -8,7 +8,6 @@ import (
 
 	"spacetime/pkg/utils/ajax"
 	"spacetime/pkg/utils/db"
-	"spacetime/pkg/utils/logging"
 )
 
 const MaxSubspacesPageLimit = 20
@@ -150,8 +149,11 @@ func LoadTopSubspaces(conn *sql.DB, auth *ajax.Auth,
 	defer rows.Close()
 
 	for rows.Next() {
-		var space = Space{}
-		err = rows.Scan(&space.ID, &space.SpaceType, &space.CreatedAt, &space.CreatedBy,
+		var space = Space{
+			ParentID: parentID,
+		}
+		err = rows.Scan(&space.ID, &space.SpaceType,
+			&space.CreatedAt, &space.CreatedBy,
 			&space.AuthorHandle, &space.AuthorDisplayName,
 			&space.UserBookmark,
 			&space.TotalSubspaces,
@@ -247,65 +249,56 @@ func LoadLastUserTitles(conn *sql.DB, auth ajax.Auth,
 		return nil
 	}
 
-	// TODO Make into a single query
-
 	var allTitles = []*Space{}
 
 	for _, space := range spaces {
 
-		rows, err := conn.Query(`WITH last_checkins AS (
-			SELECT subspace.parent_id,
-				MAX(subspace.created_at) AS last_checkin
-			FROM space subspace
-			WHERE subspace.space_type = $5
-			AND subspace.created_by = $3
-			GROUP BY subspace.parent_id
-			)
-			SELECT space.id,
-				space.created_at,
-				space.created_by,
-				unique_text.text_value
-			FROM space
+		// Load one by one
+
+		var args = []interface{}{}
+		var spaceID uint
+		var createdAt time.Time
+		var createdBy uint
+		var text string
+		var lastCheckin time.Time
+
+		err := conn.QueryRow(`SELECT space.id,
+			space.created_at, space.created_by,
+			unique_text.text_value,
+			MAX(checkin_space.created_at) AS last_checkin
+			FROM space AS space
 			INNER JOIN title_space ON title_space.space_id = space.id
 			INNER JOIN unique_text ON unique_text.id = title_space.unique_text_id
-			LEFT JOIN last_checkins ON last_checkins.parent_id = space.id
-			WHERE space.space_type = $1
-			AND space.parent_id = $2
-			ORDER BY last_checkins.last_checkin DESC
+			INNER JOIN space AS checkin_space ON checkin_space.parent_id = space.id
+			WHERE space.space_type = `+db.Arg(&args, SpaceTypeTitle)+`
+			AND space.parent_id = `+db.Arg(&args, space.ID)+`
+			AND checkin_space.space_type = `+db.Arg(&args, SpaceTypeCheckin)+`
+			AND checkin_space.created_by = `+db.Arg(&args, auth.UserID)+`
+			GROUP BY space.id, space.created_at, space.created_by,
+				unique_text.text_value
+			ORDER BY last_checkin DESC
 			LIMIT 1`,
-			SpaceTypeTitle, space.ID, auth.UserID, SpaceTypeCheckin,
-		)
+			args...,
+		).Scan(&spaceID, &createdAt, &createdBy, &text, &lastCheckin)
 
-		if err != nil {
+		if err == sql.ErrNoRows {
+			continue
+		} else if err != nil {
 			return fmt.Errorf("loading user titles by last checkin: %w", err)
 		}
 
-		defer rows.Close()
-
-		var titles = []*Space{}
-
-		for rows.Next() {
-			logging.LogDefault(nil, "user title")
-			var spaceID uint
-			var text string
-			var createdAt time.Time
-			var createdBy uint
-			err = rows.Scan(&spaceID, &createdAt, &createdBy, &text)
-			if err != nil {
-				return fmt.Errorf("loading user titles by last checkin: %w", err)
-			}
-			var title = &Space{
-				ID:        spaceID,
-				SpaceType: SpaceTypeTitle,
-				Text:      &text,
-				CreatedAt: createdAt,
-				CreatedBy: createdBy,
-			}
-			titles = append(titles, title)
-			allTitles = append(allTitles, title)
+		var titleSpace = &Space{
+			ID:        spaceID,
+			ParentID:  &space.ID,
+			SpaceType: SpaceTypeTitle,
+			Text:      &text,
+			CreatedAt: createdAt,
+			CreatedBy: createdBy,
 		}
 
-		space.UserTitle = &titles[0]
+		space.UserTitle = &titleSpace
+
+		allTitles = append(allTitles, titleSpace)
 
 	}
 
@@ -332,19 +325,23 @@ func LoadTopTitles(conn *sql.DB, spaces []*Space,
 
 	for _, space := range spaces {
 
-		rows, err := conn.Query(`SELECT space.id, unique_text.text_value,
+		var args = []interface{}{}
+
+		rows, err := conn.Query(`SELECT space.id,
+			space.created_at, space.created_by, unique_text.text_value,
 			COUNT(subspace.id) AS subspaces_total
 			FROM space
 			INNER JOIN title_space ON title_space.space_id = space.id
 			INNER JOIN unique_text ON unique_text.id = title_space.unique_text_id
 			LEFT JOIN space AS subspace ON subspace.parent_id = space.id
-			WHERE space.space_type = $1
-			AND space.parent_id = $2
-			GROUP BY space.id, unique_text.text_value
+			WHERE space.space_type = `+db.Arg(&args, SpaceTypeTitle)+`
+				AND space.parent_id = `+db.Arg(&args, space.ID)+`
+			GROUP BY space.id, space.created_at, space.created_by,
+				unique_text.text_value
 			ORDER BY subspaces_total DESC
-			OFFSET $3
-			LIMIT $4`,
-			SpaceTypeTitle, space.ID, offset, limit,
+			OFFSET `+db.Arg(&args, offset)+`
+			LIMIT `+db.Arg(&args, limit),
+			args...,
 		)
 
 		if err != nil {
@@ -353,26 +350,32 @@ func LoadTopTitles(conn *sql.DB, spaces []*Space,
 
 		defer rows.Close()
 
-		var titles = []*Space{}
+		var allTitles = []*Space{}
 
 		for rows.Next() {
 			var spaceID uint
+			var createdAt time.Time
+			var createdBy uint
 			var text string
 			var subspacesTotal uint
-			err = rows.Scan(&spaceID, &text, &subspacesTotal)
+			err = rows.Scan(&spaceID, &createdAt, &createdBy,
+				&text, &subspacesTotal)
 			if err != nil {
 				return fmt.Errorf("loading top titles: %w", err)
 			}
 			var title = &Space{
 				ID:             spaceID,
+				ParentID:       &space.ID,
 				SpaceType:      SpaceTypeTitle,
 				Text:           &text,
+				CreatedAt:      createdAt,
+				CreatedBy:      createdBy,
 				TotalSubspaces: subspacesTotal,
 			}
-			titles = append(titles, title)
+			allTitles = append(allTitles, title)
 		}
 
-		space.TopTitles = &titles
+		space.TopTitles = &allTitles
 
 	}
 
