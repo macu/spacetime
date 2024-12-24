@@ -1,6 +1,7 @@
 export const SPACE_TYPES = {
 	SPACE: 'space',
 	CHECK_IN: 'check-in',
+	SPACE_LINK: 'space-link',
 	TITLE: 'title',
 	TAG: 'tag',
 	TEXT: 'text',
@@ -11,6 +12,7 @@ export const SPACE_TYPES = {
 
 export const SPACE_TYPE_ICONS = {
 	[SPACE_TYPES.SPACE]: 'orbit',
+	[SPACE_TYPES.SPACE_LINK]: 'link',
 	[SPACE_TYPES.CHECK_IN]: 'check_circle',
 	[SPACE_TYPES.TITLE]: 'title',
 	[SPACE_TYPES.TAG]: 'label',

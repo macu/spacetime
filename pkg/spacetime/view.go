@@ -168,9 +168,9 @@ func LoadTopSubspaces(conn *sql.DB, auth *ajax.Auth,
 	}
 
 	if auth != nil {
-		err = LoadUserTitlesByLastCheckin(conn, *auth, spaces, DefaultTitlesLimit)
+		err = LoadLastUserTitles(conn, *auth, spaces)
 		if err != nil {
-			return nil, fmt.Errorf("loading bookmarked titles: %w", err)
+			return nil, fmt.Errorf("loading user's last titles: %w", err)
 		}
 	}
 
@@ -238,9 +238,8 @@ func LoadSubspaceCount(conn *sql.DB, spaces []*Space) error {
 
 }
 
-func LoadUserTitlesByLastCheckin(conn *sql.DB, auth ajax.Auth,
+func LoadLastUserTitles(conn *sql.DB, auth ajax.Auth,
 	spaces []*Space,
-	limit uint,
 ) error {
 	// Load user titles by last checkin
 
@@ -248,9 +247,7 @@ func LoadUserTitlesByLastCheckin(conn *sql.DB, auth ajax.Auth,
 		return nil
 	}
 
-	if limit > MaxSubspacesPageLimit {
-		limit = MaxSubspacesPageLimit
-	}
+	// TODO Make into a single query
 
 	var allTitles = []*Space{}
 
@@ -275,8 +272,8 @@ func LoadUserTitlesByLastCheckin(conn *sql.DB, auth ajax.Auth,
 			WHERE space.space_type = $1
 			AND space.parent_id = $2
 			ORDER BY last_checkins.last_checkin DESC
-			LIMIT $4`,
-			SpaceTypeTitle, space.ID, auth.UserID, limit, SpaceTypeCheckin,
+			LIMIT 1`,
+			SpaceTypeTitle, space.ID, auth.UserID, SpaceTypeCheckin,
 		)
 
 		if err != nil {
@@ -308,7 +305,7 @@ func LoadUserTitlesByLastCheckin(conn *sql.DB, auth ajax.Auth,
 			allTitles = append(allTitles, title)
 		}
 
-		space.UserTitles = &titles
+		space.UserTitle = &titles[0]
 
 	}
 
@@ -448,7 +445,7 @@ func LoadTopTags(conn *sql.DB, spaces []*Space,
 
 func LoadSpaceContent(conn *sql.DB, auth *ajax.Auth,
 	spaces []*Space,
-	loadCheckinSpace bool, // prevent recursion
+	loadLinkedSpaces bool, // prevent recursion
 ) error {
 	// Load content for multiple spaces
 
@@ -484,9 +481,9 @@ func LoadSpaceContent(conn *sql.DB, auth *ajax.Auth,
 		}
 	}
 
-	if loadCheckinSpace && hasSpacesOfType(spaces, SpaceTypeCheckin) {
-		err := loadCheckinSpaceDetails(conn, auth,
-			extractSpacesByType(spaces, SpaceTypeCheckin))
+	if loadLinkedSpaces && hasSpacesOfType(spaces, SpaceTypeLink) {
+		err := loadLinkSpaceDetails(conn, auth,
+			extractSpacesByType(spaces, SpaceTypeLink))
 		if err != nil {
 			return err
 		}
@@ -743,8 +740,8 @@ func loadNakedTextSpacesContent(conn *sql.DB, spaces []*Space) error {
 
 }
 
-func loadCheckinSpaceDetails(conn *sql.DB, auth *ajax.Auth, spaces []*Space) error {
-	// Load checkin content for multiple spaces
+func loadLinkSpaceDetails(conn *sql.DB, auth *ajax.Auth, spaces []*Space) error {
+	// Load link content for multiple spaces
 
 	if len(spaces) == 0 {
 		return nil
@@ -760,11 +757,11 @@ func loadCheckinSpaceDetails(conn *sql.DB, auth *ajax.Auth, spaces []*Space) err
 		}
 		inClauseSql += db.Arg(&args, space.ID)
 
-		// Set checkin space to nil for direct check-ins
+		// Set link space to nil for direct check-ins
 		var nullId *uint = nil
 		var nullSpace *Space = nil
-		space.CheckinSpaceID = &nullId
-		space.CheckinSpace = &nullSpace
+		space.LinkSpaceID = &nullId
+		space.LinkSpace = &nullSpace
 	}
 
 	var bookmarkFieldSql string
@@ -779,53 +776,53 @@ func loadCheckinSpaceDetails(conn *sql.DB, auth *ajax.Auth, spaces []*Space) err
 	}
 
 	rows, err := conn.Query(`SELECT space.id,
-		checkin_space.checkin_space_id,
+		link_space.link_space_id,
 		linked_space.space_type, linked_space.created_at, linked_space.created_by,
 		user_account.handle, user_account.display_name,
 		`+bookmarkFieldSql+`
 		FROM space
-		INNER JOIN checkin_space ON checkin_space.space_id = space.id
-		LEFT JOIN space AS linked_space ON linked_space.id = checkin_space.checkin_space_id
+		INNER JOIN link_space ON link_space.space_id = space.id
+		LEFT JOIN space AS linked_space ON linked_space.id = link_space.link_space_id
 		LEFT JOIN user_account ON user_account.id = linked_space.created_by
 		WHERE space.id IN (`+inClauseSql+`)`,
 		args...,
 	)
 
 	if err != nil {
-		return fmt.Errorf("loading checkin space details: %w", err)
+		return fmt.Errorf("loading link space details: %w", err)
 	}
 
 	defer rows.Close()
 
-	var checkinSpaces = []*Space{}
+	var linkSpaces = []*Space{}
 
 	for rows.Next() {
 		var spaceID uint
-		var checkinSpace = &Space{}
+		var linkSpace = &Space{}
 		err = rows.Scan(&spaceID,
-			&checkinSpace.ID, &checkinSpace.SpaceType,
-			&checkinSpace.CreatedAt, &checkinSpace.CreatedBy,
-			&checkinSpace.AuthorHandle, &checkinSpace.AuthorDisplayName,
-			&checkinSpace.UserBookmark,
+			&linkSpace.ID, &linkSpace.SpaceType,
+			&linkSpace.CreatedAt, &linkSpace.CreatedBy,
+			&linkSpace.AuthorHandle, &linkSpace.AuthorDisplayName,
+			&linkSpace.UserBookmark,
 		)
 		if err != nil {
-			return fmt.Errorf("loading checkin space details: %w", err)
+			return fmt.Errorf("loading link space details: %w", err)
 		}
 		for _, space := range spaces {
 			if space.ID == spaceID {
-				if checkinSpace.ID != 0 {
-					var id = &checkinSpace.ID
-					space.CheckinSpaceID = &id
-					space.CheckinSpace = &checkinSpace
-					checkinSpaces = append(checkinSpaces, checkinSpace)
+				if linkSpace.ID != 0 {
+					var id = &linkSpace.ID
+					space.LinkSpaceID = &id
+					space.LinkSpace = &linkSpace
+					linkSpaces = append(linkSpaces, linkSpace)
 				}
 			}
 		}
 	}
 
-	err = LoadSpaceContent(conn, auth, checkinSpaces, false)
+	err = LoadSpaceContent(conn, auth, linkSpaces, false)
 	if err != nil {
-		return fmt.Errorf("loading checkin space details: %w", err)
+		return fmt.Errorf("loading link space details: %w", err)
 	}
 
 	return nil

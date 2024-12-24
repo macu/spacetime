@@ -19,15 +19,15 @@ type Space struct {
 	StreamClosedAt **time.Time `json:"streamClosedAt,omitempty"`
 	StreamTexts    *[]*Space   `json:"streamTexts,omitempty"`
 
-	CheckinSpaceID **uint  `json:"checkinSpaceId,omitempty"` // checkin
-	CheckinSpace   **Space `json:"checkinSpace,omitempty"`   // checkin
+	LinkSpaceID **uint  `json:"linkSpaceId,omitempty"` // space-link
+	LinkSpace   **Space `json:"linkSpace,omitempty"`   // space-link
 
 	AuthorHandle      **string `json:"authorHandle,omitempty"`
 	AuthorDisplayName *string  `json:"authorDisplayName,omitempty"`
 
 	UserBookmark *bool `json:"userBookmark,omitempty"`
 
-	UserTitles   *[]*Space `json:"userTitles,omitempty"` // last titles by user check-in
+	UserTitle    **Space   `json:"userTitle,omitempty"` // last title by user check-in
 	TopTitles    *[]*Space `json:"topTitles,omitempty"`
 	TopTags      *[]*Space `json:"topTags,omitempty"`
 	TopSubspaces *[]*Space `json:"topSubspaces,omitempty"`

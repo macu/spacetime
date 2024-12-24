@@ -95,7 +95,8 @@ CREATE TABLE unique_text (
 
 CREATE TYPE space_type AS ENUM (
 	'space', -- (nameless; contains titles and other spaces)
-	'check-in', -- user checking in a space to another space
+	'check-in', -- user checking in directly on a space
+	'space-link', -- user linking in a space to another space
 	'title', -- plain text (no newlines), special handling to give a space an active title
 	'tag', -- plain text (no newlines), special handling to give a space a set of active tags
 	'text', -- plain text entered by a user
@@ -128,12 +129,11 @@ CREATE INDEX space_time_idx ON space (parent_id, created_at); -- for top queries
 CREATE INDEX space_type_time_idx ON space (parent_id, space_type, created_at);
 CREATE INDEX space_user_throttle ON space (created_by, created_at);
 
-CREATE TABLE checkin_space ( -- a link to another space somewhere else
+CREATE TABLE link_space ( -- a link to another space somewhere else
 	space_id INTEGER PRIMARY KEY REFERENCES space (id) ON DELETE CASCADE,
 	parent_space_id INTEGER NOT NULL REFERENCES space (id) ON DELETE CASCADE,
-	-- checkin_space_id will be null for direct checkins parent space
-	checkin_space_id INTEGER REFERENCES space (id) ON DELETE CASCADE,
-	UNIQUE (parent_space_id, checkin_space_id)
+	link_space_id INTEGER NOT NULL REFERENCES space (id) ON DELETE CASCADE,
+	UNIQUE (parent_space_id, link_space_id)
 );
 
 CREATE TABLE title_space (

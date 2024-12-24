@@ -5,6 +5,7 @@ const TagMaxLength = 128
 const TextMaxLength = 1024
 
 const SpaceTypeSpace = "space"
+const SpaceTypeLink = "space-link"
 const SpaceTypeCheckin = "check-in"
 const SpaceTypeTitle = "title"
 const SpaceTypeTag = "tag"
@@ -31,16 +32,15 @@ func IsValidText(text string) bool {
 func IsValidSpaceType(spaceType string) bool {
 	switch spaceType {
 
-	case SpaceTypeSpace, SpaceTypeCheckin, SpaceTypeTitle, SpaceTypeTag,
-		SpaceTypeText, SpaceTypeNaked, SpaceTypeStream,
-		SpaceTypeJson:
+	case SpaceTypeSpace,
+		SpaceTypeLink,
+		SpaceTypeCheckin,
+		SpaceTypeTitle, SpaceTypeTag,
+		SpaceTypeText:
 		return true
 
-	case SpaceTypePicture, SpaceTypeAudio, SpaceTypeVideo:
-		// Not yet inplemented
-		return false
-
 	default:
+		// Not yet inplemented
 		return false
 	}
 }

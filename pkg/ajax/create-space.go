@@ -53,6 +53,41 @@ func AjaxCreateEmptySpace(db *sql.DB, auth ajax.Auth,
 
 }
 
+func AjaxCreateLinkSpace(db *sql.DB, auth ajax.Auth,
+	w http.ResponseWriter, r *http.Request,
+) (interface{}, int) {
+
+	blocked, err := spacetime.CheckCreateSpaceThrottleBlock(db, auth)
+	if err != nil {
+		logging.LogError(r, &auth, err)
+		return nil, http.StatusInternalServerError
+	}
+	if blocked {
+		return nil, http.StatusTooManyRequests
+	}
+
+	// parent required
+	parentID, err := types.AtoUint(r.FormValue("parentId"))
+	if err != nil {
+		return nil, http.StatusBadRequest
+	}
+
+	// space required
+	spaceID, err := types.AtoUint(r.FormValue("spaceId"))
+	if err != nil {
+		return nil, http.StatusBadRequest
+	}
+
+	space, err := spacetime.CreateSpaceLink(db, auth, parentID, spaceID)
+	if err != nil {
+		logging.LogError(r, &auth, err)
+		return nil, http.StatusInternalServerError
+	}
+
+	return space, http.StatusCreated
+
+}
+
 func AjaxCreateCheckinSpace(db *sql.DB, auth ajax.Auth,
 	w http.ResponseWriter, r *http.Request,
 ) (interface{}, int) {
@@ -72,13 +107,7 @@ func AjaxCreateCheckinSpace(db *sql.DB, auth ajax.Auth,
 		return nil, http.StatusBadRequest
 	}
 
-	// space optional
-	spaceID, err := types.AtoUintNilIfEmpty(r.FormValue("spaceId"))
-	if err != nil {
-		return nil, http.StatusBadRequest
-	}
-
-	space, err := spacetime.CreateCheckin(db, auth, parentID, spaceID)
+	space, err := spacetime.CreateCheckin(db, auth, parentID)
 	if err != nil {
 		logging.LogError(r, &auth, err)
 		return nil, http.StatusInternalServerError

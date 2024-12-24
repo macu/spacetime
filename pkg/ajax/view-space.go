@@ -29,15 +29,16 @@ func AjaxLoadSpace(db *sql.DB, auth *ajax.Auth,
 		return nil, http.StatusInternalServerError
 	}
 
-	err = spacetime.LoadSubspaceCount(db, []*spacetime.Space{space})
+	err = spacetime.LoadSubspaceCount(db,
+		[]*spacetime.Space{space})
 	if err != nil {
 		logging.LogError(r, auth, err)
 		return nil, http.StatusInternalServerError
 	}
 
 	if auth != nil {
-		err = spacetime.LoadUserTitlesByLastCheckin(db, *auth,
-			[]*spacetime.Space{space}, spacetime.DefaultTitlesLimit)
+		err = spacetime.LoadLastUserTitles(db, *auth,
+			[]*spacetime.Space{space})
 		if err != nil {
 			logging.LogError(r, auth, err)
 			return nil, http.StatusInternalServerError

@@ -93,7 +93,7 @@
 			:space="space"
 			/>
 
-		<slot v-if="showSubspaces" name="subspaces"/>
+		<slot name="subspaces"/>
 
 	</div>
 
@@ -130,10 +130,6 @@ export default {
 			required: true,
 		},
 		showPath: {
-			type: Boolean,
-			default: false,
-		},
-		showSubspaces: {
 			type: Boolean,
 			default: false,
 		},

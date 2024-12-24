@@ -45,6 +45,21 @@ div.center {
 	overflow-wrap: anywhere;
 }
 
+.el-checkbox-group {
+	display: flex;
+	flex-direction: row;
+	row-gap: 10px;
+	column-gap: 5px;
+	.el-checkbox {
+		flex-wrap: nowrap;
+		>.el-checkbox__label {
+			display: flex;
+			flex-direction: row;
+			flex-wrap: nowrap;
+		}
+	}
+}
+
 .el-alert {
 	>.el-alert__content {
 		width: 100%;

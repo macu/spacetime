@@ -42,11 +42,9 @@ func CreateEmptySpace(conn *sql.DB, auth ajax.Auth, parentID *uint) (*Space, err
 
 }
 
-func CreateCheckin(conn *sql.DB, auth ajax.Auth, parentID uint, spaceID *uint) (*Space, error) {
+func CreateSpaceLink(conn *sql.DB, auth ajax.Auth, parentID, spaceID uint) (*Space, error) {
 
-	// If spaceID is nil, create user checkin on parent space
-	// Else, if spaceID is given, check if checkin space already exists
-	// Create new checkin space if not exists
+	// Create new space link
 	// If space itself belongs to parent space, create checkin under the space
 
 	// Ensure referenced parent space exists
@@ -58,81 +56,86 @@ func CreateCheckin(conn *sql.DB, auth ajax.Auth, parentID uint, spaceID *uint) (
 		return nil, fmt.Errorf("parent space does not exist: %d", parentID)
 	}
 
-	var space = Space{}
-
-	// If spaceID is nil, create user checkin on parent space
-	if spaceID == nil {
-
-		// Create checkin space
-		err := conn.QueryRow(`INSERT INTO space
-			(parent_id, space_type, created_at, created_by)
-			VALUES ($1, $2, $3, $4)
-			RETURNING id, space_type, created_at, created_by`,
-			parentID, SpaceTypeCheckin, time.Now(), auth.UserID,
-		).Scan(&space.ID, &space.SpaceType,
-			&space.CreatedAt, &space.CreatedBy)
-
-		if err != nil {
-			return nil, fmt.Errorf("insert space: %w", err)
-		}
-
-		// Set checkin space details to nil to indicate it is a direct checkin
-		var checkinSpaceID *uint = nil
-		space.CheckinSpaceID = &checkinSpaceID
-		var checkinSpace *Space = nil
-		space.CheckinSpace = &checkinSpace
-
-		return &space, nil
-
-	}
-
-	// If spaceID is given, check if checkin space already exists
-
-	var existingCheckinSpaceID *uint
-	err = conn.QueryRow(`SELECT space.id
-		FROM space
-		INNER JOIN checkin_space ON checkin_space.space_id = space.id
-		WHERE space.parent_id = $1
-		AND space.space_type = $2
-		AND checkin_space.checkin_space_id = $3`,
-		parentID, SpaceTypeCheckin, *spaceID,
-	).Scan(&existingCheckinSpaceID)
-
-	if err != nil && err != sql.ErrNoRows {
-		return nil, fmt.Errorf("check checkin exists: %w", err)
-	}
-
-	if existingCheckinSpaceID != nil {
-
-		// Create direct check-in under existing check-in
-		return CreateCheckin(conn, auth, *existingCheckinSpaceID, nil)
-
-	}
-
-	// Create new checkin space if not exists
-
-	spaceExists, err := CheckSpaceExists(conn, *spaceID)
+	spaceExists, err := CheckSpaceExists(conn, spaceID)
 	if err != nil {
 		return nil, err
 	}
 	if !spaceExists {
-		return nil, fmt.Errorf("space to check in does not exist: %d", *spaceID)
+		return nil, fmt.Errorf("space to check in does not exist: %d", spaceID)
 	}
 
 	// Get details about space to check in
-	existingSpaceParentID, checkinSpaceType, err := GetSpaceMeta(conn, *spaceID)
+	existingSpaceParentID, _, err := GetSpaceMeta(conn, spaceID)
 	if err != nil {
 		return nil, err
 	}
 
 	if existingSpaceParentID != nil && *existingSpaceParentID == parentID {
 
-		// Create direct checkin under existing space,
-		// becuase it was created under the target parent
-		// rather than checking space in under its own parent
-		return CreateCheckin(conn, auth, *spaceID, nil)
+		// Create direct checkin under existing space
+		return CreateCheckin(conn, auth, spaceID)
 
 	}
+
+	var space = Space{}
+
+	err = db.InTransaction(conn, func(tx *sql.Tx) error {
+
+		// Create space link
+		err := tx.QueryRow(`INSERT INTO space (parent_id, space_type, created_at, created_by)
+			VALUES ($1, $2, $3, $4)
+			RETURNING id, space_type, created_at, created_by`,
+			parentID, SpaceTypeLink, time.Now(), auth.UserID,
+		).Scan(&space.ID, &space.SpaceType,
+			&space.CreatedAt, &space.CreatedBy)
+
+		if err != nil {
+			return fmt.Errorf("insert space: %w", err)
+		}
+
+		// Create associated data
+		_, err = tx.Exec(`INSERT INTO link_space
+			(space_id, parent_space_id, link_space_id)
+			VALUES ($1, $2, $3)`,
+			space.ID, parentID, spaceID,
+		)
+
+		if err != nil {
+			return fmt.Errorf("insert space_link_space: %w", err)
+		}
+
+		var linkSpaceID = &spaceID
+		space.LinkSpaceID = &linkSpaceID
+
+		var linkSpace *Space = nil
+		space.LinkSpace = &linkSpace // not loaded
+
+		return nil
+
+	})
+
+	if err != nil {
+		return nil, err
+	}
+
+	return &space, nil
+
+}
+
+func CreateCheckin(conn *sql.DB, auth ajax.Auth, parentID uint) (*Space, error) {
+
+	// Create new checkin space
+
+	// Ensure referenced parent space exists
+	var parentExists, err = CheckSpaceExists(conn, parentID)
+	if err != nil {
+		return nil, err
+	}
+	if !parentExists {
+		return nil, fmt.Errorf("parent space does not exist: %d", parentID)
+	}
+
+	var space = Space{}
 
 	err = db.InTransaction(conn, func(tx *sql.Tx) error {
 
@@ -147,25 +150,6 @@ func CreateCheckin(conn *sql.DB, auth ajax.Auth, parentID uint, spaceID *uint) (
 		if err != nil {
 			return fmt.Errorf("insert space: %w", err)
 		}
-
-		// Create associated checkin data
-		_, err = tx.Exec(`INSERT INTO checkin_space
-			(space_id, parent_space_id checkin_space_id)
-			VALUES ($1, $2, $3)`,
-			space.ID, parentID, spaceID,
-		)
-
-		if err != nil {
-			return fmt.Errorf("insert checkin_space: %w", err)
-		}
-
-		space.CheckinSpaceID = &spaceID
-
-		var checkinSpace = &Space{
-			ID:        *spaceID,
-			SpaceType: checkinSpaceType,
-		}
-		space.CheckinSpace = &checkinSpace
 
 		return nil
 
@@ -294,7 +278,7 @@ func CreateTitleCheckin(conn *sql.DB, auth ajax.Auth, parentID uint, title strin
 			} else {
 
 				// Check-in under existing title
-				space, err = CreateCheckin(conn, auth, *existingTitleSpaceID, nil)
+				space, err = CreateCheckin(conn, auth, *existingTitleSpaceID)
 
 				if err != nil {
 					return fmt.Errorf("create checkin: %w", err)
@@ -431,7 +415,7 @@ func CreateTagCheckin(conn *sql.DB, auth ajax.Auth, parentID uint, tag string) (
 			} else {
 
 				// Check-in under existing tag
-				space, err = CreateCheckin(conn, auth, *existingTagSpaceID, nil)
+				space, err = CreateCheckin(conn, auth, *existingTagSpaceID)
 
 				if err != nil {
 					return fmt.Errorf("create checkin: %w", err)
@@ -566,7 +550,7 @@ func CreateTextCheckin(conn *sql.DB, auth ajax.Auth, parentID uint, text string)
 			} else {
 
 				// Check-in under existing text
-				space, err = CreateCheckin(conn, auth, *existingTextSpaceID, nil)
+				space, err = CreateCheckin(conn, auth, *existingTextSpaceID)
 
 				if err != nil {
 					return fmt.Errorf("create checkin: %w", err)
