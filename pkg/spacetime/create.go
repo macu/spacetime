@@ -186,7 +186,9 @@ func CreateTitleCheckin(conn *sql.DB, auth ajax.Auth, parentID uint, title strin
 	}
 
 	var space = &Space{
-		Text: &title,
+		ParentID:  &parentID,
+		SpaceType: SpaceTypeTitle,
+		Text:      &title,
 	}
 
 	err = db.InTransaction(conn, func(tx *sql.Tx) error {
@@ -200,10 +202,9 @@ func CreateTitleCheckin(conn *sql.DB, auth ajax.Auth, parentID uint, title strin
 			err = tx.QueryRow(`INSERT INTO space
 				(parent_id, space_type, created_at, created_by)
 				VALUES ($1, $2, $3, $4)
-				RETURNING id, space_type, created_at, created_by`,
+				RETURNING id, created_at, created_by`,
 				parentID, SpaceTypeTitle, time.Now(), auth.UserID,
-			).Scan(&space.ID, &space.SpaceType,
-				&space.CreatedAt, &space.CreatedBy)
+			).Scan(&space.ID, &space.CreatedAt, &space.CreatedBy)
 
 			if err != nil {
 				return fmt.Errorf("insert space: %w", err)
@@ -255,14 +256,18 @@ func CreateTitleCheckin(conn *sql.DB, auth ajax.Auth, parentID uint, title strin
 
 			// Check if title_space already exists
 			var existingTitleSpaceID *uint
-			err = conn.QueryRow(`SELECT space.id
+			var existingTitleSpaceCreatedAt time.Time
+			var existingTitleSpaceCreatedBy uint
+			err = conn.QueryRow(`SELECT space.id, space.parent_id,
+				space.created_at, space.created_by
 				FROM space
 				INNER JOIN title_space ON title_space.space_id = space.id
 				WHERE space.parent_id = $1
 				AND space.space_type = $2
 				AND title_space.unique_text_id = $3`,
 				parentID, SpaceTypeTitle, *uniqueTextId,
-			).Scan(&existingTitleSpaceID)
+			).Scan(&existingTitleSpaceID,
+				&existingTitleSpaceCreatedAt, &existingTitleSpaceCreatedBy)
 
 			if err != nil && err != sql.ErrNoRows {
 				return fmt.Errorf("check title_space exists: %w", err)
@@ -277,11 +282,20 @@ func CreateTitleCheckin(conn *sql.DB, auth ajax.Auth, parentID uint, title strin
 
 			} else {
 
+				space.ID = *existingTitleSpaceID
+				space.CreatedAt = existingTitleSpaceCreatedAt
+				space.CreatedBy = existingTitleSpaceCreatedBy
+
 				// Check-in under existing title
-				space, err = CreateCheckin(conn, auth, *existingTitleSpaceID)
+				_, err = CreateCheckin(conn, auth, *existingTitleSpaceID)
 
 				if err != nil {
 					return fmt.Errorf("create checkin: %w", err)
+				}
+
+				err = LoadSubspaceCount(conn, []*Space{space})
+				if err != nil {
+					return fmt.Errorf("load subspace count: %w", err)
 				}
 
 			}
@@ -323,7 +337,9 @@ func CreateTagCheckin(conn *sql.DB, auth ajax.Auth, parentID uint, tag string) (
 	}
 
 	var space = &Space{
-		Text: &tag,
+		ParentID:  &parentID,
+		SpaceType: SpaceTypeTag,
+		Text:      &tag,
 	}
 
 	err = db.InTransaction(conn, func(tx *sql.Tx) error {

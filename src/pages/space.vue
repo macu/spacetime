@@ -9,6 +9,7 @@
 
 				<create-dropdown
 					:parent-id="space.id"
+					:disabled="$store.getters.createDisabled"
 					/>
 
 				<space-list

@@ -44,9 +44,14 @@
 			<space-type :type="space.spaceType"/>
 			<checkin-button :space="space"/>
 			<space-creator :space="space"/>
-			<el-button v-if="!showTitles" @click="expandTitles = true" class="align-end">
-				Show titles
-			</el-button>
+			<div class="align-end flex-row-md">
+				<el-button v-if="!showTitles" @click="expandTitles = true">
+					Show titles
+				</el-button>
+				<el-button v-if="!showTags" @click="expandTags = true" class="align-end">
+					Show tags
+				</el-button>
+			</div>
 		</div>
 
 		<div v-if="showTitles" @click.stop class="space-title-bar flex-column-sm">
@@ -63,6 +68,27 @@
 							v-for="title in titlesToShow"
 							:space="title"
 							@click-title="gotoSpace(title)"
+							/>
+						<el-button>View all</el-button>
+					</div>
+				</div>
+			</div>
+		</div>
+
+		<div v-if="showTags" @click.stop class="space-tags-bar flex-column-sm">
+			<div class="label">Tag(s)</div>
+			<div :class="addingTag ? 'flex-column' : ['flex-row', 'nowrap']">
+				<add-tag
+					:parent-id="space.id"
+					@added="tagSpace => userTagAdded(tagSpace)"
+					@update:adding="addingTag = $event"
+					/>
+				<div class="horizontal-scroll">
+					<div class="flex-row-md nowrap">
+						<space-tag
+							v-for="tag in tagsToShow"
+							:space="tag"
+							@click-tag="gotoSpace(tag)"
 							/>
 						<el-button>View all</el-button>
 					</div>
@@ -108,6 +134,7 @@ import SpaceTitle from './space-title.vue';
 import SpaceTag from './space-tag.vue';
 import SpaceText from './space-text.vue';
 import AddTitle from './add-title-button.vue';
+import AddTag from './add-tag-button.vue';
 
 import {
 	SPACE_TYPES,
@@ -123,6 +150,7 @@ export default {
 		SpaceTag,
 		SpaceText,
 		AddTitle,
+		AddTag,
 	},
 	props: {
 		space: {
@@ -139,6 +167,10 @@ export default {
 			addingTitle: false,
 			userTitles: this.space.userTitle ? [this.space.userTitle] : [],
 			expandTitles: false,
+
+			addingTag: false,
+			userTags: [],
+			expandTags: false,
 		};
 	},
 	computed: {
@@ -171,10 +203,36 @@ export default {
 			let all = this.userTitles.concat(this.topTitles);
 			return all.filter((t, i) => all.findIndex(t2 => t2.id === t.id) === i);
 		},
+		topTags() {
+			return this.space.topTags || [];
+		},
+		hasTopTags() {
+			return this.topTags.length > 0;
+		},
+		showTags() {
+			if (this.expandTags) {
+				return true;
+			}
+			switch (this.space.spaceType) {
+				case SPACE_TYPES.CHECK_IN:
+				case SPACE_TYPES.TITLE:
+				case SPACE_TYPES.TAG:
+					return false;
+			}
+			// All other types show by default
+			return true;
+		},
+		tagsToShow() {
+			let all = this.userTags.concat(this.topTags);
+			return all.filter((t, i) => all.findIndex(t2 => t2.id === t.id) === i);
+		},
 	},
 	methods: {
 		userTitleAdded(titleSpace) {
 			this.userTitles.unshift(titleSpace); // add to start
+		},
+		userTagAdded(tagSpace) {
+			this.userTags.unshift(tagSpace); // add to start
 		},
 		gotoSpace(s = null) {
 			this.$router.push({
@@ -231,8 +289,23 @@ $border-radius: 12px;
 			}
 		}
 
-		>.space-title, >.space-tag, >.space-text {
+		>.space-tags-bar {
+			background-color: rgb(105, 19, 98);
+			border-radius: $border-radius;
+			padding: 10px 20px;
+			cursor: default;
+
+			.label {
+				color: white;
+			}
+		}
+
+		>.space-title, >.space-tag {
 			padding: 40px;
+			cursor: default;
+		}
+		>.space-text {
+			padding: 80px;
 			cursor: default;
 		}
 	}

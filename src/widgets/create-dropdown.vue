@@ -17,9 +17,9 @@
 					<span>Create stream of consciousness</span>
 				</el-dropdown-item>
 				<template v-if="hasParentId">
-					<el-dropdown-item command="create-check-in">
-						<material-icon :icon="SPACE_TYPE_ICONS[SPACE_TYPES.CHECK_IN]"/>
-						<span>Create check-in</span>
+					<el-dropdown-item command="create-space-link">
+						<material-icon :icon="SPACE_TYPE_ICONS[SPACE_TYPES.SPACE_LINK]"/>
+						<span>Create space link</span>
 					</el-dropdown-item>
 					<el-dropdown-item command="create-title">
 						<material-icon :icon="SPACE_TYPE_ICONS[SPACE_TYPES.TITLE]"/>

@@ -21,17 +21,27 @@ func LoadSpace(conn *sql.DB, auth *ajax.Auth, id uint) (*Space, error) {
 		ID: id,
 	}
 
+	var args = []interface{}{}
+
+	var bookmarkFieldSql string
+	if auth != nil {
+		bookmarkFieldSql = `EXISTS(SELECT * FROM user_space_bookmark
+			WHERE user_space_bookmark.space_id=space.id
+			AND user_space_bookmark.user_id = ` + db.Arg(&args, auth.UserID) + `
+			) AS user_bookmark`
+	} else {
+		bookmarkFieldSql = `FALSE AS user_bookmark`
+	}
+
 	err := conn.QueryRow(`SELECT space.parent_id, space.space_type,
 		space.created_at, space.created_by,
 		user_account.handle, user_account.display_name,
-		EXISTS(SELECT * FROM user_space_bookmark
-			WHERE user_space_bookmark.space_id=space.id
-			AND user_space_bookmark.user_id = $2) AS user_bookmark
+		`+bookmarkFieldSql+`
 		FROM space
 		LEFT JOIN user_account ON user_account.id = space.created_by
-		WHERE space.id = $1
+		WHERE space.id = `+db.Arg(&args, id)+`
 		LIMIT 1`,
-		id, auth.UserID,
+		args...,
 	).Scan(&space.ParentID, &space.SpaceType,
 		&space.CreatedAt, &space.CreatedBy,
 		&space.AuthorHandle, &space.AuthorDisplayName,
@@ -136,7 +146,7 @@ func LoadTopSubspaces(conn *sql.DB, auth *ajax.Auth,
 		LEFT JOIN space AS subspace ON subspace.parent_id = space.id
 		WHERE `+parentClauseSql+`
 		GROUP BY space.id, space.space_type, space.created_at, space.created_by, user_account.handle, user_account.display_name, user_bookmark
-		ORDER BY subspace_count DESC
+		ORDER BY subspace_count DESC, space.created_at DESC
 		LIMIT `+db.Arg(&args, limit)+`
 		OFFSET `+db.Arg(&args, offset),
 		args...,

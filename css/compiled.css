@@ -207,13 +207,18 @@ div.center {
 .spacetime-app > header {
   margin: 0;
   padding: 20px;
-  background-color: #f0f0f0;
+  background-color: #037dff;
   border-bottom: 1px solid #ccc;
+  color: white;
 }
 .spacetime-app > header > h1 {
   font-size: 2em;
 }
+.spacetime-app > header a:link, .spacetime-app > header a:visited {
+  color: white;
+}
 .spacetime-app > .body {
+  background-color: #03d1ff;
   padding: 40px 40px 80px;
 }
 .spacetime-app.is-mobile > header {
@@ -276,7 +281,7 @@ div.center {
   !*** css ./node_modules/css-loader/dist/cjs.js??clonedRuleSet-2.use[1]!./node_modules/vue-loader/dist/stylePostLoader.js!./node_modules/sass-loader/dist/cjs.js??clonedRuleSet-2.use[2]!./node_modules/vue-loader/dist/index.js??ruleSet[1].rules[5].use[0]!./src/widgets/space-tag.vue?vue&type=style&index=0&id=43250aea&lang=scss ***!
   \***************************************************************************************************************************************************************************************************************************************************************************************************************************************/
 .space-tag {
-  padding: 5px 10px;
+  padding: 5px 20px;
   background-color: white;
 }
 .space-tag > .text {
@@ -331,8 +336,21 @@ div.center {
 .space-output > .container > .space-title-bar .label {
   color: white;
 }
-.space-output > .container > .space-title, .space-output > .container > .space-tag, .space-output > .container > .space-text {
+.space-output > .container > .space-tags-bar {
+  background-color: rgb(105, 19, 98);
+  border-radius: 12px;
+  padding: 10px 20px;
+  cursor: default;
+}
+.space-output > .container > .space-tags-bar .label {
+  color: white;
+}
+.space-output > .container > .space-title, .space-output > .container > .space-tag {
   padding: 40px;
+  cursor: default;
+}
+.space-output > .container > .space-text {
+  padding: 80px;
   cursor: default;
 }
 .space-output > .parent-path + .container {

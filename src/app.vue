@@ -37,10 +37,10 @@ export default {
 			return this.$store.getters.isMobile;
 		},
 		showUser() {
-			return this.loginLoaded && this.$store.getters.userIsAuthenticated;
+			return this.loginLoaded && this.$store.getters.authenticated;
 		},
 		showLogin() {
-			return this.loginLoaded && !this.$store.getters.userIsAuthenticated;
+			return this.loginLoaded && !this.$store.getters.authenticated;
 		},
 		currentUserDisplayName() {
 			return this.$store.getters.currentUserDisplayName;
@@ -75,14 +75,20 @@ export default {
 	>header {
 		margin: 0;
 		padding: 20px;
-		background-color: #f0f0f0;
+		background-color: #037dff;
 		border-bottom: 1px solid #ccc;
+		color: white;
 		>h1 {
 			font-size: 2em;
+		}
+		a:link, a:visited {
+			color: white;
 		}
 	}
 
 	>.body {
+		background-color: #03d1ff;
+
 		padding: 40px 40px 80px;
 	}
 

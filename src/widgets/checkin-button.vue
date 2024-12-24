@@ -1,6 +1,6 @@
 <template>
 <el-button-group :type="buttonType" :size="size" class="checkin-button">
-	<el-button @click="addCheckIn()">
+	<el-button @click="addCheckIn()" :disabled="disabled">
 		<material-icon icon="check"/>
 	</el-button>
 	<el-button v-if="totalSubspaces > 0" @click="showStats()">
@@ -39,6 +39,9 @@ export default {
 	computed: {
 		buttonType() {
 			return this.hasUserCheckin ? 'success' : 'primary';
+		},
+		disabled() {
+			return this.$store.getters.createDisabled;
 		},
 	},
 	mounted() {

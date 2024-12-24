@@ -3,7 +3,7 @@
 
 	<el-backtop :right="40" :bottom="40" :visibility-height="1000"/>
 
-	<create-dropdown :disabled="disableCreate" sticky/>
+	<create-dropdown :disabled="$store.getters.createDisabled" sticky/>
 
 	<spaces-list :spaces="spaces" :loading="loading" @load-more="loadMore()"/>
 
@@ -28,14 +28,6 @@ export default {
 			loading: true,
 			spaces: [],
 		};
-	},
-	computed: {
-		authenticated() {
-			return this.$store.getters.userIsAuthenticated;
-		},
-		disableCreate() {
-			return !this.authenticated;
-		},
 	},
 	mounted() {
 		this.loadDashboard();

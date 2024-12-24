@@ -99,7 +99,7 @@ export default {
 		},
 	},
 	beforeRouteEnter(to, from, next) {
-		if (store.getters.userIsAuthenticated) {
+		if (store.getters.authenticated) {
 			next({name: 'dashboard'});
 		} else {
 			next(vm => {

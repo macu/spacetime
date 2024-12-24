@@ -1,18 +1,18 @@
 <template>
-<div class="add-space-title-widget">
+<div class="add-space-tag-widget">
 	<div v-if="adding" class="flex-row nowrap">
 		<el-input
-			v-model="title"
-			:maxlength="$store.getters.titleMaxLength"
+			v-model="tag"
+			:maxlength="$store.getters.tagMaxLength"
 			show-word-limit
 			size="large">
 			<template #prepend>
-				Add title
+				Add tag
 			</template>
 		</el-input>
 		<el-button
-			@click="addTitle()"
-			:disabled="addTitleDisabled"
+			@click="addTag()"
+			:disabled="addTagDisabled"
 			size="large" type="primary">
 			Add
 		</el-button>
@@ -23,7 +23,7 @@
 		</el-button>
 	</div>
 	<el-button v-else @click="adding = true" type="primary" :disabled="disabled">
-		Add title
+		Add tag
 	</el-button>
 </div>
 </template>
@@ -40,7 +40,7 @@ export default {
 	],
 	props: {
 		parentId: {
-			// Title added under parent space
+			// Tag added under parent space
 			type: Number,
 			required: true,
 		},
@@ -48,12 +48,12 @@ export default {
 	data() {
 		return {
 			adding: false,
-			title: '',
+			tag: '',
 		};
 	},
 	computed: {
-		addTitleDisabled() {
-			return !this.title.trim();
+		addTagDisabled() {
+			return !this.tag.trim();
 		},
 		disabled() {
 			return this.$store.getters.createDisabled;
@@ -75,17 +75,17 @@ export default {
 				input.focus();
 			}
 		},
-		addTitle() {
-			if (this.addTitleDisabled) {
+		addTag() {
+			if (this.addTagDisabled) {
 				return;
 			}
-			ajaxPost('/ajax/space/create/title', {
+			ajaxPost('/ajax/space/create/tag', {
 				parentId: this.parentId,
-				title: this.title,
+				tag: this.tag,
 			}).then(response => {
 				this.$emit('added', response);
 				this.adding = false;
-				this.title = '';
+				this.tag = '';
 			});
 		},
 	},

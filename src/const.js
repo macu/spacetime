@@ -19,5 +19,5 @@ export const SPACE_TYPE_ICONS = {
 	[SPACE_TYPES.TEXT]: 'description',
 	[SPACE_TYPES.NAKED_TEXT]: 'sms',
 	[SPACE_TYPES.STREAM_OC]: 'stream',
-	[SPACE_TYPES.JSON_AR]: 'json',
+	[SPACE_TYPES.JSON_AR]: 'code',
 };
