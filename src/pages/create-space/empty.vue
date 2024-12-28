@@ -1,31 +1,20 @@
 <template>
-<form-layout title="Create empty space" class="create-empty-space-page page-width-md">
+<div class="create-empty-space-page flex-column-lg page-width-md">
 
-	<template v-if="parentId">
-		<parent-path :parent-id="parentId"/>
-		<hr/>
-	</template>
+	<space-loader v-if="parentId" :space-id="parentId" include-parent-path>
 
-	<form-field title="Title for new space" required>
-		<el-input
-			v-model="title"
-			:maxlength="$store.getters.titleMaxLength"
-			show-word-limit
-			size="large"
-			/>
-	</form-field>
+		<form-fields :posting="posting" @submit="submit"/>
 
-	<form-actions>
-		<el-button @click="create()" type="primary" :disabled="createDisabled">
-			Create
-		</el-button>
-	</form-actions>
+	</space-loader>
 
-</form-layout>
+	<form-fields v-else :posting="posting" @submit="submit"/>
+
+</div>
 </template>
 
 <script>
-import ParentPath from '@/widgets/parent-path.vue';
+import SpaceLoader from '@/widgets/space-loader.vue';
+import FormFields from './empty-form.vue';
 
 import {
 	ajaxPost,
@@ -33,11 +22,11 @@ import {
 
 export default {
 	components: {
-		ParentPath,
+		SpaceLoader,
+		FormFields,
 	},
 	data() {
 		return {
-			title: '',
 			posting: false,
 		};
 	},
@@ -45,19 +34,13 @@ export default {
 		parentId() {
 			return this.$route.query.parentId || null;
 		},
-		createDisabled() {
-			return this.posting || !this.title.trim();
-		},
 	},
 	methods: {
-		create() {
-			if (this.createDisabled) {
-				return;
-			}
+		submit(payload) {
 			this.posting = true;
 			ajaxPost('/ajax/space/create/empty', {
 				parentId: this.parentId,
-				title: this.title.trim(),
+				...payload,
 			}).then(response => {
 				this.$router.replace({
 					name: 'space',
@@ -67,7 +50,7 @@ export default {
 				});
 			}).catch(() => {
 				this.posting = false;
-			})
+			});
 		},
 	},
 };

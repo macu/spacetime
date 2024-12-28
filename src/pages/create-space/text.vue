@@ -1,41 +1,22 @@
 <template>
-<form-layout title="Create text" class="create-text-page page-width-md">
+<div class="create-text-page flex-column-lg page-width-md">
 
-	<template v-if="parentId">
-		<parent-path :parent-id="parentId"/>
-		<hr/>
-	</template>
+	<space-loader v-if="parentId" :space-id="parentId" include-parent-path>
 
-	<form-field title="Title">
-		<el-input
-			v-model="title"
-			:maxlength="$store.getters.titleMaxLength"
-			show-word-limit
-			size="large"
-			/>
-	</form-field>
+		<form-fields :posting="posting" @submit="submit"/>
 
-	<form-field title="Text" required>
-		<el-input
-			type="textarea"
-			v-model="text"
-			:maxlength="$store.getters.textMaxLength"
-			show-word-limit
-			:autosize="{minRows: 3}"
-			/>
-	</form-field>
+	</space-loader>
 
-	<form-actions>
-		<el-button @click="create()" type="primary" :disabled="createDisabled">
-			Create
-		</el-button>
-	</form-actions>
+	<el-alert v-else type="error" :closable="false">
+		<p>A parent space is required to create a text.</p>
+	</el-alert>
 
-</form-layout>
+</div>
 </template>
 
 <script>
-import ParentPath from '@/widgets/parent-path.vue';
+import SpaceLoader from '@/widgets/space-loader.vue';
+import FormFields from './text-form.vue';
 
 import {
 	ajaxPost,
@@ -43,12 +24,11 @@ import {
 
 export default {
 	components: {
-		ParentPath,
+		SpaceLoader,
+		FormFields,
 	},
 	data() {
 		return {
-			title: '',
-			text: '',
 			posting: false,
 		};
 	},
@@ -56,20 +36,13 @@ export default {
 		parentId() {
 			return this.$route.query.parentId || null;
 		},
-		createDisabled() {
-			return this.posting || !this.text.trim();
-		},
 	},
 	methods: {
-		create() {
-			if (this.createDisabled) {
-				return;
-			}
+		submit(payload) {
 			this.posting = true;
 			ajaxPost('/ajax/space/create/text', {
 				parentId: this.parentId,
-				title: this.title.trim(),
-				text: this.text.trim(),
+				...payload,
 			}).then(response => {
 				this.$router.replace({
 					name: 'space',
@@ -79,7 +52,7 @@ export default {
 				});
 			}).catch(() => {
 				this.posting = false;
-			})
+			});
 		},
 	},
 };

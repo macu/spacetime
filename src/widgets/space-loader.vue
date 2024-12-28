@@ -1,15 +1,22 @@
 <template>
-<div class="parent-path">
 
 	<loading-message v-if="loading"/>
 
 	<space-output
-		v-if="parentSpace"
-		:space="parentSpace"
-		show-path
+		v-if="space"
+		:space="space"
+		:show-path="includeParentPath">
+
+		<slot/>
+
+	</space-output>
+
+	<el-alert
+		v-else title="Space could not be loaded"
+		type="error"
+		:closable="false"
 		/>
 
-</div>
 </template>
 
 <script>
@@ -24,23 +31,27 @@ export default {
 		SpaceOutput,
 	},
 	props: {
-		parentId: {
+		spaceId: {
 			type: [String, Number],
 			required: true,
+		},
+		includeParentPath: {
+			type: Boolean,
+			default: false,
 		},
 	},
 	data() {
 		return {
 			loading: true,
-			parentSpace: null,
+			space: null,
 		};
 	},
 	mounted() {
 		ajaxGet('/ajax/space', {
-			spaceId: this.parentId,
-			includeParentPath: true,
+			spaceId: this.spaceId,
+			includeParentPath: this.includeParentPath,
 		}).then(response => {
-			this.parentSpace = response;
+			this.space = response;
 		}).finally(() => {
 			this.loading = false;
 		});

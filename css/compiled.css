@@ -302,6 +302,10 @@ div.center {
 /*!******************************************************************************************************************************************************************************************************************************************************************************************************************************************!*\
   !*** css ./node_modules/css-loader/dist/cjs.js??clonedRuleSet-2.use[1]!./node_modules/vue-loader/dist/stylePostLoader.js!./node_modules/sass-loader/dist/cjs.js??clonedRuleSet-2.use[2]!./node_modules/vue-loader/dist/index.js??ruleSet[1].rules[5].use[0]!./src/widgets/space-output.vue?vue&type=style&index=0&id=6b8af261&lang=scss ***!
   \******************************************************************************************************************************************************************************************************************************************************************************************************************************************/
+.space-output {
+  border-radius: 12px;
+  box-shadow: 0 0 5px 0 rgb(255, 255, 255);
+}
 .space-output > .parent-path {
   border-top-left-radius: 12px;
   border-top-right-radius: 12px;
@@ -353,6 +357,15 @@ div.center {
   padding: 80px;
   cursor: default;
 }
+.space-output > .container > .portal {
+  padding: 20px;
+  background-color: darkturquoise;
+  border-radius: 12px;
+  cursor: default;
+}
+.space-output > .container > .space-info-bar, .space-output > .container > .space-title-bar, .space-output > .container > .space-tags-bar, .space-output > .container > .portal {
+  box-shadow: inset 0 0 10px 0 rgb(255, 255, 255);
+}
 .space-output > .parent-path + .container {
   border-top-left-radius: 0;
   border-top-right-radius: 0;
@@ -360,12 +373,7 @@ div.center {
 /*!*********************************************************************************************************************************************************************************************************************************************************************************************************************************!*\
   !*** css ./node_modules/css-loader/dist/cjs.js??clonedRuleSet-2.use[1]!./node_modules/vue-loader/dist/stylePostLoader.js!./node_modules/sass-loader/dist/cjs.js??clonedRuleSet-2.use[2]!./node_modules/vue-loader/dist/index.js??ruleSet[1].rules[5].use[0]!./src/pages/space.vue?vue&type=style&index=0&id=68c3739c&lang=scss ***!
   \*********************************************************************************************************************************************************************************************************************************************************************************************************************************/
-.space-page .subspaces {
-  padding: 20px;
-  background-color: darkturquoise;
-  border-radius: 12px;
-  cursor: default;
-}
+
 /*!*******************************************************************************************************************************************************************************************************************************************************************************************************************************************!*\
   !*** css ./node_modules/css-loader/dist/cjs.js??clonedRuleSet-2.use[1]!./node_modules/vue-loader/dist/stylePostLoader.js!./node_modules/sass-loader/dist/cjs.js??clonedRuleSet-2.use[2]!./node_modules/vue-loader/dist/index.js??ruleSet[1].rules[5].use[0]!./src/widgets/material-icon.vue?vue&type=style&index=0&id=55e49714&lang=scss ***!
   \*******************************************************************************************************************************************************************************************************************************************************************************************************************************************/
@@ -397,6 +405,9 @@ div.center {
 .form-layout {
   align-items: stretch;
 }
+.form-layout > h2 {
+  text-shadow: 2px 2px 3px white;
+}
 /*!****************************************************************************************************************************************************************************************************************************************************************************************************************************************!*\
   !*** css ./node_modules/css-loader/dist/cjs.js??clonedRuleSet-2.use[1]!./node_modules/vue-loader/dist/stylePostLoader.js!./node_modules/sass-loader/dist/cjs.js??clonedRuleSet-2.use[2]!./node_modules/vue-loader/dist/index.js??ruleSet[1].rules[5].use[0]!./src/widgets/form-field.vue?vue&type=style&index=0&id=09e9792a&lang=scss ***!
   \****************************************************************************************************************************************************************************************************************************************************************************************************************************************/
@@ -414,4 +425,12 @@ div.center {
 }
 .form-layout-form-field > .form-field-body > .form-value {
   font-size: larger;
+}
+/*!******************************************************************************************************************************************************************************************************************************************************************************************************************************************!*\
+  !*** css ./node_modules/css-loader/dist/cjs.js??clonedRuleSet-2.use[1]!./node_modules/vue-loader/dist/stylePostLoader.js!./node_modules/sass-loader/dist/cjs.js??clonedRuleSet-2.use[2]!./node_modules/vue-loader/dist/index.js??ruleSet[1].rules[5].use[0]!./src/widgets/form-actions.vue?vue&type=style&index=0&id=8321bca6&lang=scss ***!
+  \******************************************************************************************************************************************************************************************************************************************************************************************************************************************/
+.form-actions {
+  background-color: #eee;
+  padding: 10px;
+  border-radius: 8px;
 }

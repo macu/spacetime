@@ -24,5 +24,8 @@ export default {
 <style lang="scss">
 .form-layout {
 	align-items: stretch;
+	>h2 {
+		text-shadow: 2px 2px 3px white;
+	}
 }
 </style>

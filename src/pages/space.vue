@@ -4,23 +4,23 @@
 	<loading-message v-if="loading"/>
 
 	<space-output v-else-if="space" :space="space" show-path>
-		<template #subspaces>
-			<div @click.stop class="subspaces flex-column-md">
 
-				<create-dropdown
-					:parent-id="space.id"
-					:disabled="$store.getters.createDisabled"
-					/>
+		<div @click.stop class="subspaces flex-column-md">
 
-				<space-list
-					v-if="subspaces"
-					:spaces="subspaces"
-					:loading="loadingSubspaces"
-					@load-more="loadMore()"
-					/>
+			<create-dropdown
+				:parent-id="space.id"
+				:disabled="$store.getters.createDisabled"
+				/>
 
-			</div>
-		</template>
+			<space-list
+				v-if="subspaces"
+				:spaces="subspaces"
+				:loading="loadingSubspaces"
+				@load-more="loadMore()"
+				/>
+
+		</div>
+
 	</space-output>
 
 	<el-alert v-else type="error" show-icon :closable="false">
@@ -79,6 +79,7 @@ export default {
 			this.subspaces = null;
 			ajaxGet('/ajax/space', {
 				spaceId,
+				includeTags: true,
 				includeSubspaces: true,
 				includeParentPath: true,
 				excludeTypes: SPACE_TYPES.CHECK_IN,
@@ -113,10 +114,10 @@ export default {
 <style lang="scss">
 .space-page {
 	.subspaces {
-		padding: 20px;
-		background-color: darkturquoise;
-		border-radius: 12px;
-		cursor: default;
+		// padding: 20px;
+		// background-color: darkturquoise;
+		// border-radius: 12px;
+		// cursor: default;
 	}
 }
 </style>

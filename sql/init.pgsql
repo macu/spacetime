@@ -165,7 +165,7 @@ CREATE TABLE naked_text_space (
 
 CREATE TABLE stream_of_consciousness_space (
 	space_id INTEGER PRIMARY KEY REFERENCES space (id) ON DELETE CASCADE,
-	parent_space_id INTEGER REFERENCES space (id) ON DELETE CASCADE,
+	parent_space_id INTEGER NOT NULL REFERENCES space (id) ON DELETE CASCADE,
 	stream_closed_at TIMESTAMPTZ -- null until closed
 );
 

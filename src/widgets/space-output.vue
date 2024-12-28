@@ -119,7 +119,9 @@
 			:space="space"
 			/>
 
-		<slot name="subspaces"/>
+		<div v-if="$slots.default" class="portal" @click.stop>
+			<slot/>
+		</div>
 
 	</div>
 
@@ -250,6 +252,8 @@ export default {
 $border-radius: 12px;
 
 .space-output {
+	border-radius: $border-radius;
+	box-shadow: 0 0 5px 0 rgba(255, 255, 255);
 
 	>.parent-path {
 		border-top-left-radius: $border-radius;
@@ -307,6 +311,18 @@ $border-radius: 12px;
 		>.space-text {
 			padding: 80px;
 			cursor: default;
+		}
+
+		>.portal {
+			padding: 20px;
+			background-color: #03d1ff;
+			border-radius: 12px;
+			cursor: default;
+		}
+
+		>.space-info-bar, >.space-title-bar, >.space-tags-bar, >.portal {
+			// inner drop shadow
+			box-shadow: inset 0 0 10px 0 rgba(255, 255, 255);
 		}
 	}
 

@@ -1,38 +1,22 @@
 <template>
-<form-layout title="Create title" class="create-title-page page-width-md">
+<div class="create-title-page flex-column-lg page-width-md">
 
-	<template v-if="parentId">
+	<space-loader v-if="parentId" :space-id="parentId" include-parent-path>
 
-		<parent-path :parent-id="parentId"/>
+		<form-fields :posting="posting" @submit="submit"/>
 
-		<hr/>
-
-		<form-field title="New title" required>
-			<el-input
-				v-model="title"
-				:maxlength="$store.getters.titleMaxLength"
-				show-word-limit
-				size="large"
-				/>
-		</form-field>
-
-		<form-actions>
-			<el-button @click="create()" type="primary" :disabled="createDisabled">
-				Create
-			</el-button>
-		</form-actions>
-
-	</template>
+	</space-loader>
 
 	<el-alert v-else type="error" :closable="false">
 		<p>A parent space is required to create a title.</p>
 	</el-alert>
 
-</form-layout>
+</div>
 </template>
 
 <script>
-import ParentPath from '@/widgets/parent-path.vue';
+import SpaceLoader from '@/widgets/space-loader.vue';
+import FormFields from './title-form.vue';
 
 import {
 	ajaxPost,
@@ -40,11 +24,11 @@ import {
 
 export default {
 	components: {
-		ParentPath,
+		SpaceLoader,
+		FormFields,
 	},
 	data() {
 		return {
-			title: '',
 			posting: false,
 		};
 	},
@@ -52,19 +36,13 @@ export default {
 		parentId() {
 			return this.$route.query.parentId || null;
 		},
-		createDisabled() {
-			return this.posting || !this.title.trim();
-		},
 	},
 	methods: {
-		create() {
-			if (this.createDisabled) {
-				return;
-			}
+		submit(payload) {
 			this.posting = true;
 			ajaxPost('/ajax/space/create/title', {
 				parentId: this.parentId,
-				title: this.title.trim(),
+				...payload,
 			}).then(response => {
 				this.$router.replace({
 					name: 'space',
@@ -74,7 +52,7 @@ export default {
 				});
 			}).catch(() => {
 				this.posting = false;
-			})
+			});
 		},
 	},
 };

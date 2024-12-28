@@ -12,10 +12,6 @@
 					<material-icon :icon="SPACE_TYPE_ICONS[SPACE_TYPES.SPACE]"/>
 					<span>Create empty space</span>
 				</el-dropdown-item>
-				<el-dropdown-item disabled command="create-stream-oc">
-					<material-icon :icon="SPACE_TYPE_ICONS[SPACE_TYPES.STREAM_OC]"/>
-					<span>Create stream of consciousness</span>
-				</el-dropdown-item>
 				<template v-if="hasParentId">
 					<el-dropdown-item command="create-space-link">
 						<material-icon :icon="SPACE_TYPE_ICONS[SPACE_TYPES.SPACE_LINK]"/>
@@ -33,9 +29,13 @@
 						<material-icon :icon="SPACE_TYPE_ICONS[SPACE_TYPES.TEXT]"/>
 						<span>Create text</span>
 					</el-dropdown-item>
-					<el-dropdown-item command="create-naked-text">
+					<el-dropdown-item disabled command="create-naked-text">
 						<material-icon :icon="SPACE_TYPE_ICONS[SPACE_TYPES.NAKED_TEXT]"/>
 						<span>Create naked text</span>
+					</el-dropdown-item>
+					<el-dropdown-item disabled command="create-stream-oc">
+						<material-icon :icon="SPACE_TYPE_ICONS[SPACE_TYPES.STREAM_OC]"/>
+						<span>Create stream of consciousness</span>
 					</el-dropdown-item>
 					<el-dropdown-item disabled command="create-json-ar">
 						<material-icon :icon="SPACE_TYPE_ICONS[SPACE_TYPES.JSON_AR]"/>

@@ -179,18 +179,6 @@ func LoadTopSubspaces(conn *sql.DB, auth *ajax.Auth,
 		return nil, fmt.Errorf("loading space details: %w", err)
 	}
 
-	if auth != nil {
-		err = LoadLastUserTitles(conn, *auth, spaces)
-		if err != nil {
-			return nil, fmt.Errorf("loading user's last titles: %w", err)
-		}
-	}
-
-	err = LoadTopTitles(conn, spaces, 0, DefaultTitlesLimit)
-	if err != nil {
-		return nil, fmt.Errorf("loading top titles: %w", err)
-	}
-
 	return spaces, nil
 
 }
@@ -292,7 +280,12 @@ func LoadLastUserTitles(conn *sql.DB, auth ajax.Auth,
 		).Scan(&spaceID, &createdAt, &createdBy, &text, &lastCheckin)
 
 		if err == sql.ErrNoRows {
+
+			var nullTitle *Space = nil
+			space.UserTitle = &nullTitle
+
 			continue
+
 		} else if err != nil {
 			return fmt.Errorf("loading user titles by last checkin: %w", err)
 		}
