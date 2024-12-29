@@ -1,5 +1,5 @@
 <template>
-<div class="space-tag flex-row nowrap">
+<div class="space-tag flex-row nowrap" :class="{'ellipsis': ellipsis}">
 	<material-icon :icon="icon"/>
 	<checkin-button
 		v-if="showCheckin"
@@ -39,6 +39,10 @@ export default {
 			type: Boolean,
 			default: true,
 		},
+		ellipsis: {
+			type: Boolean,
+			default: false,
+		},
 	},
 	computed: {
 		icon() {
@@ -61,9 +65,17 @@ export default {
 	background-color: $tag-bg-color;
 	color: $tag-color;
 	border: $tag-border;
+	overflow: hidden;
+	cursor: pointer;
 	>.text {
 		font-size: 120%;
-		cursor: pointer;
+	}
+	&.ellipsis {
+		>.text {
+			white-space: nowrap;
+			overflow: hidden;
+			text-overflow: ellipsis;
+		}
 	}
 }
 </style>

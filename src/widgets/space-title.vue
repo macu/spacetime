@@ -1,5 +1,5 @@
 <template>
-<div class="space-title flex-row nowrap">
+<div class="space-title flex-row nowrap" :class="{'ellipsis': ellipsis}">
 	<material-icon :icon="icon"/>
 	<checkin-button
 		v-if="showCheckin"
@@ -39,6 +39,10 @@ export default {
 			type: Boolean,
 			default: true,
 		},
+		ellipsis: {
+			type: Boolean,
+			default: false,
+		},
 	},
 	computed: {
 		icon() {
@@ -61,9 +65,17 @@ export default {
 	background-color: $title-bg-color;
 	color: $title-color;
 	border: $title-border;
+	overflow: hidden;
+	cursor: pointer;
 	>.text {
 		font-size: 150%;
-		cursor: pointer;
+	}
+	&.ellipsis {
+		>.text {
+			white-space: nowrap;
+			overflow: hidden;
+			text-overflow: ellipsis;
+		}
 	}
 }
 </style>

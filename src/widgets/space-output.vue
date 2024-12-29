@@ -68,6 +68,7 @@
 					v-for="title in titlesToShow"
 					:space="title"
 					@click-title="gotoSpace(title)"
+					ellipsis
 					/>
 				<el-button size="small">Load more</el-button>
 			</div>
@@ -84,6 +85,7 @@
 					v-for="tag in tagsToShow"
 					:space="tag"
 					@click-tag="gotoSpace(tag)"
+					ellipsis
 					/>
 				<el-button size="small">Load more</el-button>
 			</div>
@@ -281,10 +283,6 @@ export default {
 
 			background-color: $space-info-bar-bg-color;
 			color: $space-info-bar-color;
-
-			.space-title .text, .space-tag .text {
-				white-space: nowrap;
-			}
 		}
 
 		>.space-title-bar {

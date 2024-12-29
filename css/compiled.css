@@ -283,10 +283,16 @@ div.center {
   background-color: white;
   color: black;
   border: thin solid gray;
+  overflow: hidden;
+  cursor: pointer;
 }
 .space-title > .text {
   font-size: 150%;
-  cursor: pointer;
+}
+.space-title.ellipsis > .text {
+  white-space: nowrap;
+  overflow: hidden;
+  text-overflow: ellipsis;
 }
 /*!***************************************************************************************************************************************************************************************************************************************************************************************************************************************!*\
   !*** css ./node_modules/css-loader/dist/cjs.js??clonedRuleSet-2.use[1]!./node_modules/vue-loader/dist/stylePostLoader.js!./node_modules/sass-loader/dist/cjs.js??clonedRuleSet-2.use[2]!./node_modules/vue-loader/dist/index.js??ruleSet[1].rules[5].use[0]!./src/widgets/space-tag.vue?vue&type=style&index=0&id=43250aea&lang=scss ***!
@@ -298,10 +304,16 @@ div.center {
   background-color: white;
   color: rgb(84.24, 5.2, 124.8);
   border: thin solid gray;
+  overflow: hidden;
+  cursor: pointer;
 }
 .space-tag > .text {
   font-size: 120%;
-  cursor: pointer;
+}
+.space-tag.ellipsis > .text {
+  white-space: nowrap;
+  overflow: hidden;
+  text-overflow: ellipsis;
 }
 /*!***************************************************************************************************************************************************************************************************************************************************************************************************************************************!*\
   !*** css ./node_modules/css-loader/dist/cjs.js??clonedRuleSet-2.use[1]!./node_modules/vue-loader/dist/stylePostLoader.js!./node_modules/sass-loader/dist/cjs.js??clonedRuleSet-2.use[2]!./node_modules/vue-loader/dist/index.js??ruleSet[1].rules[5].use[0]!./src/widgets/space-text.vue?vue&type=style&index=0&id=15d15a8d&lang=css ***!
@@ -344,9 +356,6 @@ div.center {
   cursor: default;
   background-color: #f0f0f0;
   color: #000000;
-}
-.space-output > .container > .space-info-bar .space-title .text, .space-output > .container > .space-info-bar .space-tag .text {
-  white-space: nowrap;
 }
 .space-output > .container > .space-title-bar {
   padding: 10px 20px;
