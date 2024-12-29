@@ -4,6 +4,7 @@
 html, body {
   padding: 0;
   margin: 0;
+  background-color: #d5f4ff;
 }
 
 * {
@@ -122,6 +123,7 @@ div.center {
 .flex-row, .flex-row-md, .flex-row-lg {
   display: flex;
   flex-direction: row;
+  flex-wrap: wrap;
   align-items: center;
 }
 .flex-row.nowrap, .flex-row-md.nowrap, .flex-row-lg.nowrap {
@@ -132,6 +134,9 @@ div.center {
 }
 .flex-row > .flex-1, .flex-row-md > .flex-1, .flex-row-lg > .flex-1 {
   flex: 1;
+}
+.flex-row > .flex-100, .flex-row-md > .flex-100, .flex-row-lg > .flex-100 {
+  flex-basis: 100%;
 }
 .flex-row > *, .flex-row > .el-button + .el-button, .flex-row-md > *, .flex-row-md > .el-button + .el-button, .flex-row-lg > *, .flex-row-lg > .el-button + .el-button {
   margin: 0;
@@ -201,6 +206,11 @@ div.center {
   max-width: 1000px;
   margin: 0 auto;
 }
+
+.page-width-xl {
+  max-width: 1200px;
+  margin: 0 auto;
+}
 /*!*************************************************************************************************************************************************************************************************************************************************************************************************************************!*\
   !*** css ./node_modules/css-loader/dist/cjs.js??clonedRuleSet-2.use[1]!./node_modules/vue-loader/dist/stylePostLoader.js!./node_modules/sass-loader/dist/cjs.js??clonedRuleSet-2.use[2]!./node_modules/vue-loader/dist/index.js??ruleSet[1].rules[5].use[0]!./src/app.vue?vue&type=style&index=0&id=5ef48958&lang=scss ***!
   \*************************************************************************************************************************************************************************************************************************************************************************************************************************/
@@ -218,7 +228,6 @@ div.center {
   color: white;
 }
 .spacetime-app > .body {
-  background-color: #03d1ff;
   padding: 40px 40px 80px;
 }
 .spacetime-app.is-mobile > header {
@@ -268,26 +277,30 @@ div.center {
   !*** css ./node_modules/css-loader/dist/cjs.js??clonedRuleSet-2.use[1]!./node_modules/vue-loader/dist/stylePostLoader.js!./node_modules/sass-loader/dist/cjs.js??clonedRuleSet-2.use[2]!./node_modules/vue-loader/dist/index.js??ruleSet[1].rules[5].use[0]!./src/widgets/space-title.vue?vue&type=style&index=0&id=658550a8&lang=scss ***!
   \*****************************************************************************************************************************************************************************************************************************************************************************************************************************************/
 .space-title {
-  padding: 5px 20px;
+  padding: 5px 10px;
+  border-radius: 10px;
+  border: thin solid gray;
   background-color: white;
+  color: black;
+  border: thin solid gray;
 }
 .space-title > .text {
-  font-size: 1.5em;
-  font-weight: bold;
-  white-space: nowrap;
+  font-size: 150%;
   cursor: pointer;
 }
 /*!***************************************************************************************************************************************************************************************************************************************************************************************************************************************!*\
   !*** css ./node_modules/css-loader/dist/cjs.js??clonedRuleSet-2.use[1]!./node_modules/vue-loader/dist/stylePostLoader.js!./node_modules/sass-loader/dist/cjs.js??clonedRuleSet-2.use[2]!./node_modules/vue-loader/dist/index.js??ruleSet[1].rules[5].use[0]!./src/widgets/space-tag.vue?vue&type=style&index=0&id=43250aea&lang=scss ***!
   \***************************************************************************************************************************************************************************************************************************************************************************************************************************************/
 .space-tag {
-  padding: 5px 20px;
+  padding: 5px 10px;
+  border-radius: 10px;
+  border: thin solid gray;
   background-color: white;
+  color: rgb(84.24, 5.2, 124.8);
+  border: thin solid gray;
 }
 .space-tag > .text {
-  font-size: 1.5em;
-  font-weight: bold;
-  white-space: nowrap;
+  font-size: 120%;
   cursor: pointer;
 }
 /*!***************************************************************************************************************************************************************************************************************************************************************************************************************************************!*\
@@ -303,12 +316,12 @@ div.center {
   !*** css ./node_modules/css-loader/dist/cjs.js??clonedRuleSet-2.use[1]!./node_modules/vue-loader/dist/stylePostLoader.js!./node_modules/sass-loader/dist/cjs.js??clonedRuleSet-2.use[2]!./node_modules/vue-loader/dist/index.js??ruleSet[1].rules[5].use[0]!./src/widgets/space-output.vue?vue&type=style&index=0&id=6b8af261&lang=scss ***!
   \******************************************************************************************************************************************************************************************************************************************************************************************************************************************/
 .space-output {
-  border-radius: 12px;
-  box-shadow: 0 0 5px 0 rgb(255, 255, 255);
+  border-radius: 10px;
+  box-shadow: inset 0 0 10px 0 rgb(255, 255, 255);
 }
 .space-output > .parent-path {
-  border-top-left-radius: 12px;
-  border-top-right-radius: 12px;
+  border-top-left-radius: 10px;
+  border-top-right-radius: 10px;
   background-color: lightsteelblue;
 }
 .space-output > .parent-path > div {
@@ -321,49 +334,53 @@ div.center {
 .space-output > .container {
   border: medium solid darkblue;
   background-color: black;
-  border-radius: 12px;
+  border-radius: 10px;
   padding: 20px;
   cursor: pointer;
 }
 .space-output > .container > .space-info-bar {
-  background-color: rgb(200, 200, 255);
-  border-radius: 12px;
+  border-radius: 10px;
   padding: 10px 20px;
   cursor: default;
+  background-color: #f0f0f0;
+  color: #000000;
+}
+.space-output > .container > .space-info-bar .space-title .text, .space-output > .container > .space-info-bar .space-tag .text {
+  white-space: nowrap;
 }
 .space-output > .container > .space-title-bar {
-  background-color: rgb(100, 100, 200);
-  border-radius: 12px;
   padding: 10px 20px;
   cursor: default;
+  background-color: #91ff79;
+  color: #000000;
 }
-.space-output > .container > .space-title-bar .label {
-  color: white;
+.space-output > .container > .space-title-bar .nowrap .space-title .text {
+  white-space: nowrap;
 }
 .space-output > .container > .space-tags-bar {
-  background-color: rgb(105, 19, 98);
-  border-radius: 12px;
   padding: 10px 20px;
   cursor: default;
-}
-.space-output > .container > .space-tags-bar .label {
+  background-color: #d387fa;
   color: white;
+}
+.space-output > .container > .space-tags-bar .nowrap .space-tag .text {
+  white-space: nowrap;
 }
 .space-output > .container > .space-title, .space-output > .container > .space-tag {
   padding: 40px;
   cursor: default;
+  background-color: white;
 }
 .space-output > .container > .space-text {
   padding: 80px;
   cursor: default;
+  background-color: white;
 }
 .space-output > .container > .portal {
-  padding: 20px;
-  background-color: darkturquoise;
+  padding: 40px 20px;
+  background-color: #d5f4ff;
   border-radius: 12px;
   cursor: default;
-}
-.space-output > .container > .space-info-bar, .space-output > .container > .space-title-bar, .space-output > .container > .space-tags-bar, .space-output > .container > .portal {
   box-shadow: inset 0 0 10px 0 rgb(255, 255, 255);
 }
 .space-output > .parent-path + .container {

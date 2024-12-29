@@ -1,12 +1,12 @@
 <template>
 <div class="space-title flex-row nowrap">
+	<material-icon :icon="icon"/>
 	<checkin-button
 		v-if="showCheckin"
 		:space="space"
 		@check-in="$emit('check-in')"
 		size="small"
 		/>
-	<material-icon :icon="icon"/>
 	<span
 		@click="$emit('click-title')"
 		class="text"
@@ -52,13 +52,17 @@ export default {
 </script>
 
 <style lang="scss">
+@import '@/styles/vars.scss';
+
 .space-title {
-	padding: 5px 20px;
-	background-color: white;
+	padding: 5px 10px;
+	border-radius: $border-radius;
+	border: thin solid gray;
+	background-color: $title-bg-color;
+	color: $title-color;
+	border: $title-border;
 	>.text {
-		font-size: 1.5em;
-		font-weight: bold;
-		white-space: nowrap;
+		font-size: 150%;
 		cursor: pointer;
 	}
 }

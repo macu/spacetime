@@ -1,6 +1,7 @@
 .flex-row, .flex-row-md, .flex-row-lg {
 	display: flex;
 	flex-direction: row;
+	flex-wrap: wrap;
 	align-items: center;
 
 	&.nowrap {
@@ -13,6 +14,10 @@
 
 	>.flex-1 {
 		flex: 1;
+	}
+
+	>.flex-100 {
+		flex-basis: 100%;
 	}
 
 	>*, >.el-button+.el-button {
@@ -85,5 +90,10 @@
 
 .page-width-lg {
 	max-width: 1000px;
+	margin: 0 auto;
+}
+
+.page-width-xl {
+	max-width: 1200px;
 	margin: 0 auto;
 }

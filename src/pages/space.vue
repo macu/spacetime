@@ -1,11 +1,11 @@
 <template>
-<div class="space-page page-width-lg">
+<div class="space-page page-width-xl">
 
 	<loading-message v-if="loading"/>
 
 	<space-output v-else-if="space" :space="space" show-path>
 
-		<div @click.stop class="subspaces flex-column-md">
+		<div @click.stop class="subspaces flex-column-lg">
 
 			<create-dropdown
 				:parent-id="space.id"

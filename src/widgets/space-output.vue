@@ -40,60 +40,54 @@
 
 	<div class="container flex-column-md">
 
-		<div @click.stop class="space-info-bar flex-row-md">
-			<space-type :type="space.spaceType"/>
-			<checkin-button :space="space"/>
-			<space-creator :space="space"/>
-			<div class="align-end flex-row-md">
-				<el-button v-if="!showTitles" @click="expandTitles = true">
-					Show titles
-				</el-button>
-				<el-button v-if="!showTags" @click="expandTags = true" class="align-end">
-					Show tags
-				</el-button>
-			</div>
-		</div>
+		<div @click.stop class="space-info-bar flex-column-md">
 
-		<div v-if="showTitles" @click.stop class="space-title-bar flex-column-sm">
-			<div class="label">Title(s)</div>
-			<div :class="addingTitle ? 'flex-column' : ['flex-row', 'nowrap']">
+			<div class="flex-row-md">
+				<space-type :type="space.spaceType"/>
+				<checkin-button :space="space"/>
+				<space-creator :space="space"/>
+				<div class="align-end flex-row-md">
+					<el-button v-if="!showTitles" @click="expandTitles = true" size="small">
+						Show titles
+					</el-button>
+					<el-button v-if="!showTags" @click="expandTags = true" class="align-end" size="small">
+						Show tags
+					</el-button>
+				</div>
+			</div>
+
+			<div v-if="showTitles" class="flex-row">
+				<strong class="label">Title(s)</strong>
 				<add-title
 					:parent-id="space.id"
 					@added="titleSpace => userTitleAdded(titleSpace)"
 					@update:adding="addingTitle = $event"
+					:class="{'flex-100': addingTitle}"
 					/>
-				<div class="horizontal-scroll">
-					<div class="flex-row-md nowrap">
-						<space-title
-							v-for="title in titlesToShow"
-							:space="title"
-							@click-title="gotoSpace(title)"
-							/>
-						<el-button>View all</el-button>
-					</div>
-				</div>
+				<space-title
+					v-for="title in titlesToShow"
+					:space="title"
+					@click-title="gotoSpace(title)"
+					/>
+				<el-button size="small">Load more</el-button>
 			</div>
-		</div>
 
-		<div v-if="showTags" @click.stop class="space-tags-bar flex-column-sm">
-			<div class="label">Tag(s)</div>
-			<div :class="addingTag ? 'flex-column' : ['flex-row', 'nowrap']">
+			<div v-if="showTags" class="flex-row">
+				<strong class="label">Tag(s)</strong>
 				<add-tag
 					:parent-id="space.id"
 					@added="tagSpace => userTagAdded(tagSpace)"
 					@update:adding="addingTag = $event"
+					:class="{'flex-100': addingTag}"
 					/>
-				<div class="horizontal-scroll">
-					<div class="flex-row-md nowrap">
-						<space-tag
-							v-for="tag in tagsToShow"
-							:space="tag"
-							@click-tag="gotoSpace(tag)"
-							/>
-						<el-button>View all</el-button>
-					</div>
-				</div>
+				<space-tag
+					v-for="tag in tagsToShow"
+					:space="tag"
+					@click-tag="gotoSpace(tag)"
+					/>
+				<el-button size="small">Load more</el-button>
 			</div>
+
 		</div>
 
 		<space-output
@@ -173,6 +167,8 @@ export default {
 			addingTag: false,
 			userTags: [],
 			expandTags: false,
+
+			titlesExpanded: false,
 		};
 	},
 	computed: {
@@ -244,16 +240,19 @@ export default {
 				},
 			});
 		},
+		loadMoreTitles() {
+			this.titlesExpanded = true;
+		},
 	},
 };
 </script>
 
 <style lang="scss">
-$border-radius: 12px;
+@import '@/styles/vars.scss';
 
 .space-output {
 	border-radius: $border-radius;
-	box-shadow: 0 0 5px 0 rgba(255, 255, 255);
+	box-shadow: $space-drop-shadow;
 
 	>.parent-path {
 		border-top-left-radius: $border-radius;
@@ -276,53 +275,61 @@ $border-radius: 12px;
 		cursor: pointer; // clickable spaces
 
 		>.space-info-bar {
-			background-color: rgb(200, 200, 255);
 			border-radius: $border-radius;
 			padding: 10px 20px;
 			cursor: default;
+
+			background-color: $space-info-bar-bg-color;
+			color: $space-info-bar-color;
+
+			.space-title .text, .space-tag .text {
+				white-space: nowrap;
+			}
 		}
 
 		>.space-title-bar {
-			background-color: rgb(100, 100, 200);
-			border-radius: $border-radius;
 			padding: 10px 20px;
 			cursor: default;
 
-			.label {
-				color: white;
+			background-color: $space-titles-bg-color;
+			color: $space-titles-color;
+
+			.nowrap .space-title .text {
+				white-space: nowrap;
 			}
 		}
 
 		>.space-tags-bar {
-			background-color: rgb(105, 19, 98);
-			border-radius: $border-radius;
 			padding: 10px 20px;
 			cursor: default;
 
-			.label {
-				color: white;
+			background-color: $space-tags-bg-color;
+			color: white;
+
+			.nowrap .space-tag .text {
+				white-space: nowrap;
 			}
 		}
 
 		>.space-title, >.space-tag {
 			padding: 40px;
 			cursor: default;
+			background-color: white;
 		}
 		>.space-text {
 			padding: 80px;
 			cursor: default;
+			background-color: white;
 		}
 
 		>.portal {
-			padding: 20px;
-			background-color: #03d1ff;
+			padding: 40px 20px;
+			background-color: $space-bg-color;
 			border-radius: 12px;
 			cursor: default;
-		}
 
-		>.space-info-bar, >.space-title-bar, >.space-tags-bar, >.portal {
 			// inner drop shadow
-			box-shadow: inset 0 0 10px 0 rgba(255, 255, 255);
+			box-shadow: $space-inner-drop-shadow;
 		}
 	}
 

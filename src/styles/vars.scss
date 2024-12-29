@@ -1,2 +1,20 @@
 $border-radius: 10px;
-$box-shadow: 0 0 10px rgba(0, 0, 0, 0.1);
+
+$space-bg-color: #d5f4ff;
+$space-drop-shadow: inset 0 0 10px 0 rgba(255, 255, 255);
+$space-inner-drop-shadow: inset 0 0 10px 0 rgba(255, 255, 255);
+
+$space-info-bar-bg-color: #f0f0f0;
+$space-info-bar-color: #000000;
+
+$space-titles-bg-color: #91ff79;
+$space-titles-color: #000000;
+
+$title-bg-color: white;
+$title-border: thin solid gray;
+$title-color: black;
+
+$space-tags-bg-color: #d387fa;
+$tag-bg-color: white;
+$tag-border: thin solid gray;
+$tag-color: darken($space-tags-bg-color, 50%);

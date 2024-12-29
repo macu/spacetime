@@ -87,8 +87,6 @@ export default {
 	}
 
 	>.body {
-		background-color: #03d1ff;
-
 		padding: 40px 40px 80px;
 	}
 

@@ -14,16 +14,16 @@
 			@click="addTitle()"
 			:disabled="addTitleDisabled"
 			size="large" type="primary">
-			Add
+			<material-icon icon="check"/>
 		</el-button>
 		<el-button
 			@click="adding = false"
 			size="large" type="warning">
-			Cancel
+			<material-icon icon="close"/>
 		</el-button>
 	</div>
-	<el-button v-else @click="adding = true" type="primary" :disabled="disabled">
-		Add title
+	<el-button v-else @click="adding = true" type="primary" :disabled="disabled" plain>
+		<material-icon icon="add"/>
 	</el-button>
 </div>
 </template>
