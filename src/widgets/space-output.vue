@@ -40,56 +40,52 @@
 
 	<div class="container flex-column-md">
 
-		<div @click.stop class="space-info-bar flex-column-md">
-
-			<div class="flex-row-md">
-				<space-type :type="space.spaceType"/>
-				<checkin-button :space="space"/>
-				<space-creator :space="space"/>
-				<div class="align-end flex-row-md">
-					<el-button v-if="!showTitles" @click="expandTitles = true" size="small">
-						Show titles
-					</el-button>
-					<el-button v-if="!showTags" @click="expandTags = true" class="align-end" size="small">
-						Show tags
-					</el-button>
-				</div>
+		<div class="space-info-bar flex-row-md" @click.stop>
+			<space-type :type="space.spaceType" @click="gotoSpace()"/>
+			<checkin-button :space="space"/>
+			<space-creator :space="space"/>
+			<div class="align-end flex-row-md">
+				<el-button v-if="!showTitles" @click="expandTitles = true" size="small">
+					Show titles
+				</el-button>
+				<el-button v-if="!showTags" @click="expandTags = true" class="align-end" size="small">
+					Show tags
+				</el-button>
 			</div>
+		</div>
 
-			<div v-if="showTitles" class="flex-row">
-				<strong class="label">Title(s)</strong>
-				<add-title
-					:parent-id="space.id"
-					@added="titleSpace => userTitleAdded(titleSpace)"
-					@update:adding="addingTitle = $event"
-					:class="{'flex-100': addingTitle}"
-					/>
-				<space-title
-					v-for="title in titlesToShow"
-					:space="title"
-					@click-title="gotoSpace(title)"
-					ellipsis
-					/>
-				<el-button size="small">Load more</el-button>
-			</div>
+		<div v-if="showTitles" class="space-titles-bar flex-row" @click.stop>
+			<strong class="label">Title(s)</strong>
+			<add-title
+				:parent-id="space.id"
+				@added="titleSpace => userTitleAdded(titleSpace)"
+				@update:adding="addingTitle = $event"
+				:class="{'flex-100': addingTitle}"
+				/>
+			<space-title
+				v-for="title in titlesToShow"
+				:space="title"
+				@click-title="gotoSpace(title)"
+				ellipsis
+				/>
+			<el-button size="small">Load more</el-button>
+		</div>
 
-			<div v-if="showTags" class="flex-row">
-				<strong class="label">Tag(s)</strong>
-				<add-tag
-					:parent-id="space.id"
-					@added="tagSpace => userTagAdded(tagSpace)"
-					@update:adding="addingTag = $event"
-					:class="{'flex-100': addingTag}"
-					/>
-				<space-tag
-					v-for="tag in tagsToShow"
-					:space="tag"
-					@click-tag="gotoSpace(tag)"
-					ellipsis
-					/>
-				<el-button size="small">Load more</el-button>
-			</div>
-
+		<div v-if="showTags" class="space-tags-bar flex-row" @click.stop>
+			<strong class="label">Tag(s)</strong>
+			<add-tag
+				:parent-id="space.id"
+				@added="tagSpace => userTagAdded(tagSpace)"
+				@update:adding="addingTag = $event"
+				:class="{'flex-100': addingTag}"
+				/>
+			<space-tag
+				v-for="tag in tagsToShow"
+				:space="tag"
+				@click-tag="gotoSpace(tag)"
+				ellipsis
+				/>
+			<el-button size="small">Load more</el-button>
 		</div>
 
 		<space-output
@@ -270,59 +266,34 @@ export default {
 	}
 
 	>.container {
-		border: medium solid darkblue;
-		background-color: black;
+		background-color: white;
+		border: thin solid darkblue;
 		border-radius: $border-radius;
-		padding: 20px;
+		padding: 20px 40px;
 		cursor: pointer; // clickable spaces
 
-		>.space-info-bar {
-			border-radius: $border-radius;
-			padding: 10px 20px;
-			cursor: default;
-
-			background-color: $space-info-bar-bg-color;
-			color: $space-info-bar-color;
+		.space-type {
+			cursor: pointer;
 		}
 
-		>.space-title-bar {
-			padding: 10px 20px;
+		>.space-info-bar, >.space-titles-bar, >.space-tags-bar {
 			cursor: default;
-
-			background-color: $space-titles-bg-color;
-			color: $space-titles-color;
-
-			.nowrap .space-title .text {
-				white-space: nowrap;
-			}
-		}
-
-		>.space-tags-bar {
-			padding: 10px 20px;
-			cursor: default;
-
-			background-color: $space-tags-bg-color;
-			color: white;
-
-			.nowrap .space-tag .text {
-				white-space: nowrap;
-			}
 		}
 
 		>.space-title, >.space-tag {
 			padding: 40px;
 			cursor: default;
-			background-color: white;
 		}
 		>.space-text {
 			padding: 80px;
 			cursor: default;
-			background-color: white;
 		}
 
 		>.portal {
-			padding: 40px 20px;
 			background-color: $space-bg-color;
+			border: thin solid darkblue;
+			border-radius: $border-radius;
+			padding: 40px;
 			border-radius: 12px;
 			cursor: default;
 
@@ -336,5 +307,20 @@ export default {
 		border-top-right-radius: 0;
 	}
 
+}
+
+.is-mobile .space-output {
+	>.container {
+		padding: 20px 10px;
+		>.space-title, >.space-tag {
+			padding: 20px;
+		}
+		>.space-text {
+			padding: 40px;
+		}
+		>.portal {
+			padding: 20px;
+		}
+	}
 }
 </style>

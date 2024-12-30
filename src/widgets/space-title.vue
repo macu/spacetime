@@ -67,9 +67,11 @@ export default {
 	border: $title-border;
 	overflow: hidden;
 	cursor: pointer;
+
 	>.text {
 		font-size: 150%;
 	}
+
 	&.ellipsis {
 		>.text {
 			white-space: nowrap;

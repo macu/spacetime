@@ -67,9 +67,11 @@ export default {
 	border: $tag-border;
 	overflow: hidden;
 	cursor: pointer;
+
 	>.text {
 		font-size: 120%;
 	}
+
 	&.ellipsis {
 		>.text {
 			white-space: nowrap;

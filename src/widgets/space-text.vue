@@ -18,9 +18,15 @@ export default {
 };
 </script>
 
-<style lang="css">
+<style lang="scss">
+@import '@/styles/vars.scss';
+
 .space-text {
-	background-color: white;
+	background-color: $text-bg-color;
+	border: $text-border;
+	color: $text-color;
+	border-radius: $border-radius;
+
 	padding: 20px;
 
 	font-size: 1.2em;

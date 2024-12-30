@@ -280,9 +280,9 @@ div.center {
   padding: 5px 10px;
   border-radius: 10px;
   border: thin solid gray;
-  background-color: white;
+  background-color: rgb(216.8, 255, 216.8);
   color: black;
-  border: thin solid gray;
+  border: thin solid green;
   overflow: hidden;
   cursor: pointer;
 }
@@ -301,9 +301,9 @@ div.center {
   padding: 5px 10px;
   border-radius: 10px;
   border: thin solid gray;
-  background-color: white;
-  color: rgb(84.24, 5.2, 124.8);
-  border: thin solid gray;
+  background-color: rgb(255, 216.8, 255);
+  color: black;
+  border: thin solid purple;
   overflow: hidden;
   cursor: pointer;
 }
@@ -315,11 +315,14 @@ div.center {
   overflow: hidden;
   text-overflow: ellipsis;
 }
-/*!***************************************************************************************************************************************************************************************************************************************************************************************************************************************!*\
-  !*** css ./node_modules/css-loader/dist/cjs.js??clonedRuleSet-2.use[1]!./node_modules/vue-loader/dist/stylePostLoader.js!./node_modules/sass-loader/dist/cjs.js??clonedRuleSet-2.use[2]!./node_modules/vue-loader/dist/index.js??ruleSet[1].rules[5].use[0]!./src/widgets/space-text.vue?vue&type=style&index=0&id=15d15a8d&lang=css ***!
-  \***************************************************************************************************************************************************************************************************************************************************************************************************************************************/
+/*!****************************************************************************************************************************************************************************************************************************************************************************************************************************************!*\
+  !*** css ./node_modules/css-loader/dist/cjs.js??clonedRuleSet-2.use[1]!./node_modules/vue-loader/dist/stylePostLoader.js!./node_modules/sass-loader/dist/cjs.js??clonedRuleSet-2.use[2]!./node_modules/vue-loader/dist/index.js??ruleSet[1].rules[5].use[0]!./src/widgets/space-text.vue?vue&type=style&index=0&id=15d15a8d&lang=scss ***!
+  \****************************************************************************************************************************************************************************************************************************************************************************************************************************************/
 .space-text {
-  background-color: white;
+  background-color: rgb(242.3, 242.3, 242.3);
+  border: thin solid gray;
+  color: black;
+  border-radius: 10px;
   padding: 20px;
   font-size: 1.2em;
   white-space: pre-wrap;
@@ -329,7 +332,7 @@ div.center {
   \******************************************************************************************************************************************************************************************************************************************************************************************************************************************/
 .space-output {
   border-radius: 10px;
-  box-shadow: inset 0 0 10px 0 rgb(255, 255, 255);
+  box-shadow: 0 0 10px 0 rgb(255, 255, 255);
 }
 .space-output > .parent-path {
   border-top-left-radius: 10px;
@@ -344,50 +347,31 @@ div.center {
   border-top: thin solid black;
 }
 .space-output > .container {
-  border: medium solid darkblue;
-  background-color: black;
+  background-color: white;
+  border: thin solid darkblue;
   border-radius: 10px;
-  padding: 20px;
+  padding: 20px 40px;
   cursor: pointer;
 }
-.space-output > .container > .space-info-bar {
-  border-radius: 10px;
-  padding: 10px 20px;
+.space-output > .container .space-type {
+  cursor: pointer;
+}
+.space-output > .container > .space-info-bar, .space-output > .container > .space-titles-bar, .space-output > .container > .space-tags-bar {
   cursor: default;
-  background-color: #f0f0f0;
-  color: #000000;
-}
-.space-output > .container > .space-title-bar {
-  padding: 10px 20px;
-  cursor: default;
-  background-color: #91ff79;
-  color: #000000;
-}
-.space-output > .container > .space-title-bar .nowrap .space-title .text {
-  white-space: nowrap;
-}
-.space-output > .container > .space-tags-bar {
-  padding: 10px 20px;
-  cursor: default;
-  background-color: #d387fa;
-  color: white;
-}
-.space-output > .container > .space-tags-bar .nowrap .space-tag .text {
-  white-space: nowrap;
 }
 .space-output > .container > .space-title, .space-output > .container > .space-tag {
   padding: 40px;
   cursor: default;
-  background-color: white;
 }
 .space-output > .container > .space-text {
   padding: 80px;
   cursor: default;
-  background-color: white;
 }
 .space-output > .container > .portal {
-  padding: 40px 20px;
   background-color: #d5f4ff;
+  border: thin solid darkblue;
+  border-radius: 10px;
+  padding: 40px;
   border-radius: 12px;
   cursor: default;
   box-shadow: inset 0 0 10px 0 rgb(255, 255, 255);
@@ -395,6 +379,18 @@ div.center {
 .space-output > .parent-path + .container {
   border-top-left-radius: 0;
   border-top-right-radius: 0;
+}
+.is-mobile .space-output > .container {
+  padding: 20px 10px;
+}
+.is-mobile .space-output > .container > .space-title, .is-mobile .space-output > .container > .space-tag {
+  padding: 20px;
+}
+.is-mobile .space-output > .container > .space-text {
+  padding: 40px;
+}
+.is-mobile .space-output > .container > .portal {
+  padding: 20px;
 }
 /*!*********************************************************************************************************************************************************************************************************************************************************************************************************************************!*\
   !*** css ./node_modules/css-loader/dist/cjs.js??clonedRuleSet-2.use[1]!./node_modules/vue-loader/dist/stylePostLoader.js!./node_modules/sass-loader/dist/cjs.js??clonedRuleSet-2.use[2]!./node_modules/vue-loader/dist/index.js??ruleSet[1].rules[5].use[0]!./src/pages/space.vue?vue&type=style&index=0&id=68c3739c&lang=scss ***!
