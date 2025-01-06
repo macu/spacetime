@@ -22,7 +22,7 @@
 			<material-icon icon="close"/>
 		</el-button>
 	</div>
-	<el-button v-else @click="adding = true" type="primary" :disabled="disabled" plain>
+	<el-button v-else @click="adding = true" type="primary" size="small" :disabled="disabled" plain>
 		<material-icon icon="add"/>
 	</el-button>
 </div>

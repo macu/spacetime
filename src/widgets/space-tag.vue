@@ -59,12 +59,10 @@ export default {
 @import '@/styles/vars.scss';
 
 .space-tag {
-	padding: 5px 10px;
-	border-radius: $border-radius;
-	border: thin solid gray;
+	padding: 0 0 5px;
 	background-color: $tag-bg-color;
+	border-bottom: $tag-border;
 	color: $tag-color;
-	border: $tag-border;
 	overflow: hidden;
 	cursor: pointer;
 

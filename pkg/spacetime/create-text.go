@@ -10,7 +10,7 @@ import (
 	"spacetime/pkg/utils/db"
 )
 
-func CreateTextCheckin(conn *sql.DB, auth ajax.Auth, parentID uint, text string) (*Space, error) {
+func CreateTextCheckin(conn *sql.DB, auth ajax.Auth, parentID *uint, text string) (*Space, error) {
 
 	// Load unique_text ID
 	// Check for existing tag space under parent
@@ -23,24 +23,29 @@ func CreateTextCheckin(conn *sql.DB, auth ajax.Auth, parentID uint, text string)
 		return nil, fmt.Errorf("invalid text: %s", text)
 	}
 
-	// Ensure referenced parent space exists
-	var parentExists, err = CheckSpaceExists(conn, parentID)
-	if err != nil {
-		return nil, err
-	}
-	if !parentExists {
-		return nil, fmt.Errorf("parent space does not exist: %d", parentID)
+	if parentID != nil {
+		// Ensure referenced parent space exists
+		var parentExists, err = CheckSpaceExists(conn, *parentID)
+		if err != nil {
+			return nil, err
+		}
+		if !parentExists {
+			return nil, fmt.Errorf("parent space does not exist: %d", parentID)
+		}
 	}
 
 	var space = &Space{
-		ParentID:  &parentID,
+		ParentID:  parentID,
 		SpaceType: SpaceTypeText,
 		Text:      &text,
 	}
 
-	err = db.InTransaction(conn, func(tx *sql.Tx) error {
+	err := db.InTransaction(conn, func(tx *sql.Tx) error {
 
-		var uniqueTextId *uint
+		uniqueTextId, err := GetUniqueTextId(conn, text)
+		if err != nil {
+			return err
+		}
 
 		// Create function to insert text space
 		var runInsertTextSpace = func() error {
@@ -72,26 +77,11 @@ func CreateTextCheckin(conn *sql.DB, auth ajax.Auth, parentID uint, text string)
 
 		}
 
-		// Check for existing unique_text
-		err := conn.QueryRow(`SELECT id FROM unique_text WHERE text_value = $1`,
-			text,
-		).Scan(&uniqueTextId)
-
-		if err != nil && err != sql.ErrNoRows {
-			return fmt.Errorf("load unique_text ID: %w", err)
-		}
-
 		if uniqueTextId == nil {
 
-			// Create unique_text
-			err := tx.QueryRow(`INSERT INTO unique_text (text_value)
-				VALUES ($1)
-				RETURNING id`,
-				text,
-			).Scan(&uniqueTextId)
-
+			uniqueTextId, err = CreateUniqueText(conn, text)
 			if err != nil {
-				return fmt.Errorf("insert unique_text: %w", err)
+				return err
 			}
 
 			// Create text space now that uniqueTextId is available

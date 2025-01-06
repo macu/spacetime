@@ -1,6 +1,7 @@
 <template>
 <div class="space-title flex-row nowrap" :class="{'ellipsis': ellipsis}">
 	<material-icon :icon="icon"/>
+	<span v-if="label" class="label" v-text="label"/>
 	<checkin-button
 		v-if="showCheckin"
 		:space="space"
@@ -43,6 +44,10 @@ export default {
 			type: Boolean,
 			default: false,
 		},
+		label: {
+			type: String,
+			default: '',
+		},
 	},
 	computed: {
 		icon() {
@@ -59,12 +64,10 @@ export default {
 @import '@/styles/vars.scss';
 
 .space-title {
-	padding: 5px 10px;
-	border-radius: $border-radius;
-	border: thin solid gray;
+	padding: 0 0 5px;
 	background-color: $title-bg-color;
+	border-bottom: $title-border;
 	color: $title-color;
-	border: $title-border;
 	overflow: hidden;
 	cursor: pointer;
 

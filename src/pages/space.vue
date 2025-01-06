@@ -7,10 +7,16 @@
 
 		<div @click.stop class="subspaces flex-column-lg">
 
-			<create-dropdown
-				:parent-id="space.id"
-				:disabled="$store.getters.createDisabled"
-				/>
+			<div class="flex-row-md">
+				<create-dropdown
+					:parent-id="space.id"
+					:disabled="$store.getters.createDisabled"
+					/>
+				<show-types-filter
+					v-if="subspaces"
+					@update:showTypes="showTypes = $event"
+					/>
+			</div>
 
 			<space-list
 				v-if="subspaces"
@@ -34,6 +40,7 @@
 import SpaceOutput from '@/widgets/space-output.vue';
 import SpaceList from '@/widgets/spaces-list.vue';
 import CreateDropdown from '@/widgets/create-dropdown.vue';
+import ShowTypesFilter from '@/widgets/show-types-filter.vue';
 
 import {
 	ajaxGet,
@@ -48,12 +55,14 @@ export default {
 		SpaceOutput,
 		SpaceList,
 		CreateDropdown,
+		ShowTypesFilter,
 	},
 	data() {
 		return {
 			loading: true,
 			space: null,
 			subspaces: null,
+			showTypes: [],
 			loadingSubspaces: false,
 		};
 	},

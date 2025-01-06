@@ -17,31 +17,23 @@
 						<material-icon :icon="SPACE_TYPE_ICONS[SPACE_TYPES.SPACE_LINK]"/>
 						<span>Create space link</span>
 					</el-dropdown-item>
-					<el-dropdown-item command="create-title">
-						<material-icon :icon="SPACE_TYPE_ICONS[SPACE_TYPES.TITLE]"/>
-						<span>Create title</span>
-					</el-dropdown-item>
-					<el-dropdown-item command="create-tag">
-						<material-icon :icon="SPACE_TYPE_ICONS[SPACE_TYPES.TAG]"/>
-						<span>Create tag</span>
-					</el-dropdown-item>
-					<el-dropdown-item command="create-text">
-						<material-icon :icon="SPACE_TYPE_ICONS[SPACE_TYPES.TEXT]"/>
-						<span>Create text</span>
-					</el-dropdown-item>
-					<el-dropdown-item disabled command="create-naked-text">
-						<material-icon :icon="SPACE_TYPE_ICONS[SPACE_TYPES.NAKED_TEXT]"/>
-						<span>Create naked text</span>
-					</el-dropdown-item>
-					<el-dropdown-item disabled command="create-stream-oc">
-						<material-icon :icon="SPACE_TYPE_ICONS[SPACE_TYPES.STREAM_OC]"/>
-						<span>Create stream of consciousness</span>
-					</el-dropdown-item>
-					<el-dropdown-item disabled command="create-json-ar">
-						<material-icon :icon="SPACE_TYPE_ICONS[SPACE_TYPES.JSON_AR]"/>
-						<span>Create json attribute reporter</span>
-					</el-dropdown-item>
 				</template>
+				<el-dropdown-item command="create-text">
+					<material-icon :icon="SPACE_TYPE_ICONS[SPACE_TYPES.TEXT]"/>
+					<span>Create text</span>
+				</el-dropdown-item>
+				<el-dropdown-item disabled command="create-naked-text">
+					<material-icon :icon="SPACE_TYPE_ICONS[SPACE_TYPES.NAKED_TEXT]"/>
+					<span>Create naked text</span>
+				</el-dropdown-item>
+				<el-dropdown-item disabled command="create-stream-oc">
+					<material-icon :icon="SPACE_TYPE_ICONS[SPACE_TYPES.STREAM_OC]"/>
+					<span>Create stream of consciousness</span>
+				</el-dropdown-item>
+				<el-dropdown-item disabled command="create-json-ar">
+					<material-icon :icon="SPACE_TYPE_ICONS[SPACE_TYPES.JSON_AR]"/>
+					<span>Create json attribute reporter</span>
+				</el-dropdown-item>
 			</template>
 		</el-dropdown>
 	</div>

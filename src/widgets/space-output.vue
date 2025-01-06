@@ -42,7 +42,7 @@
 
 		<div class="space-info-bar flex-row-md" @click.stop>
 			<space-type :type="space.spaceType" @click="gotoSpace()"/>
-			<checkin-button :space="space"/>
+			<checkin-button :space="space" size="small"/>
 			<space-creator :space="space"/>
 			<div class="align-end flex-row-md">
 				<el-button v-if="!showTitles" @click="expandTitles = true" size="small">
@@ -54,7 +54,7 @@
 			</div>
 		</div>
 
-		<div v-if="showTitles" class="space-titles-bar flex-row" @click.stop>
+		<div v-if="showTitles" class="space-titles-bar flex-row-md" @click.stop>
 			<strong class="label">Title(s)</strong>
 			<add-title
 				:parent-id="space.id"
@@ -63,15 +63,42 @@
 				:class="{'flex-100': addingTitle}"
 				/>
 			<space-title
-				v-for="title in titlesToShow"
+				v-if="space.userTitle"
+				:space="space.userTitle"
+				ellipsis
+				label="(Your title)"
+				/>
+			<space-title
+				v-if="space.topTitle"
+				:space="space.topTitle"
+				ellipsis
+				label="(Top title)"
+				/>
+			<space-title
+				v-if="space.originalTitle"
+				:space="space.originalTitle"
+				ellipsis
+				label="(Original title)"
+				/>
+			<space-title
+				v-for="title in newTitles"
 				:space="title"
 				@click-title="gotoSpace(title)"
 				ellipsis
+				label="(New title)"
 				/>
-			<el-button size="small">Load more</el-button>
+			<template v-if="showAllTitles">
+				<space-title
+					v-for="title in extraTitles"
+					:space="title"
+					@click-title="gotoSpace(title)"
+					ellipsis
+					/>
+			</template>
+			<el-button size="small" @click="showAllTitles = true">Load more</el-button>
 		</div>
 
-		<div v-if="showTags" class="space-tags-bar flex-row" @click.stop>
+		<div v-if="showTags" class="space-tags-bar flex-row-md" @click.stop>
 			<strong class="label">Tag(s)</strong>
 			<add-tag
 				:parent-id="space.id"
@@ -159,11 +186,13 @@ export default {
 	data() {
 		return {
 			addingTitle: false,
-			userTitles: this.space.userTitle ? [this.space.userTitle] : [],
+			newTitles: [],
 			expandTitles: false,
+			showAllTitles: false,
+			extraTitles: [],
 
 			addingTag: false,
-			userTags: [],
+			newTags: [],
 			expandTags: false,
 
 			titlesExpanded: false,
@@ -195,10 +224,6 @@ export default {
 			// All other types show by default
 			return true;
 		},
-		titlesToShow() {
-			let all = this.userTitles.concat(this.topTitles);
-			return all.filter((t, i) => all.findIndex(t2 => t2.id === t.id) === i);
-		},
 		topTags() {
 			return this.space.topTags || [];
 		},
@@ -219,16 +244,16 @@ export default {
 			return true;
 		},
 		tagsToShow() {
-			let all = this.userTags.concat(this.topTags);
+			let all = this.newTags.concat(this.topTags);
 			return all.filter((t, i) => all.findIndex(t2 => t2.id === t.id) === i);
 		},
 	},
 	methods: {
 		userTitleAdded(titleSpace) {
-			this.userTitles.unshift(titleSpace); // add to start
+			this.newTitles.unshift(titleSpace); // add to start
 		},
 		userTagAdded(tagSpace) {
-			this.userTags.unshift(tagSpace); // add to start
+			this.newTags.unshift(tagSpace); // add to start
 		},
 		gotoSpace(s = null) {
 			this.$router.push({
@@ -278,6 +303,7 @@ export default {
 
 		>.space-info-bar, >.space-titles-bar, >.space-tags-bar {
 			cursor: default;
+			font-size: smaller;
 		}
 
 		>.space-title, >.space-tag {

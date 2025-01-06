@@ -92,19 +92,19 @@ func AjaxCreateCheckinSpace(db *sql.DB, auth ajax.Auth,
 	w http.ResponseWriter, r *http.Request,
 ) (interface{}, int) {
 
-	blocked, err := spacetime.CheckCreateSpaceThrottleBlock(db, auth)
+	// parent required
+	parentID, err := types.AtoUint(r.FormValue("parentId"))
+	if err != nil {
+		return nil, http.StatusBadRequest
+	}
+
+	blocked, err := spacetime.CheckCreateCheckinThrottleBlock(db, auth, parentID)
 	if err != nil {
 		logging.LogError(r, &auth, err)
 		return nil, http.StatusInternalServerError
 	}
 	if blocked {
 		return nil, http.StatusTooManyRequests
-	}
-
-	// parent required
-	parentID, err := types.AtoUint(r.FormValue("parentId"))
-	if err != nil {
-		return nil, http.StatusBadRequest
 	}
 
 	space, err := spacetime.CreateCheckin(db, auth, parentID)
@@ -200,8 +200,8 @@ func AjaxCreateTextSpace(db *sql.DB, auth ajax.Auth,
 		return nil, http.StatusTooManyRequests
 	}
 
-	// parent required
-	parentID, err := types.AtoUint(r.FormValue("parentId"))
+	// parent optional
+	parentID, err := types.AtoUintNilIfEmpty(r.FormValue("parentId"))
 	if err != nil {
 		return nil, http.StatusBadRequest
 	}

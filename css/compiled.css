@@ -277,12 +277,10 @@ div.center {
   !*** css ./node_modules/css-loader/dist/cjs.js??clonedRuleSet-2.use[1]!./node_modules/vue-loader/dist/stylePostLoader.js!./node_modules/sass-loader/dist/cjs.js??clonedRuleSet-2.use[2]!./node_modules/vue-loader/dist/index.js??ruleSet[1].rules[5].use[0]!./src/widgets/space-title.vue?vue&type=style&index=0&id=658550a8&lang=scss ***!
   \*****************************************************************************************************************************************************************************************************************************************************************************************************************************************/
 .space-title {
-  padding: 5px 10px;
-  border-radius: 10px;
-  border: thin solid gray;
-  background-color: rgb(216.8, 255, 216.8);
+  padding: 0 0 5px;
+  background-color: white;
+  border-bottom: medium solid green;
   color: black;
-  border: thin solid green;
   overflow: hidden;
   cursor: pointer;
 }
@@ -298,12 +296,10 @@ div.center {
   !*** css ./node_modules/css-loader/dist/cjs.js??clonedRuleSet-2.use[1]!./node_modules/vue-loader/dist/stylePostLoader.js!./node_modules/sass-loader/dist/cjs.js??clonedRuleSet-2.use[2]!./node_modules/vue-loader/dist/index.js??ruleSet[1].rules[5].use[0]!./src/widgets/space-tag.vue?vue&type=style&index=0&id=43250aea&lang=scss ***!
   \***************************************************************************************************************************************************************************************************************************************************************************************************************************************/
 .space-tag {
-  padding: 5px 10px;
-  border-radius: 10px;
-  border: thin solid gray;
-  background-color: rgb(255, 216.8, 255);
+  padding: 0 0 5px;
+  background-color: white;
+  border-bottom: medium solid purple;
   color: black;
-  border: thin solid purple;
   overflow: hidden;
   cursor: pointer;
 }
@@ -358,6 +354,7 @@ div.center {
 }
 .space-output > .container > .space-info-bar, .space-output > .container > .space-titles-bar, .space-output > .container > .space-tags-bar {
   cursor: default;
+  font-size: smaller;
 }
 .space-output > .container > .space-title, .space-output > .container > .space-tag {
   padding: 40px;
@@ -391,6 +388,12 @@ div.center {
 }
 .is-mobile .space-output > .container > .portal {
   padding: 20px;
+}
+/*!***********************************************************************************************************************************************************************************************************************************************************************************************************************************************!*\
+  !*** css ./node_modules/css-loader/dist/cjs.js??clonedRuleSet-2.use[1]!./node_modules/vue-loader/dist/stylePostLoader.js!./node_modules/sass-loader/dist/cjs.js??clonedRuleSet-2.use[2]!./node_modules/vue-loader/dist/index.js??ruleSet[1].rules[5].use[0]!./src/widgets/show-types-filter.vue?vue&type=style&index=0&id=05b5bd33&lang=scss ***!
+  \***********************************************************************************************************************************************************************************************************************************************************************************************************************************************/
+.show-types-filter-type.showing {
+  font-weight: bold;
 }
 /*!*********************************************************************************************************************************************************************************************************************************************************************************************************************************!*\
   !*** css ./node_modules/css-loader/dist/cjs.js??clonedRuleSet-2.use[1]!./node_modules/vue-loader/dist/stylePostLoader.js!./node_modules/sass-loader/dist/cjs.js??clonedRuleSet-2.use[2]!./node_modules/vue-loader/dist/index.js??ruleSet[1].rules[5].use[0]!./src/pages/space.vue?vue&type=style&index=0&id=68c3739c&lang=scss ***!

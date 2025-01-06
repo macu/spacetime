@@ -27,10 +27,11 @@ type Space struct {
 
 	UserBookmark *bool `json:"userBookmark,omitempty"`
 
-	UserTitle    **Space   `json:"userTitle,omitempty"` // last title by user check-in
-	TopTitles    *[]*Space `json:"topTitles,omitempty"`
-	TopTags      *[]*Space `json:"topTags,omitempty"`
-	TopSubspaces *[]*Space `json:"topSubspaces,omitempty"`
+	UserTitle     **Space   `json:"userTitle,omitempty"` // last title by user check-in
+	OriginalTitle **Space   `json:"originalTitle,omitempty"`
+	TopTitle      **Space   `json:"topTitle,omitempty"`
+	TopTags       *[]*Space `json:"topTags,omitempty"`
+	TopSubspaces  *[]*Space `json:"topSubspaces,omitempty"`
 
 	ParentPath *[]*Space `json:"parentPath,omitempty"`
 }

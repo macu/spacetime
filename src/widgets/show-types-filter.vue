@@ -1,48 +1,44 @@
 <template>
-<div class="show-types-filter flex-row-md">
-	<el-checkbox v-model="showAll">
-		<template v-if="showAll">
-			Show all subspace types
+
+	<el-dropdown @command="show" placement="bottom-start" :hide-on-click="false">
+		<el-button>
+			<material-icon icon="filter_list"/>
+			<span>Filter</span>
+			<material-icon icon="arrow_drop_down"/>
+		</el-button>
+		<template #dropdown>
+			<el-dropdown-item v-if="!showingAll" command="all">
+				<material-icon icon="done_all"/>
+				<span>Show all types</span>
+			</el-dropdown-item>
+			<el-dropdown-item
+				v-for="type in SPACE_TYPES"
+				:key="type"
+				:command="type">
+				<div class="show-types-filter-type flex-row"
+					:class="{'showing': showTypes.includes(type)}">
+					<material-icon :icon="SPACE_TYPE_ICONS[type]"/>
+					<span v-text="titlesByType[type]"/>
+					<material-icon v-if="showTypes.includes(type)" icon="check"/>
+				</div>
+			</el-dropdown-item>
 		</template>
-		<template v-else>
-			Show all
-		</template>
-	</el-checkbox>
-	<el-checkbox-group v-model="showTypes">
-		<el-checkbox :label="SPACE_TYPES.SPACE">
-			<material-icon :icon="SPACE_TYPE_ICONS[SPACE_TYPES.SPACE]"/>
-			<span>Space</span>
-		</el-checkbox>
-		<el-checkbox :label="SPACE_TYPES.CHECK_IN">
-			<material-icon :icon="SPACE_TYPE_ICONS[SPACE_TYPES.CHECK_IN]"/>
-			<span>Check in</span>
-		</el-checkbox>
-		<el-checkbox :label="SPACE_TYPES.TITLE">
-			<material-icon :icon="SPACE_TYPE_ICONS[SPACE_TYPES.TITLE]"/>
-			<span>Title</span>
-		</el-checkbox>
-		<el-checkbox :label="SPACE_TYPES.TAG">
-			<material-icon :icon="SPACE_TYPE_ICONS[SPACE_TYPES.TAG]"/>
-			<span>Tag</span>
-		</el-checkbox>
-		<el-checkbox :label="SPACE_TYPES.TEXT">
-			<material-icon :icon="SPACE_TYPE_ICONS[SPACE_TYPES.TEXT]"/>
-			<span>Text</span>
-		</el-checkbox>
-		<el-checkbox :label="SPACE_TYPES.NAKED_TEXT">
-			<material-icon :icon="SPACE_TYPE_ICONS[SPACE_TYPES.NAKED_TEXT]"/>
-			<span>Naked text</span>
-		</el-checkbox>
-		<el-checkbox :label="SPACE_TYPES.STREAM_OC">
-			<material-icon :icon="SPACE_TYPE_ICONS[SPACE_TYPES.STREAM_OC]"/>
-			<span>Stream of consciousness</span>
-		</el-checkbox>
-		<el-checkbox :label="SPACE_TYPES.JSON_AR">
-			<material-icon :icon="SPACE_TYPE_ICONS[SPACE_TYPES.JSON_AR]"/>
-			<span>JSON attribute</span>
-		</el-checkbox>
-	</el-checkbox-group>
-</div>
+	</el-dropdown>
+
+	<el-tag v-if="showingAll" size="large">
+		<material-icon icon="done_all"/>
+		<span>Showing all types</span>
+	</el-tag>
+
+	<template v-else>
+		<el-tag v-for="t in showTypes" :key="t" closable @close="toggleShow(t)" size="large">
+			<span class="flex-row">
+				<material-icon :icon="SPACE_TYPE_ICONS[t]"/>
+				<span v-text="titlesByType[t]"/>
+			</span>
+		</el-tag>
+	</template>
+
 </template>
 
 <script>
@@ -60,7 +56,6 @@ export default {
 	emits: ['update:showTypes'],
 	data() {
 		return {
-			showAll: false,
 			showTypes: getStorage('filterShowTypes', Object.values(SPACE_TYPES)),
 		};
 	},
@@ -68,12 +63,31 @@ export default {
 		SPACE_TYPES() {
 			return SPACE_TYPES;
 		},
-		selectedTypes() {
-			return this.showAll ? Object.values(SPACE_TYPES) : this.showTypes;
+		titlesByType() {
+			return {
+				[SPACE_TYPES.SPACE]: 'Space',
+				[SPACE_TYPES.SPACE_LINK]: 'Space link',
+				[SPACE_TYPES.CHECK_IN]: 'Check in',
+				[SPACE_TYPES.TITLE]: 'Title',
+				[SPACE_TYPES.TAG]: 'Tag',
+				[SPACE_TYPES.TEXT]: 'Text',
+				[SPACE_TYPES.NAKED_TEXT]: 'Naked text',
+				[SPACE_TYPES.STREAM_OC]: 'Stream of consciousness',
+				[SPACE_TYPES.JSON_AR]: 'JSON attribute',
+			};
+		},
+		SPACE_TYPE_ICONS() {
+			return SPACE_TYPE_ICONS;
+		},
+		showingAll() {
+			return Object.values(SPACE_TYPES).every(type => this.showTypes.includes(type));
+		},
+		typesNotShowing() {
+			return Object.values(SPACE_TYPES).filter(type => !this.showTypes.includes(type));
 		},
 	},
 	watch: {
-		selectedTypes: {
+		showTypes: {
 			deep: true,
 			immediate: true,
 			handler(selected) {
@@ -82,5 +96,32 @@ export default {
 			},
 		},
 	},
+	methods: {
+		showAll() {
+			this.showTypes = Object.values(SPACE_TYPES);
+		},
+		toggleShow(type) {
+			if (this.showTypes.includes(type)) {
+				this.showTypes = this.showTypes.filter(t => t !== type);
+			} else {
+				this.showTypes.push(type);
+			}
+		},
+		show(type) {
+			if (type === 'all') {
+				this.showAll();
+			} else {
+				this.toggleShow(type);
+			}
+		},
+	},
 };
 </script>
+
+<style lang="scss">
+.show-types-filter-type {
+	&.showing {
+		font-weight: bold;
+	}
+}
+</style>

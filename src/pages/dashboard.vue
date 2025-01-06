@@ -39,6 +39,7 @@ export default {
 				parentId: null, // root
 				offset: 0,
 				limit: this.$store.getters.maxLimit,
+				includeTags: true,
 			}).then(response => {
 				this.spaces = response;
 			}).finally((error) => {
@@ -51,6 +52,7 @@ export default {
 				parentId: null, // root
 				offset: this.spaces.length,
 				limit: this.$store.getters.maxLimit,
+				includeTags: true,
 			}).then(response => {
 				this.spaces = this.spaces.concat(response);
 			}).finally((error) => {

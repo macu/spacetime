@@ -45,8 +45,15 @@ func AjaxLoadSpace(db *sql.DB, auth *ajax.Auth,
 		}
 	}
 
+	err = spacetime.LoadOriginalTitles(db,
+		[]*spacetime.Space{space})
+	if err != nil {
+		logging.LogError(r, auth, err)
+		return nil, http.StatusInternalServerError
+	}
+
 	err = spacetime.LoadTopTitles(db,
-		[]*spacetime.Space{space}, 0, spacetime.DefaultTitlesLimit)
+		[]*spacetime.Space{space})
 	if err != nil {
 		logging.LogError(r, auth, err)
 		return nil, http.StatusInternalServerError
@@ -78,8 +85,13 @@ func AjaxLoadSpace(db *sql.DB, auth *ajax.Auth,
 			}
 		}
 
-		err = spacetime.LoadTopTitles(db,
-			content, 0, spacetime.DefaultTitlesLimit)
+		err = spacetime.LoadOriginalTitles(db, content)
+		if err != nil {
+			logging.LogError(r, auth, err)
+			return nil, http.StatusInternalServerError
+		}
+
+		err = spacetime.LoadTopTitles(db, content)
 		if err != nil {
 			logging.LogError(r, auth, err)
 			return nil, http.StatusInternalServerError
@@ -107,8 +119,7 @@ func AjaxLoadSpace(db *sql.DB, auth *ajax.Auth,
 				return nil, http.StatusInternalServerError
 			}
 
-			// Load 1 top title for each parent space.
-			err = spacetime.LoadTopTitles(db, path, 0, 1)
+			err = spacetime.LoadOriginalTitles(db, path)
 			if err != nil {
 				logging.LogError(r, auth, err)
 				return nil, http.StatusInternalServerError
@@ -119,35 +130,5 @@ func AjaxLoadSpace(db *sql.DB, auth *ajax.Auth,
 	}
 
 	return space, http.StatusOK
-
-}
-
-// Load subspaces ordered by most checkins all time.
-func AjaxLoadTopSubspaces(db *sql.DB, auth *ajax.Auth,
-	w http.ResponseWriter, r *http.Request,
-) (interface{}, int) {
-
-	parentId, err := types.AtoUintNilIfEmpty(r.FormValue("parentId"))
-	if err != nil {
-		return nil, http.StatusBadRequest
-	}
-
-	offset, err := types.AtoUint(r.FormValue("offset"))
-	if err != nil {
-		return nil, http.StatusBadRequest
-	}
-
-	limit, err := types.AtoUint(r.FormValue("limit"))
-	if err != nil {
-		return nil, http.StatusBadRequest
-	}
-
-	spaces, err := spacetime.LoadTopSubspaces(db, auth, parentId, offset, limit, nil, nil)
-	if err != nil {
-		logging.LogError(r, auth, err)
-		return nil, http.StatusInternalServerError
-	}
-
-	return spaces, http.StatusOK
 
 }
