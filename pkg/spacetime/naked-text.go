@@ -1,8 +1,11 @@
 package spacetime
 
 import (
+	"database/sql"
 	"encoding/json"
 	"unicode"
+
+	"spacetime/pkg/utils/ajax"
 )
 
 type NakedTextDelta struct {
@@ -142,5 +145,15 @@ func ValidateNakedText(text NakedText) bool {
 	}
 
 	return true
+
+}
+
+func CreateNakedText(conn *sql.DB, auth ajax.Auth,
+	parentID uint, finalText, replayData string,
+) (*Space, error) {
+
+	// Create naked text space with given replay data
+
+	return nil, nil
 
 }

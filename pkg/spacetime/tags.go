@@ -4,11 +4,44 @@ import (
 	"database/sql"
 	"fmt"
 	"strings"
-	"time"
 
 	"spacetime/pkg/utils/ajax"
 	"spacetime/pkg/utils/db"
 )
+
+func LoadExistingTag(conn *sql.DB,
+	parentID uint, tag string,
+) (*Space, error) {
+
+	// Load tag space
+
+	var space = &Space{
+		ParentID:  &parentID,
+		SpaceType: SpaceTypeTag,
+		Text:      &tag,
+	}
+
+	var args = []interface{}{}
+
+	err := conn.QueryRow(`SELECT space.id, space.created_at, space.created_by
+		FROM space
+		INNER JOIN tag_space ON tag_space.space_id = space.id
+		INNER JOIN unique_text ON unique_text.id = tag_space.unique_text_id
+		WHERE space.parent_id = `+db.Arg(&args, parentID)+`
+		AND space.space_type = `+db.Arg(&args, SpaceTypeTag)+`
+		AND unique_text.text_value = `+db.Arg(&args, tag),
+		args...,
+	).Scan(&space.ID, &space.CreatedAt, &space.CreatedBy)
+
+	if err == sql.ErrNoRows {
+		return nil, nil
+	} else if err != nil {
+		return nil, fmt.Errorf("select tag_space: %w", err)
+	}
+
+	return space, nil
+
+}
 
 func CreateTagCheckin(conn *sql.DB, auth ajax.Auth, parentID uint, tag string) (*Space, error) {
 
@@ -46,14 +79,7 @@ func CreateTagCheckin(conn *sql.DB, auth ajax.Auth, parentID uint, tag string) (
 		var runInsertTagSpace = func() error {
 
 			// Create space
-			err = tx.QueryRow(`INSERT INTO space
-				(parent_id, space_type, created_at, created_by)
-				VALUES ($1, $2, $3, $4)
-				RETURNING id, created_at, created_by`,
-				parentID, SpaceTypeTag, time.Now(), auth.UserID,
-			).Scan(&space.ID,
-				&space.CreatedAt, &space.CreatedBy)
-
+			err = CreateSpace(tx, auth, space, &parentID, SpaceTypeTag)
 			if err != nil {
 				return fmt.Errorf("insert space: %w", err)
 			}
@@ -103,24 +129,12 @@ func CreateTagCheckin(conn *sql.DB, auth ajax.Auth, parentID uint, tag string) (
 		} else {
 
 			// Check if tag_space already exists
-			var existingID *uint
-			var existingCreatedAt time.Time
-			var existingCreatedBy uint
-			err = conn.QueryRow(`SELECT space.id,
-				space.created_at, space.created_by
-				FROM space
-				INNER JOIN tag_space ON tag_space.space_id = space.id
-				WHERE space.parent_id = $1
-				AND space.space_type = $2
-				AND tag_space.unique_text_id = $3`,
-				parentID, SpaceTypeTag, *uniqueTextId,
-			).Scan(&existingID, &existingCreatedAt, &existingCreatedBy)
-
-			if err != nil && err != sql.ErrNoRows {
+			existingTag, err := LoadExistingTag(conn, parentID, tag)
+			if err != nil {
 				return fmt.Errorf("check tag_space exists: %w", err)
 			}
 
-			if existingID == nil {
+			if existingTag == nil {
 
 				// Create tag subspace
 				if err = runInsertTagSpace(); err != nil {
@@ -129,13 +143,10 @@ func CreateTagCheckin(conn *sql.DB, auth ajax.Auth, parentID uint, tag string) (
 
 			} else {
 
-				// Return existing space details
-				space.ID = *existingID
-				space.CreatedAt = existingCreatedAt
-				space.CreatedBy = existingCreatedBy
+				space = existingTag
 
 				// Check-in under existing tag
-				_, err = CreateCheckin(conn, auth, *existingID)
+				_, err = CreateCheckin(conn, auth, space.ID)
 
 				if err != nil {
 					return fmt.Errorf("create checkin: %w", err)
@@ -160,5 +171,81 @@ func CreateTagCheckin(conn *sql.DB, auth ajax.Auth, parentID uint, tag string) (
 	}
 
 	return space, nil
+
+}
+
+func LoadTopTags(conn *sql.DB, spaces []*Space,
+	offset uint, limit uint,
+) error {
+	// Load top tags for multiple spaces
+
+	if len(spaces) == 0 {
+		return nil
+	}
+
+	if limit > MaxSubspacesPageLimit {
+		limit = MaxSubspacesPageLimit
+	}
+
+	for _, space := range spaces {
+
+		tags, err := LoadMoreTags(conn, space.ID, offset, limit)
+		if err != nil {
+			return err
+		}
+
+		space.TopTags = tags
+
+	}
+
+	return nil
+
+}
+
+func LoadMoreTags(conn *sql.DB, parentId uint,
+	offset uint, limit uint,
+) (*[]*Space, error) {
+
+	rows, err := conn.Query(`SELECT space.id, unique_text.text_value,
+		COUNT(subspace.id) AS subspace_total
+		FROM space
+		INNER JOIN tag_space ON tag_space.space_id = space.id
+		INNER JOIN unique_text ON unique_text.id = tag_space.unique_text_id
+		LEFT JOIN space AS subspace ON subspace.parent_id = space.id
+		WHERE space.space_type = $1
+		AND space.parent_id = $2
+		GROUP BY space.id, unique_text.text_value
+		ORDER BY subspace_total DESC
+		OFFSET $3
+		LIMIT $4`,
+		SpaceTypeTag, parentId, offset, limit,
+	)
+
+	if err != nil {
+		return nil, fmt.Errorf("loading top tags: %w", err)
+	}
+
+	defer rows.Close()
+
+	var tags = []*Space{}
+
+	for rows.Next() {
+		var spaceID uint
+		var text string
+		var subspacesTotal uint
+		err = rows.Scan(&spaceID, &text, &subspacesTotal)
+		if err != nil {
+			return nil, fmt.Errorf("scanning top tags: %w", err)
+		}
+		var tag = &Space{
+			ID:             spaceID,
+			SpaceType:      SpaceTypeTag,
+			Text:           &text,
+			TotalSubspaces: subspacesTotal,
+		}
+		tags = append(tags, tag)
+	}
+
+	return &tags, nil
 
 }

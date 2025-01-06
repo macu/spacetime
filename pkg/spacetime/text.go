@@ -4,11 +4,44 @@ import (
 	"database/sql"
 	"fmt"
 	"strings"
-	"time"
 
 	"spacetime/pkg/utils/ajax"
 	"spacetime/pkg/utils/db"
 )
+
+func LoadExistingText(conn *sql.DB,
+	parentID uint, text string,
+) (*Space, error) {
+
+	// Load text space
+
+	var space = &Space{
+		ParentID:  &parentID,
+		SpaceType: SpaceTypeText,
+		Text:      &text,
+	}
+
+	var args = []interface{}{}
+
+	err := conn.QueryRow(`SELECT space.id, space.created_at, space.created_by
+		FROM space
+		INNER JOIN title_space ON title_space.space_id = space.id
+		INNER JOIN unique_text ON unique_text.id = title_space.unique_text_id
+		WHERE space.parent_id = `+db.Arg(&args, parentID)+`
+		AND space.space_type = `+db.Arg(&args, SpaceTypeText)+`
+		AND unique_text.text_value = `+db.Arg(&args, text),
+		args...,
+	).Scan(&space.ID, &space.CreatedAt, &space.CreatedBy)
+
+	if err == sql.ErrNoRows {
+		return nil, nil
+	} else if err != nil {
+		return nil, fmt.Errorf("select text_space: %w", err)
+	}
+
+	return space, nil
+
+}
 
 func CreateTextCheckin(conn *sql.DB, auth ajax.Auth, parentID *uint, text string) (*Space, error) {
 
@@ -51,15 +84,9 @@ func CreateTextCheckin(conn *sql.DB, auth ajax.Auth, parentID *uint, text string
 		var runInsertTextSpace = func() error {
 
 			// Create space
-			err := tx.QueryRow(`INSERT INTO space
-				(parent_id, space_type, created_at, created_by)
-				VALUES ($1, $2, $3, $4)
-				RETURNING id, created_at, created_by`,
-				parentID, SpaceTypeText, time.Now(), auth.UserID,
-			).Scan(&space.ID, &space.CreatedAt, &space.CreatedBy)
-
+			err = CreateSpace(tx, auth, space, parentID, SpaceTypeText)
 			if err != nil {
-				return fmt.Errorf("insert space: %w", err)
+				return fmt.Errorf("insert text space: %w", err)
 			}
 
 			// Create text_space
@@ -92,24 +119,12 @@ func CreateTextCheckin(conn *sql.DB, auth ajax.Auth, parentID *uint, text string
 		} else {
 
 			// Check if text_space already exists
-			var existingID *uint
-			var existingCreatedAt time.Time
-			var existingCreatedBy uint
-			err = conn.QueryRow(`SELECT space.id,
-				space.created_at, space.created_by
-				FROM space
-				INNER JOIN text_space ON text_space.space_id = space.id
-				WHERE space.parent_id = $1
-				AND space.space_type = $2
-				AND text_space.unique_text_id = $3`,
-				parentID, SpaceTypeText, *uniqueTextId,
-			).Scan(&existingID, &existingCreatedAt, &existingCreatedBy)
-
-			if err != nil && err != sql.ErrNoRows {
+			existingText, err := LoadExistingText(conn, *parentID, text)
+			if err != nil {
 				return fmt.Errorf("check text_space exists: %w", err)
 			}
 
-			if existingID == nil {
+			if existingText == nil {
 
 				// Create text subspace
 				if err = runInsertTextSpace(); err != nil {
@@ -118,20 +133,12 @@ func CreateTextCheckin(conn *sql.DB, auth ajax.Auth, parentID *uint, text string
 
 			} else {
 
-				// Return existing space details
-				space.ID = *existingID
-				space.CreatedAt = existingCreatedAt
-				space.CreatedBy = existingCreatedBy
+				space = existingText
 
 				// Check-in under existing text
-				_, err = CreateCheckin(conn, auth, *existingID)
+				_, err = CreateCheckin(conn, auth, space.ID)
 				if err != nil {
 					return fmt.Errorf("create checkin: %w", err)
-				}
-
-				err = LoadSubspaceCount(conn, []*Space{space})
-				if err != nil {
-					return fmt.Errorf("load subspace count: %w", err)
 				}
 
 			}

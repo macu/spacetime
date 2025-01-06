@@ -1,6 +1,8 @@
 <template>
 <div class="space-page page-width-xl">
 
+	<return-to-top/>
+
 	<loading-message v-if="loading"/>
 
 	<space-output v-else-if="space" :space="space" show-path>

@@ -3,10 +3,8 @@ package spacetime
 import (
 	"database/sql"
 	"fmt"
-	"time"
 
 	"spacetime/pkg/utils/ajax"
-	"spacetime/pkg/utils/db"
 )
 
 func CreateCheckin(conn *sql.DB, auth ajax.Auth, parentID uint) (*Space, error) {
@@ -24,24 +22,7 @@ func CreateCheckin(conn *sql.DB, auth ajax.Auth, parentID uint) (*Space, error) 
 
 	var space = Space{}
 
-	err = db.InTransaction(conn, func(tx *sql.Tx) error {
-
-		// Create checkin space
-		err := tx.QueryRow(`INSERT INTO space (parent_id, space_type, created_at, created_by)
-			VALUES ($1, $2, $3, $4)
-			RETURNING id, space_type, created_at, created_by`,
-			parentID, SpaceTypeCheckin, time.Now(), auth.UserID,
-		).Scan(&space.ID, &space.SpaceType,
-			&space.CreatedAt, &space.CreatedBy)
-
-		if err != nil {
-			return fmt.Errorf("insert space: %w", err)
-		}
-
-		return nil
-
-	})
-
+	err = CreateSpace(conn, auth, &space, &parentID, SpaceTypeCheckin)
 	if err != nil {
 		return nil, fmt.Errorf("create checkin: %w", err)
 	}

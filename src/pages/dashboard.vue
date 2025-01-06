@@ -1,7 +1,7 @@
 <template>
 <div class="dashboard-page flex-column-lg page-width-md">
 
-	<el-backtop :right="40" :bottom="40" :visibility-height="1000"/>
+	<return-to-top/>
 
 	<create-dropdown :disabled="$store.getters.createDisabled" sticky/>
 

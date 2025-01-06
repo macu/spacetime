@@ -88,7 +88,7 @@ export function alertError(error, errorCodeMessages = {}) {
 						message = "Unable to process request. (422)";
 						break;
 					case 429: // Too Many Requests
-						message = "Take a break for a minute!";
+						message = "Rate limit exceeded. Take a break for a minute!";
 						break
 					case 500: // Internal Server Error
 						message = "An internal server error occurred.";
