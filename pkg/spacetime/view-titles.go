@@ -188,6 +188,8 @@ func LoadTopTitles(conn *sql.DB, spaces []*Space) error {
 			var nullTitle *Space = nil
 			space.TopTitle = &nullTitle
 
+			continue
+
 		} else if err != nil {
 			return fmt.Errorf("loading top title: %w", err)
 		}
