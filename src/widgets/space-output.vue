@@ -42,6 +42,11 @@
 
 		<div class="space-info-bar flex-row-md" @click.stop>
 			<space-type :type="space.spaceType" @click="gotoSpace()"/>
+			<el-button @click="toggleBookmark()"
+				:type="isBookmarked ? 'success' : 'default'" size="small">
+				<material-icon v-if="isBookmarked" icon="bookmark_border"/>
+				<material-icon v-else icon="bookmark"/>
+			</el-button>
 			<checkin-button :space="space" size="small"/>
 			<space-creator :space="space"/>
 			<div class="align-end flex-row-md">
@@ -161,6 +166,10 @@ import {
 	SPACE_TYPES,
 } from '@/const.js';
 
+import {
+	ajaxPost,
+} from '@/utils/ajax.js';
+
 export default {
 	name: 'space-output', // recursive
 	components: {
@@ -185,6 +194,8 @@ export default {
 	},
 	data() {
 		return {
+			isBookmarked: this.space.userBookmark || false,
+
 			addingTitle: false,
 			newTitles: [],
 			expandTitles: false,
@@ -265,6 +276,14 @@ export default {
 		},
 		loadMoreTitles() {
 			this.titlesExpanded = true;
+		},
+		toggleBookmark() {
+			let newState = !this.isBookmarked;
+			this.isBookmarked = newState;
+			ajaxPost('/ajax/bookmark', {
+				spaceId: this.space.id,
+				bookmark: newState,
+			});
 		},
 	},
 };

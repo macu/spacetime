@@ -9,7 +9,9 @@ import (
 	"time"
 
 	"spacetime/pkg/env"
+	"spacetime/pkg/spacetime"
 	"spacetime/pkg/utils/ajax"
+	dbutil "spacetime/pkg/utils/db"
 	"spacetime/pkg/utils/logging"
 	"spacetime/pkg/utils/random"
 	"spacetime/pkg/utils/types"
@@ -248,28 +250,60 @@ func AjaxSignupVerify(db *sql.DB, auth *ajax.Auth, w http.ResponseWriter, r *htt
 		return nil, http.StatusInternalServerError
 	}
 
-	// create user account
 	var userID *uint
-	err = db.QueryRow(
-		`INSERT INTO user_account (email, handle, display_name, auth_hash, created_at)
-		VALUES ($1, $2, $3, $4, $5)
-		RETURNING id`,
-		email, handleValue, displayName, authHash, time.Now(),
-	).Scan(&userID)
+
+	err = dbutil.InTransaction(db, func(tx *sql.Tx) error {
+
+		// create user account
+		err = tx.QueryRow(
+			`INSERT INTO user_account (email, handle, display_name, auth_hash, created_at)
+				VALUES ($1, $2, $3, $4, $5)
+				RETURNING id`,
+			email, handleValue, displayName, authHash, time.Now(),
+		).Scan(&userID)
+
+		if err != nil {
+			return fmt.Errorf("error creating user account: %v", err)
+		}
+
+		// create user_space space
+		var userSpaceID uint
+		err = tx.QueryRow(
+			`INSERT INTO space (parent_id, space_type, created_at, created_by)
+				VALUES (NULL, $1, $2, $3)
+				RETURNING id`,
+			nil, spacetime.SpaceTypeUser, time.Now(), *userID,
+		).Scan(&userSpaceID)
+
+		if err != nil {
+			return fmt.Errorf("error creating user space: %v", err)
+		}
+
+		_, err = tx.Exec(
+			`INSERT INTO user_space (space_id, user_id) VALUES ($1, $2)`,
+			userSpaceID, *userID,
+		)
+
+		if err != nil {
+			return fmt.Errorf("error creating user_space: %v", err)
+		}
+
+		// delete signup request
+		_, err = tx.Exec(
+			"DELETE FROM user_signup_request WHERE id = $1",
+			requestID,
+		)
+
+		if err != nil {
+			return fmt.Errorf("error deleting signup request: %v", err)
+		}
+
+		return nil
+
+	})
 
 	if err != nil {
-		logging.LogError(r, nil, fmt.Errorf("error creating user account: %v", err))
-		return nil, http.StatusInternalServerError
-	}
-
-	// delete signup request
-	_, err = db.Exec(
-		"DELETE FROM user_signup_request WHERE id = $1",
-		requestID,
-	)
-
-	if err != nil {
-		logging.LogError(r, nil, fmt.Errorf("error deleting signup request: %v", err))
+		logging.LogError(r, nil, fmt.Errorf("error creating user: %v", err))
 		return nil, http.StatusInternalServerError
 	}
 
