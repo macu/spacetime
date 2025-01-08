@@ -23,7 +23,7 @@
 	</form-field>
 
 	<form-actions>
-		<el-button @click="create()" type="primary" :disabled="createDisabled">
+		<el-button @click="submit()" type="primary" :disabled="createDisabled">
 			Create
 		</el-button>
 	</form-actions>
