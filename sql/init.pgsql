@@ -170,7 +170,8 @@ CREATE TABLE naked_text_space (
 	space_id INTEGER PRIMARY KEY REFERENCES space (id) ON DELETE CASCADE,
 	parent_space_id INTEGER NOT NULL REFERENCES space (id) ON DELETE CASCADE,
 	final_unique_text_id INTEGER NOT NULL REFERENCES unique_text (id) ON DELETE CASCADE,
-	replay_data TEXT NOT NULL
+	replay_data TEXT NOT NULL,
+	typing_started_at TIMESTAMPTZ
 );
 
 CREATE TABLE stream_of_consciousness_space (

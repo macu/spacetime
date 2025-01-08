@@ -3,6 +3,7 @@ package spacetime
 const TitleMaxLength = 64
 const TagMaxLength = 64
 const TextMaxLength = 1024
+const NakedTextMaxDeltas = TextMaxLength * 10
 
 const SpaceTypeSpace = "space"
 const SpaceTypeUser = "user"
