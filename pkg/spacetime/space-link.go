@@ -118,12 +118,6 @@ func CreateSpaceLink(conn *sql.DB, auth ajax.Auth, parentID, spaceID uint) (*Spa
 
 	}
 
-	// Create checkin under existing link space
-	_, err = CreateCheckin(conn, auth, existingSpaceLink.ID)
-	if err != nil {
-		return nil, err
-	}
-
 	return existingSpaceLink, nil
 
 }

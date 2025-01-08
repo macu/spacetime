@@ -42,7 +42,7 @@ func AjaxCreateEmptySpace(db *sql.DB, auth ajax.Auth,
 	}
 
 	if title != "" {
-		_, err := spacetime.CreateTitleCheckin(db, auth, space.ID, title)
+		_, err := spacetime.CreateTitle(db, auth, space.ID, title)
 		if err != nil {
 			logging.LogError(r, &auth, err)
 			return nil, http.StatusInternalServerError
@@ -78,10 +78,20 @@ func AjaxCreateLinkSpace(db *sql.DB, auth ajax.Auth,
 		return nil, http.StatusBadRequest
 	}
 
+	title := strings.TrimSpace(r.FormValue("title")) // optional
+
 	space, err := spacetime.CreateSpaceLink(db, auth, parentID, spaceID)
 	if err != nil {
 		logging.LogError(r, &auth, err)
 		return nil, http.StatusInternalServerError
+	}
+
+	if title != "" {
+		_, err := spacetime.CreateTitle(db, auth, space.ID, title)
+		if err != nil {
+			logging.LogError(r, &auth, err)
+			return nil, http.StatusInternalServerError
+		}
 	}
 
 	return space, http.StatusCreated
@@ -142,7 +152,7 @@ func AjaxCreateTitleSpace(db *sql.DB, auth ajax.Auth,
 		return nil, http.StatusBadRequest
 	}
 
-	space, err := spacetime.CreateTitleCheckin(db, auth, parentID, title)
+	space, err := spacetime.CreateTitle(db, auth, parentID, title)
 	if err != nil {
 		logging.LogError(r, &auth, err)
 		return nil, http.StatusInternalServerError
@@ -177,7 +187,7 @@ func AjaxCreateTagSpace(db *sql.DB, auth ajax.Auth,
 		return nil, http.StatusBadRequest
 	}
 
-	space, err := spacetime.CreateTagCheckin(db, auth, parentID, tag)
+	space, err := spacetime.CreateTag(db, auth, parentID, tag)
 	if err != nil {
 		logging.LogError(r, &auth, err)
 		return nil, http.StatusInternalServerError
@@ -219,14 +229,14 @@ func AjaxCreateTextSpace(db *sql.DB, auth ajax.Auth,
 		return nil, http.StatusBadRequest
 	}
 
-	space, err := spacetime.CreateTextCheckin(db, auth, parentID, text)
+	space, err := spacetime.CreateText(db, auth, parentID, text)
 	if err != nil {
 		logging.LogError(r, &auth, err)
 		return nil, http.StatusInternalServerError
 	}
 
 	if title != "" {
-		_, err = spacetime.CreateTitleCheckin(db, auth, space.ID, title)
+		_, err = spacetime.CreateTitle(db, auth, space.ID, title)
 		if err != nil {
 			logging.LogError(r, &auth, err)
 			return nil, http.StatusInternalServerError

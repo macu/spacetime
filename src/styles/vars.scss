@@ -13,5 +13,6 @@ $tag-bg-color: white;
 $tag-color: black;
 
 $text-border: thin solid gray;
-$text-bg-color: scale-color(gray, $lightness: 90%);
+$text-bg-color: white;
 $text-color: black;
+$text-inner-drop-shadow: inset 0 0 10px 0 rgba(0, 0, 0, 0.1);

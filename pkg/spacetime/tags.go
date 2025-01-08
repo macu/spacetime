@@ -43,7 +43,7 @@ func LoadExistingTag(conn *sql.DB,
 
 }
 
-func CreateTagCheckin(conn *sql.DB, auth ajax.Auth, parentID uint, tag string) (*Space, error) {
+func CreateTag(conn *sql.DB, auth ajax.Auth, parentID uint, tag string) (*Space, error) {
 
 	// Load unique_text ID
 	// Check for existing tag space under parent
@@ -65,6 +65,19 @@ func CreateTagCheckin(conn *sql.DB, auth ajax.Auth, parentID uint, tag string) (
 		return nil, fmt.Errorf("parent space does not exist: %d", parentID)
 	}
 
+	// Check if tag already exists
+	existingTag, err := LoadExistingTag(conn, parentID, tag)
+	if err != nil {
+		return nil, fmt.Errorf("check tag exists: %w", err)
+	}
+	if existingTag != nil {
+		err = LoadSubspaceCount(conn, []*Space{existingTag})
+		if err != nil {
+			return nil, err
+		}
+		return existingTag, nil
+	}
+
 	var space = &Space{
 		ParentID:  &parentID,
 		SpaceType: SpaceTypeTag,
@@ -73,93 +86,32 @@ func CreateTagCheckin(conn *sql.DB, auth ajax.Auth, parentID uint, tag string) (
 
 	err = db.InTransaction(conn, func(tx *sql.Tx) error {
 
-		var uniqueTextId *uint
-
-		// Create function to insert tag space
-		var runInsertTagSpace = func() error {
-
-			// Create space
-			err = CreateSpace(tx, auth, space, &parentID, SpaceTypeTag)
-			if err != nil {
-				return fmt.Errorf("insert space: %w", err)
-			}
-
-			// Create tag_space
-			_, err = tx.Exec(`INSERT INTO tag_space
-				(space_id, parent_space_id, unique_text_id)
-				VALUES ($1, $2, $3)`,
-				space.ID, parentID, *uniqueTextId,
-			)
-
-			if err != nil {
-				return fmt.Errorf("insert tag_space: %w", err)
-			}
-
-			return nil
-
-		}
-
-		// Check for existing unique_text
-		err := conn.QueryRow(`SELECT id FROM unique_text WHERE text_value = $1`,
-			tag,
-		).Scan(&uniqueTextId)
-
-		if err != nil && err != sql.ErrNoRows {
-			return fmt.Errorf("load unique_text ID: %w", err)
+		uniqueTextId, err := GetUniqueTextId(tx, tag)
+		if err != nil {
+			return err
 		}
 
 		if uniqueTextId == nil {
-
-			// Create unique_text
-			err := tx.QueryRow(`INSERT INTO unique_text (text_value)
-				VALUES ($1)
-				RETURNING id`,
-				tag,
-			).Scan(&uniqueTextId)
-
+			uniqueTextId, err = CreateUniqueText(tx, tag)
 			if err != nil {
-				return fmt.Errorf("insert unique_text: %w", err)
+				return err
 			}
+		}
 
-			// Create tag space now that uniqueTextId is available
-			if err = runInsertTagSpace(); err != nil {
-				return fmt.Errorf("insert tag space: %w", err)
-			}
+		// Create space
+		err = CreateSpace(tx, auth, space, &parentID, SpaceTypeTag)
+		if err != nil {
+			return err
+		}
 
-		} else {
-
-			// Check if tag_space already exists
-			existingTag, err := LoadExistingTag(conn, parentID, tag)
-			if err != nil {
-				return fmt.Errorf("check tag_space exists: %w", err)
-			}
-
-			if existingTag == nil {
-
-				// Create tag subspace
-				if err = runInsertTagSpace(); err != nil {
-					return fmt.Errorf("insert tag_space: %w", err)
-				}
-
-			} else {
-
-				space = existingTag
-
-				// Check-in under existing tag
-				_, err = CreateCheckin(conn, auth, space.ID)
-
-				if err != nil {
-					return fmt.Errorf("create checkin: %w", err)
-				}
-
-				err = LoadSubspaceCount(conn, []*Space{space})
-
-				if err != nil {
-					return fmt.Errorf("load subspace count: %w", err)
-				}
-
-			}
-
+		// Create tag_space
+		_, err = tx.Exec(`INSERT INTO tag_space
+			(space_id, parent_space_id, unique_text_id)
+			VALUES ($1, $2, $3)`,
+			space.ID, parentID, *uniqueTextId,
+		)
+		if err != nil {
+			return fmt.Errorf("insert tag_space: %w", err)
 		}
 
 		return nil
@@ -167,7 +119,7 @@ func CreateTagCheckin(conn *sql.DB, auth ajax.Auth, parentID uint, tag string) (
 	})
 
 	if err != nil {
-		return nil, fmt.Errorf("create tag checkin: %w", err)
+		return nil, fmt.Errorf("create tag: %w", err)
 	}
 
 	return space, nil

@@ -23,13 +23,11 @@
 				:space="p"
 				/>
 
-			<template v-else-if="p.topTitles && p.topTitles.length > 0">
-				<space-title
-					v-for="title in p.topTitles"
-					:space="title"
-					:show-checkin="false"
-					/>
-			</template>
+			<space-title
+				v-else-if="p.originalTitle"
+				:space="p.originalTitle"
+				:show-checkin="false"
+				/>
 
 			<space-creator
 				:space="p"
@@ -42,12 +40,8 @@
 
 		<div class="space-info-bar flex-row-md" @click.stop>
 			<space-type :type="space.spaceType" @click="gotoSpace()"/>
-			<el-button @click="toggleBookmark()"
-				:type="isBookmarked ? 'success' : 'default'" size="small">
-				<material-icon v-if="isBookmarked" icon="bookmark_border"/>
-				<material-icon v-else icon="bookmark"/>
-			</el-button>
-			<checkin-button :space="space" size="small"/>
+			<bookmark-button :space="space"/>
+			<checkin-button :space="space"/>
 			<space-creator :space="space"/>
 			<div class="align-end flex-row-md">
 				<el-button v-if="!showTitles" @click="expandTitles = true" size="small">
@@ -70,26 +64,22 @@
 			<space-title
 				v-if="space.userTitle"
 				:space="space.userTitle"
-				ellipsis
 				label="(Your title)"
 				/>
 			<space-title
 				v-if="space.topTitle"
 				:space="space.topTitle"
-				ellipsis
 				label="(Top title)"
 				/>
 			<space-title
 				v-if="space.originalTitle"
 				:space="space.originalTitle"
-				ellipsis
 				label="(Original title)"
 				/>
 			<space-title
 				v-for="title in newTitles"
 				:space="title"
 				@click-title="gotoSpace(title)"
-				ellipsis
 				label="(New title)"
 				/>
 			<template v-if="showAllTitles">
@@ -97,7 +87,6 @@
 					v-for="title in extraTitles"
 					:space="title"
 					@click-title="gotoSpace(title)"
-					ellipsis
 					/>
 			</template>
 			<el-button size="small" @click="showAllTitles = true">Load more</el-button>
@@ -115,7 +104,6 @@
 				v-for="tag in tagsToShow"
 				:space="tag"
 				@click-tag="gotoSpace(tag)"
-				ellipsis
 				/>
 			<el-button size="small">Load more</el-button>
 		</div>
@@ -154,6 +142,7 @@
 
 <script>
 import CheckinButton from './checkin-button.vue';
+import BookmarkButton from './bookmark-button.vue';
 import SpaceType from './space-type.vue';
 import SpaceCreator from './space-creator.vue';
 import SpaceTitle from './space-title.vue';
@@ -166,14 +155,11 @@ import {
 	SPACE_TYPES,
 } from '@/const.js';
 
-import {
-	ajaxPost,
-} from '@/utils/ajax.js';
-
 export default {
 	name: 'space-output', // recursive
 	components: {
 		CheckinButton,
+		BookmarkButton,
 		SpaceType,
 		SpaceCreator,
 		SpaceTitle,
@@ -194,8 +180,6 @@ export default {
 	},
 	data() {
 		return {
-			isBookmarked: this.space.userBookmark || false,
-
 			addingTitle: false,
 			newTitles: [],
 			expandTitles: false,
@@ -277,14 +261,6 @@ export default {
 		loadMoreTitles() {
 			this.titlesExpanded = true;
 		},
-		toggleBookmark() {
-			let newState = !this.isBookmarked;
-			this.isBookmarked = newState;
-			ajaxPost('/ajax/bookmark', {
-				spaceId: this.space.id,
-				bookmark: newState,
-			});
-		},
 	},
 };
 </script>
@@ -307,6 +283,10 @@ export default {
 		>div+div {
 			border-top: thin solid black;
 		}
+		.space-title {
+			padding-left: 10px;
+			padding-right: 10px;
+		}
 	}
 
 	>.container {
@@ -320,8 +300,7 @@ export default {
 			cursor: pointer;
 		}
 
-		>.space-info-bar, >.space-titles-bar, >.space-tags-bar {
-			cursor: default;
+		>.space-titles-bar, >.space-tags-bar {
 			font-size: smaller;
 		}
 
@@ -357,11 +336,8 @@ export default {
 .is-mobile .space-output {
 	>.container {
 		padding: 20px 10px;
-		>.space-title, >.space-tag {
+		>.space-title, >.space-tag, >.space-text {
 			padding: 20px;
-		}
-		>.space-text {
-			padding: 40px;
 		}
 		>.portal {
 			padding: 20px;

@@ -44,7 +44,7 @@ func LoadExistingTitle(conn *sql.DB,
 
 }
 
-func CreateTitleCheckin(conn *sql.DB, auth ajax.Auth, parentID uint, title string) (*Space, error) {
+func CreateTitle(conn *sql.DB, auth ajax.Auth, parentID uint, title string) (*Space, error) {
 
 	// Load unique_text ID
 	// Check for existing title space under parent
@@ -66,6 +66,19 @@ func CreateTitleCheckin(conn *sql.DB, auth ajax.Auth, parentID uint, title strin
 		return nil, fmt.Errorf("parent space does not exist: %d", parentID)
 	}
 
+	// Check if title already exists
+	existingTitle, err := LoadExistingTitle(conn, parentID, title)
+	if err != nil {
+		return nil, err
+	}
+	if existingTitle != nil {
+		err = LoadSubspaceCount(conn, []*Space{existingTitle})
+		if err != nil {
+			return nil, err
+		}
+		return existingTitle, nil
+	}
+
 	var space = &Space{
 		ParentID:  &parentID,
 		SpaceType: SpaceTypeTitle,
@@ -74,93 +87,32 @@ func CreateTitleCheckin(conn *sql.DB, auth ajax.Auth, parentID uint, title strin
 
 	err = db.InTransaction(conn, func(tx *sql.Tx) error {
 
-		var uniqueTextId *uint
-
-		// Create function to insert title space
-		var runInsertTitleSpace = func() error {
-
-			// Create space
-			err = CreateSpace(tx, auth, space, &parentID, SpaceTypeTitle)
-			if err != nil {
-				return fmt.Errorf("insert space: %w", err)
-			}
-
-			// Create title_space
-			_, err = tx.Exec(`INSERT INTO title_space
-				(space_id, parent_space_id, unique_text_id)
-				VALUES ($1, $2, $3)`,
-				space.ID, parentID, *uniqueTextId,
-			)
-
-			if err != nil {
-				return fmt.Errorf("insert title_space: %w", err)
-			}
-
-			return nil
-
-		}
-
-		// Check for existing unique_text
-		err := tx.QueryRow(`SELECT id FROM unique_text WHERE text_value = $1`,
-			title,
-		).Scan(&uniqueTextId)
-
-		if err != nil && err != sql.ErrNoRows {
-			return fmt.Errorf("load unique_text ID: %w", err)
+		uniqueTextId, err := GetUniqueTextId(tx, title)
+		if err != nil {
+			return err
 		}
 
 		if uniqueTextId == nil {
-
-			// Create unique_text
-			err := tx.QueryRow(`INSERT INTO unique_text (text_value)
-				VALUES ($1)
-				RETURNING id`,
-				title,
-			).Scan(&uniqueTextId)
-
+			uniqueTextId, err = CreateUniqueText(tx, title)
 			if err != nil {
-				return fmt.Errorf("insert unique_text: %w", err)
+				return err
 			}
+		}
 
-			// Create title space now that uniqueTextId is available
-			if err = runInsertTitleSpace(); err != nil {
-				return fmt.Errorf("insert title space: %w", err)
-			}
+		// Create space
+		err = CreateSpace(tx, auth, space, &parentID, SpaceTypeTitle)
+		if err != nil {
+			return err
+		}
 
-		} else {
-
-			// Check if title_space already exists
-			existingTitle, err := LoadExistingTitle(conn, parentID, title)
-			if err != nil {
-				return fmt.Errorf("check title_space exists: %w", err)
-			}
-
-			if existingTitle == nil {
-
-				// Create title subspace
-				if err = runInsertTitleSpace(); err != nil {
-					return fmt.Errorf("insert title_space: %w", err)
-				}
-
-			} else {
-
-				space = existingTitle
-
-				// Check-in under existing title
-				_, err = CreateCheckin(conn, auth, space.ID)
-
-				if err != nil {
-					return fmt.Errorf("create checkin: %w", err)
-				}
-
-				err = LoadSubspaceCount(conn, []*Space{space})
-
-				if err != nil {
-					return fmt.Errorf("load subspace count: %w", err)
-				}
-
-			}
-
+		// Create title_space
+		_, err = tx.Exec(`INSERT INTO title_space
+			(space_id, parent_space_id, unique_text_id)
+			VALUES ($1, $2, $3)`,
+			space.ID, parentID, *uniqueTextId,
+		)
+		if err != nil {
+			return fmt.Errorf("insert title_space: %w", err)
 		}
 
 		return nil
@@ -168,7 +120,7 @@ func CreateTitleCheckin(conn *sql.DB, auth ajax.Auth, parentID uint, title strin
 	})
 
 	if err != nil {
-		return nil, fmt.Errorf("create title checkin: %w", err)
+		return nil, fmt.Errorf("create title: %w", err)
 	}
 
 	return space, nil

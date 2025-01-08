@@ -57,7 +57,10 @@ export function alertError(error, errorCodeMessages = {}) {
 			if (customResponse) {
 				if (typeof customResponse === "string") {
 					message = customResponse;
-				} if (typeof customResponse == "object") {
+				} else if (typeof customResponse === "function") {
+					customResponse();
+					return;
+				} else if (typeof customResponse == "object") {
 					if (customResponse.message) {
 						message = customResponse.message;
 					}

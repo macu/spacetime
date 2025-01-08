@@ -10,6 +10,10 @@
 </template>
 
 <script>
+import {
+	ElMessage,
+} from 'element-plus';
+
 import bus from '@/utils/bus.js';
 
 import {
@@ -60,6 +64,14 @@ export default {
 		addCheckIn() {
 			ajaxPost('/ajax/space/create/checkin', {
 				parentId: this.space.id,
+			}, {
+				429() {
+					ElMessage({
+						message: 'Rate limit exceeded. Max 1 check-in per minute.',
+						type: 'error',
+						showClose: true,
+					});
+				},
 			}).then(() => {
 				bus.emit('direct-check-in', {
 					spaceId: this.space.id,

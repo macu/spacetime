@@ -26,6 +26,7 @@ export default {
 	border: $text-border;
 	color: $text-color;
 	border-radius: $border-radius;
+	box-shadow: $text-inner-drop-shadow;
 
 	padding: 20px;
 
