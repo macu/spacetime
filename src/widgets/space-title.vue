@@ -1,13 +1,13 @@
 <template>
 <div class="space-title flex-row nowrap" :class="{'ellipsis': ellipsis}">
-	<material-icon :icon="icon"/>
-	<span v-if="label" class="label" v-text="label"/>
+	<material-icon :icon="icon" @click="$emit('click-title')"/>
 	<checkin-button
 		v-if="showCheckin"
 		:space="space"
 		@check-in="$emit('check-in')"
 		size="small"
 		/>
+	<span v-if="label" class="label" v-text="label"/>
 	<span
 		@click="$emit('click-title')"
 		class="text"

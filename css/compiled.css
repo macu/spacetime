@@ -359,6 +359,7 @@ div.center {
 }
 .space-output > .container > .space-titles-bar, .space-output > .container > .space-tags-bar {
   font-size: smaller;
+  cursor: default;
 }
 .space-output > .container > .space-title, .space-output > .container > .space-tag {
   padding: 40px;

@@ -42,9 +42,14 @@
 			<space-type :type="space.spaceType" @click="gotoSpace()"/>
 			<bookmark-button :space="space"/>
 			<checkin-button :space="space"/>
+			<space-title
+				v-if="!expandTitles && firstTitle"
+				:space="firstTitle"
+				:label="firstTitle.label"
+				/>
 			<space-creator :space="space"/>
 			<div class="align-end flex-row-md">
-				<el-button v-if="!showTitles" @click="expandTitles = true" size="small">
+				<el-button v-if="!expandTitles" @click="expandTitles = true" size="small">
 					Show titles
 				</el-button>
 				<el-button v-if="!showTags" @click="expandTags = true" class="align-end" size="small">
@@ -53,7 +58,7 @@
 			</div>
 		</div>
 
-		<div v-if="showTitles" class="space-titles-bar flex-row-md" @click.stop>
+		<div v-if="expandTitles" class="space-titles-bar flex-row-md" @click.stop>
 			<strong class="label">Title(s)</strong>
 			<add-title
 				:parent-id="space.id"
@@ -62,33 +67,11 @@
 				:class="{'flex-100': addingTitle}"
 				/>
 			<space-title
-				v-if="space.userTitle"
-				:space="space.userTitle"
-				label="(Your title)"
-				/>
-			<space-title
-				v-if="space.topTitle"
-				:space="space.topTitle"
-				label="(Top title)"
-				/>
-			<space-title
-				v-if="space.originalTitle"
-				:space="space.originalTitle"
-				label="(Original title)"
-				/>
-			<space-title
-				v-for="title in newTitles"
+				v-for="title in titles"
 				:space="title"
 				@click-title="gotoSpace(title)"
-				label="(New title)"
+				:label="title.label"
 				/>
-			<template v-if="showAllTitles">
-				<space-title
-					v-for="title in extraTitles"
-					:space="title"
-					@click-title="gotoSpace(title)"
-					/>
-			</template>
 			<el-button size="small" @click="showAllTitles = true">Load more</el-button>
 		</div>
 
@@ -183,8 +166,8 @@ export default {
 			addingTitle: false,
 			newTitles: [],
 			expandTitles: false,
-			showAllTitles: false,
-			extraTitles: [],
+			loadingTitles: false,
+			moreTitles: [],
 
 			addingTag: false,
 			newTags: [],
@@ -206,18 +189,47 @@ export default {
 		hasParentPath() {
 			return !!this.space.parentPath && this.space.parentPath.length > 0;
 		},
-		showTitles() {
-			if (this.expandTitles) {
-				return true;
+		titles() {
+			let titles = this.newTitles.map(t => {
+				return {
+					...t,
+					label: '(New title)',
+				};
+			});
+
+			if (this.space.userTitle) {
+				titles.push({
+					...this.space.userTitle,
+					label: '(Your title)',
+				});
 			}
-			switch (this.space.spaceType) {
-				case SPACE_TYPES.CHECK_IN:
-				case SPACE_TYPES.TITLE:
-				case SPACE_TYPES.TAG:
-					return false;
+
+			if (this.space.topTitle) {
+				titles.push({
+					...this.space.topTitle,
+					label: '(Top title)',
+				});
 			}
-			// All other types show by default
-			return true;
+
+			if (this.space.originalTitle) {
+				titles.push({
+					...this.space.originalTitle,
+					label: '(Original title)',
+				});
+			}
+
+			return titles.concat(this.moreTitles.map(t => {
+				return {
+					...t,
+					label: null,
+				};
+			}));
+		},
+		firstTitle() {
+			if (this.titles.length > 0) {
+				return this.titles[0];
+			}
+			return null;
 		},
 		topTags() {
 			return this.space.topTags || [];
@@ -229,14 +241,7 @@ export default {
 			if (this.expandTags) {
 				return true;
 			}
-			switch (this.space.spaceType) {
-				case SPACE_TYPES.CHECK_IN:
-				case SPACE_TYPES.TITLE:
-				case SPACE_TYPES.TAG:
-					return false;
-			}
-			// All other types show by default
-			return true;
+			return false;
 		},
 		tagsToShow() {
 			let all = this.newTags.concat(this.topTags);
@@ -302,6 +307,7 @@ export default {
 
 		>.space-titles-bar, >.space-tags-bar {
 			font-size: smaller;
+			cursor: default;
 		}
 
 		>.space-title, >.space-tag {
