@@ -140,12 +140,11 @@ func LoadTopSubspaces(conn *sql.DB, auth *ajax.Auth,
 		space.space_type, space.created_at, space.created_by,
 		user_account.handle, user_account.display_name,
 		`+bookmarkFieldSql+`,
-		COUNT(subspace.id) AS subspace_count
+		(SELECT COUNT(*) FROM space AS subspace
+			WHERE subspace.parent_id = space.id) AS subspace_count
 		FROM space
 		LEFT JOIN user_account ON user_account.id = space.created_by
-		LEFT JOIN space AS subspace ON subspace.parent_id = space.id
 		WHERE `+parentClauseSql+`
-		GROUP BY space.id, space.space_type, space.created_at, space.created_by, user_account.handle, user_account.display_name, user_bookmark
 		ORDER BY subspace_count DESC, space.created_at DESC
 		LIMIT `+db.Arg(&args, limit)+`
 		OFFSET `+db.Arg(&args, offset),
@@ -205,11 +204,11 @@ func LoadSubspaceCount(conn *sql.DB, spaces []*Space) error {
 	}
 
 	rows, err := conn.Query(`SELECT space.id,
-		COUNT(subspace.id) AS subspace_count
+		(SELECT COUNT(*) FROM space AS subspace
+			WHERE subspace.parent_id = space.id) AS subspace_count
 		FROM space
 		LEFT JOIN space AS subspace ON subspace.parent_id = space.id
-		WHERE space.id IN (`+inClauseSql+`)
-		GROUP BY space.id`,
+		WHERE space.id IN (`+inClauseSql+`)`,
 		args...,
 	)
 

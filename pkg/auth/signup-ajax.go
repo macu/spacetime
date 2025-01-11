@@ -272,7 +272,7 @@ func AjaxSignupVerify(db *sql.DB, auth *ajax.Auth, w http.ResponseWriter, r *htt
 			`INSERT INTO space (parent_id, space_type, created_at, created_by)
 				VALUES (NULL, $1, $2, $3)
 				RETURNING id`,
-			nil, spacetime.SpaceTypeUser, time.Now(), *userID,
+			spacetime.SpaceTypeUser, time.Now(), *userID,
 		).Scan(&userSpaceID)
 
 		if err != nil {

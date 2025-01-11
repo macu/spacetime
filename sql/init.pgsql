@@ -3,10 +3,8 @@
 DROP INDEX IF EXISTS space_time_idx;
 DROP INDEX IF EXISTS space_type_time_idx;
 DROP INDEX IF EXISTS space_user_throttle;
-DROP INDEX IF EXISTS idx_user_space_user_id;
 DROP TABLE IF EXISTS user_space_bookmark CASCADE;
 DROP TABLE IF EXISTS user_space CASCADE;
-DROP TABLE IF EXISTS space_checkin_activity CASCADE;
 DROP TABLE IF EXISTS json_attribute_space CASCADE;
 DROP TABLE IF EXISTS naked_text_space CASCADE;
 DROP TABLE IF EXISTS stream_of_consciousness_space CASCADE;
@@ -132,10 +130,9 @@ CREATE INDEX space_user_throttle ON space (created_by, created_at);
 
 CREATE TABLE user_space ( -- a user's personal space
 	space_id INTEGER PRIMARY KEY REFERENCES space (id) ON DELETE CASCADE,
-	user_id INTEGER NOT NULL REFERENCES user_account (id) ON DELETE CASCADE
+	user_id INTEGER NOT NULL REFERENCES user_account (id) ON DELETE CASCADE,
+	UNIQUE (user_id)
 );
-
-CREATE INDEX idx_user_space_user_id ON user_space (user_id);
 
 CREATE TABLE link_space ( -- a link to another space somewhere else
 	space_id INTEGER PRIMARY KEY REFERENCES space (id) ON DELETE CASCADE,

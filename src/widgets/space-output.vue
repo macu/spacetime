@@ -10,7 +10,7 @@
 
 			<material-icon icon="arrow_right_alt"/>
 
-			<space-type :type="p.spaceType"/>
+			<space-type :space="p"/>
 
 			<space-title
 				v-if="p.spaceType === SPACE_TYPES.TITLE"
@@ -39,7 +39,7 @@
 	<div class="container flex-column-md">
 
 		<div class="space-info-bar flex-row-md" @click.stop>
-			<space-type :type="space.spaceType" @click="gotoSpace()"/>
+			<space-type :space="space" @click="gotoSpace()"/>
 			<bookmark-button :space="space"/>
 			<checkin-button :space="space"/>
 			<space-title

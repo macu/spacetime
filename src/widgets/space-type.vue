@@ -13,14 +13,17 @@ import {
 
 export default {
 	props: {
-		type: {
-			type: String,
+		space: {
+			type: Object,
 			required: true,
 		},
 	},
 	computed: {
 		typeOutput() {
-			switch (this.type) {
+			switch (this.space.spaceType) {
+				case SPACE_TYPES.USER:
+					return this.space.authorHandle ||
+						this.space.authorDisplayName || 'User';
 				case SPACE_TYPES.SPACE:
 					return 'Space';
 				case SPACE_TYPES.CHECK_IN:
@@ -41,7 +44,7 @@ export default {
 			return 'Unknown';
 		},
 		icon() {
-			return SPACE_TYPE_ICONS[this.type];
+			return SPACE_TYPE_ICONS[this.space.spaceType];
 		},
 	},
 };

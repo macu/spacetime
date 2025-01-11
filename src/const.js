@@ -1,4 +1,5 @@
 export const SPACE_TYPES = {
+	USER: 'user',
 	SPACE: 'space',
 	CHECK_IN: 'check-in',
 	SPACE_LINK: 'space-link',
@@ -11,6 +12,7 @@ export const SPACE_TYPES = {
 };
 
 export const SPACE_TYPE_ICONS = {
+	[SPACE_TYPES.USER]: 'person',
 	[SPACE_TYPES.SPACE]: 'orbit',
 	[SPACE_TYPES.SPACE_LINK]: 'link',
 	[SPACE_TYPES.CHECK_IN]: 'check_circle',
