@@ -3,10 +3,8 @@
 DROP INDEX IF EXISTS space_time_idx;
 DROP INDEX IF EXISTS space_type_time_idx;
 DROP INDEX IF EXISTS space_user_throttle;
-DROP INDEX IF EXISTS space_check_in_idx;
-DROP TABLE IF EXISTS user_check_in CASCADE;
 DROP TABLE IF EXISTS user_space_bookmark CASCADE;
-DROP TABLE IF EXISTS user_space_structure CASCADE;
+DROP TABLE IF EXISTS user_space CASCADE;
 DROP TABLE IF EXISTS json_attribute_space CASCADE;
 DROP TABLE IF EXISTS naked_text_space CASCADE;
 DROP TABLE IF EXISTS stream_of_consciousness_space CASCADE;
@@ -95,14 +93,17 @@ CREATE TABLE unique_text (
 );
 
 CREATE TYPE space_type AS ENUM (
-	'user', -- a user's personal space (user can create multiple)
+	'user', -- user's personal space
 	'space', -- (nameless; contains titles and other spaces)
-	'text' -- plain text entered by a user
+	'check-in', -- user checking in directly on a space
 	'space-link', -- user linking in a space to another space
 	'title', -- plain text (no newlines), special handling to give a space an active title
-	'tag' -- plain text (no newlines), special handling to give a space a set of active tags
+	'tag', -- plain text (no newlines), special handling to give a space a set of active tags
+	'text', -- plain text entered by a user
+	'naked-text', -- text with realtime replay data
+	'stream-of-consciousness', -- contains a stream of text checkins ("text-radio")
+	'json-attribute' -- URL and json path and refresh rate
 
-	-- 'json-attribute' -- URL and json path and refresh rate
 	-- 'picture',
 	-- 'audio',
 	-- 'video',
@@ -127,18 +128,10 @@ CREATE INDEX space_time_idx ON space (parent_id, created_at); -- for top queries
 CREATE INDEX space_type_time_idx ON space (parent_id, space_type, created_at);
 CREATE INDEX space_user_throttle ON space (created_by, created_at);
 
-CREATE TABLE user_check_in (
-	user_id INTEGER NOT NULL REFERENCES user_account (id) ON DELETE CASCADE,
-	space_id INTEGER NOT NULL REFERENCES space (id) ON DELETE CASCADE,
-	created_at TIMESTAMPTZ NOT NULL,
-	PRIMARY KEY (user_id, space_id, created_at)
-);
-
-CREATE INDEX space_check_in_idx ON user_checkin (space_id, created_at);
-
-CREATE TABLE user_space_pins ( -- a user's structuring of their own space
+CREATE TABLE user_space ( -- a user's personal space
 	space_id INTEGER PRIMARY KEY REFERENCES space (id) ON DELETE CASCADE,
-	index_position INTEGER NOT NULL
+	user_id INTEGER NOT NULL REFERENCES user_account (id) ON DELETE CASCADE,
+	UNIQUE (user_id)
 );
 
 CREATE TABLE link_space ( -- a link to another space somewhere else
@@ -165,10 +158,17 @@ CREATE TABLE tag_space (
 CREATE TABLE text_space (
 	space_id INTEGER PRIMARY KEY REFERENCES space (id) ON DELETE CASCADE,
 	parent_space_id INTEGER NOT NULL REFERENCES space (id) ON DELETE CASCADE,
-	title_unique_text_id INTEGER REFERENCES unique_text (id) ON DELETE SET NULL,
 	unique_text_id INTEGER NOT NULL REFERENCES unique_text (id) ON DELETE CASCADE,
-	replay_data TEXT, -- optional keystroke progression
-	started_at TIMESTAMPTZ -- included with replay_data
+	UNIQUE (parent_space_id, unique_text_id)
+);
+
+CREATE TABLE naked_text_space (
+	-- allow duplicates of final text (replay data will probably always be unique)
+	space_id INTEGER PRIMARY KEY REFERENCES space (id) ON DELETE CASCADE,
+	parent_space_id INTEGER NOT NULL REFERENCES space (id) ON DELETE CASCADE,
+	final_unique_text_id INTEGER NOT NULL REFERENCES unique_text (id) ON DELETE CASCADE,
+	replay_data TEXT NOT NULL,
+	typing_started_at TIMESTAMPTZ
 );
 
 CREATE TABLE stream_of_consciousness_space (
