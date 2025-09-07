@@ -119,12 +119,6 @@ func AjaxLoadSpace(db *sql.DB, auth *ajax.Auth,
 				return nil, http.StatusInternalServerError
 			}
 
-			err = spacetime.LoadOriginalTitles(db, path)
-			if err != nil {
-				logging.LogError(r, auth, err)
-				return nil, http.StatusInternalServerError
-			}
-
 			space.ParentPath = &path
 		}
 	}

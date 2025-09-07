@@ -15,20 +15,31 @@ cd /treetime
 sh ./bin/restart-all.sh
 ```
 
-## Access postgres interactive shell
+## Init DB and access postgres interactive shell
 
 Run `sql/init.pgsql` by copying contents into shell.
 
 ```bash
+sh ./bin/psql-execute-script.sh < sql/init.pgsql
 sh ./bin/psql-shell.sh
 ```
 
 ## Rebuild web app
 
+The app will re-compile automatically when any Go source files change.
+
+Run the following command to force the web container to restart.
+
 ```bash
 sh ./bin/restart-web.sh
 ```
 
+Run the following command to re-compile the frontend web bundle.
+
+```bash
+npm run dev
+```
+
 ## Test in browser
 
-http://localhost:8080/
+http://localhost:2024/

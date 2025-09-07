@@ -12,21 +12,20 @@
 
 			<space-type :space="p"/>
 
-			<space-title
-				v-if="p.spaceType === SPACE_TYPES.TITLE"
-				:space="p"
-				:show-checkin="false"
+			<span v-if="p.spaceType === SPACE_TYPES.SPACE"
+				v-text="p.label"
+				class="label"
 				/>
 
-			<space-tag
+			<span v-else-if="p.spaceType === SPACE_TYPES.TITLE"
+				v-text="p.text"
+				class="label"
+				/>
+
+			<span
 				v-else-if="p.spaceType === SPACE_TYPES.TAG"
-				:space="p"
-				/>
-
-			<space-title
-				v-else-if="p.originalTitle"
-				:space="p.originalTitle"
-				:show-checkin="false"
+				v-text="p.text"
+				class="label"
 				/>
 
 			<space-creator
@@ -42,11 +41,9 @@
 			<space-type :space="space" @click="gotoSpace()"/>
 			<bookmark-button :space="space"/>
 			<checkin-button :space="space"/>
-			<space-title
-				v-if="!expandTitles && firstTitle"
-				:space="firstTitle"
-				:label="firstTitle.label"
-				/>
+			<div v-if="space.label" class="space-label">
+				<strong v-text="space.label"/>
+			</div>
 			<space-creator :space="space"/>
 			<div class="align-end flex-row-md">
 				<el-button v-if="!expandTitles" @click="expandTitles = true" size="small">
@@ -288,9 +285,11 @@ export default {
 		>div+div {
 			border-top: thin solid black;
 		}
-		.space-title {
+		.label {
+			display: inline-block;
 			padding-left: 10px;
 			padding-right: 10px;
+			font-weight: bold;
 		}
 	}
 

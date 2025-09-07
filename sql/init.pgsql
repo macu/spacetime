@@ -11,7 +11,8 @@ DROP TABLE IF EXISTS stream_of_consciousness_space CASCADE;
 DROP TABLE IF EXISTS text_space CASCADE;
 DROP TABLE IF EXISTS tag_space CASCADE;
 DROP TABLE IF EXISTS title_space CASCADE;
-DROP TABLE IF EXISTS checkin_space CASCADE;
+DROP TABLE IF EXISTS link_space CASCADE;
+DROP TABLE IF EXISTS subspace CASCADE;
 DROP TABLE IF EXISTS space CASCADE;
 DROP TABLE IF EXISTS unique_text CASCADE;
 DROP TYPE IF EXISTS space_type;
@@ -128,6 +129,13 @@ CREATE INDEX space_time_idx ON space (parent_id, created_at); -- for top queries
 CREATE INDEX space_type_time_idx ON space (parent_id, space_type, created_at);
 CREATE INDEX space_user_throttle ON space (created_by, created_at);
 
+CREATE TABLE subspace (
+	parent_id INTEGER NOT NULL, -- 'space' type; 0 for root spaces
+	space_id INTEGER NOT NULL REFERENCES space (id) ON DELETE CASCADE,
+	label_unique_text_id INTEGER NOT NULL REFERENCES unique_text (id) ON DELETE CASCADE,
+	UNIQUE (parent_id, label_unique_text_id)
+);
+
 CREATE TABLE user_space ( -- a user's personal space
 	space_id INTEGER PRIMARY KEY REFERENCES space (id) ON DELETE CASCADE,
 	user_id INTEGER NOT NULL REFERENCES user_account (id) ON DELETE CASCADE,
@@ -135,10 +143,10 @@ CREATE TABLE user_space ( -- a user's personal space
 );
 
 CREATE TABLE link_space ( -- a link to another space somewhere else
+	parent_id INTEGER NOT NULL REFERENCES space (id) ON DELETE CASCADE,
 	space_id INTEGER PRIMARY KEY REFERENCES space (id) ON DELETE CASCADE,
-	parent_space_id INTEGER NOT NULL REFERENCES space (id) ON DELETE CASCADE,
 	link_space_id INTEGER NOT NULL REFERENCES space (id) ON DELETE CASCADE,
-	UNIQUE (parent_space_id, link_space_id)
+	UNIQUE (parent_id, link_space_id)
 );
 
 CREATE TABLE title_space (
@@ -168,13 +176,13 @@ CREATE TABLE naked_text_space (
 	parent_space_id INTEGER NOT NULL REFERENCES space (id) ON DELETE CASCADE,
 	final_unique_text_id INTEGER NOT NULL REFERENCES unique_text (id) ON DELETE CASCADE,
 	replay_data TEXT NOT NULL,
-	typing_started_at TIMESTAMPTZ
+	typing_start_at TIMESTAMPTZ
 );
 
 CREATE TABLE stream_of_consciousness_space (
 	space_id INTEGER PRIMARY KEY REFERENCES space (id) ON DELETE CASCADE,
 	parent_space_id INTEGER NOT NULL REFERENCES space (id) ON DELETE CASCADE,
-	stream_closed_at TIMESTAMPTZ -- null until closed
+	stream_closed_at TIMESTAMPTZ -- null until closed (can be reopened)
 );
 
 CREATE TABLE json_attribute_space (

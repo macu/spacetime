@@ -1,8 +1,9 @@
 package spacetime
 
-const TitleMaxLength = 64
-const TagMaxLength = 64
-const TextMaxLength = 1024
+const LabelMaxLength = 128
+const TitleMaxLength = 256
+const TagMaxLength = 128
+const TextMaxLength = 2048
 const NakedTextMaxDeltas = TextMaxLength * 10
 
 const SpaceTypeSpace = "space"

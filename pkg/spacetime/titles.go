@@ -100,7 +100,7 @@ func CreateTitle(conn *sql.DB, auth ajax.Auth, parentID uint, title string) (*Sp
 		}
 
 		// Create space
-		err = CreateSpace(tx, auth, space, &parentID, SpaceTypeTitle)
+		err = CreateSpace(tx, auth, space, parentID, SpaceTypeTitle)
 		if err != nil {
 			return err
 		}

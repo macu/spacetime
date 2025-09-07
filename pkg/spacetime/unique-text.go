@@ -28,3 +28,14 @@ func CreateUniqueText(conn db.DBConn, text string) (*uint, error) {
 	}
 	return uniqueTextId, nil
 }
+
+func GetOrCreateUniqueTextId(conn db.DBConn, text string) (*uint, error) {
+	uniqueTextId, err := GetUniqueTextId(conn, text)
+	if err != nil {
+		return nil, err
+	}
+	if uniqueTextId != nil {
+		return uniqueTextId, nil
+	}
+	return CreateUniqueText(conn, text)
+}

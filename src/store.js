@@ -57,6 +57,9 @@ export const store = createStore({
 			}
 			return null;
 		},
+		labelMaxLength() {
+			return window.appConstants.labelMaxLength;
+		},
 		titleMaxLength() {
 			return window.appConstants.titleMaxLength;
 		},

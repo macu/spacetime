@@ -1,9 +1,10 @@
 <template>
 <div class="form-layout-form-field flex-column">
-	<div v-if="showTitle" class="flex-row">
+	<div v-if="showTitle" class="flex-row title-row">
 		<h3 class="flex-1"><slot name="title">{{title}}</slot></h3>
 		<em v-if="required">Required</em>
 	</div>
+	<div v-if="$slots.tip" class="tip"><slot name="tip"/></div>
 	<div class="form-field-body flex-column">
 		<slot><span v-if="showValue" class="form-value" v-text="value"/></slot>
 	</div>
@@ -39,10 +40,15 @@ export default {
 
 <style lang="scss">
 .form-layout-form-field {
+	display: flex;
+	flex-direction: column;
+	row-gap: 10px;
+
 	background-color: #eee;
 	padding: 10px;
 	border-radius: 8px;
-	>h3 {
+
+	>.title-row {
 		font-weight: bold;
 	}
 	>.form-field-body {

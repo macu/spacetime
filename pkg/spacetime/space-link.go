@@ -84,7 +84,7 @@ func CreateSpaceLink(conn *sql.DB, auth ajax.Auth, parentID, spaceID uint) (*Spa
 		err = db.InTransaction(conn, func(tx *sql.Tx) error {
 
 			// Create space link
-			err = CreateSpace(tx, auth, &space, &parentID, SpaceTypeLink)
+			err = CreateSpace(tx, auth, &space, parentID, SpaceTypeLink)
 			if err != nil {
 				return fmt.Errorf("insert space: %w", err)
 			}

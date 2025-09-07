@@ -101,7 +101,11 @@ func CreateText(conn *sql.DB, auth ajax.Auth, parentID *uint, text string) (*Spa
 		}
 
 		// Create space
-		err = CreateSpace(tx, auth, space, parentID, SpaceTypeText)
+		if parentID == nil {
+			parentID = new(uint)
+			*parentID = 0
+		}
+		err = CreateSpace(tx, auth, space, *parentID, SpaceTypeText)
 		if err != nil {
 			return err
 		}
@@ -110,7 +114,7 @@ func CreateText(conn *sql.DB, auth ajax.Auth, parentID *uint, text string) (*Spa
 		_, err = tx.Exec(`INSERT INTO text_space
 			(space_id, parent_space_id, unique_text_id)
 			VALUES ($1, $2, $3)`,
-			space.ID, parentID, *uniqueTextId,
+			space.ID, *parentID, *uniqueTextId,
 		)
 		if err != nil {
 			return fmt.Errorf("insert text_space: %w", err)

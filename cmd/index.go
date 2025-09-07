@@ -19,6 +19,7 @@ func indexHandler(db *sql.DB, user *ajax.Auth, w http.ResponseWriter, r *http.Re
 		Local              bool
 		VersionStamp       string
 		PasswordMinLength  uint
+		LabelMaxLength     uint
 		TitleMaxLength     uint
 		TagMaxLength       uint
 		TextMaxLength      uint
@@ -28,6 +29,7 @@ func indexHandler(db *sql.DB, user *ajax.Auth, w http.ResponseWriter, r *http.Re
 		env.IsLocal(),
 		env.GetCacheControlVersionStamp(),
 		auth.PasswordMinLength,
+		spacetime.LabelMaxLength,
 		spacetime.TitleMaxLength,
 		spacetime.TagMaxLength,
 		spacetime.TextMaxLength,

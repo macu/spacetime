@@ -37,26 +37,6 @@ func AjaxLoadTopSubspaces(db *sql.DB, auth *ajax.Auth,
 		return nil, http.StatusInternalServerError
 	}
 
-	if auth != nil {
-		err = spacetime.LoadLastUserTitles(db, *auth, spaces)
-		if err != nil {
-			logging.LogError(r, auth, err)
-			return nil, http.StatusInternalServerError
-		}
-	}
-
-	err = spacetime.LoadOriginalTitles(db, spaces)
-	if err != nil {
-		logging.LogError(r, auth, err)
-		return nil, http.StatusInternalServerError
-	}
-
-	err = spacetime.LoadTopTitles(db, spaces)
-	if err != nil {
-		logging.LogError(r, auth, err)
-		return nil, http.StatusInternalServerError
-	}
-
 	if includeTags {
 		err = spacetime.LoadTopTags(db, spaces, 0, spacetime.DefaultTagsLimit)
 		if err != nil {

@@ -22,7 +22,7 @@ func CreateCheckin(conn *sql.DB, auth ajax.Auth, parentID uint) (*Space, error) 
 
 	var space = Space{}
 
-	err = CreateSpace(conn, auth, &space, &parentID, SpaceTypeCheckin)
+	err = CreateSpace(conn, auth, &space, parentID, SpaceTypeCheckin)
 	if err != nil {
 		return nil, fmt.Errorf("create checkin: %w", err)
 	}

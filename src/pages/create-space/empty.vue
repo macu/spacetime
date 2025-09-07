@@ -3,11 +3,11 @@
 
 	<space-loader v-if="parentId" :space-id="parentId" include-parent-path>
 
-		<form-fields :posting="posting" @submit="submit"/>
+		<form-fields :posting="posting" :root="root" @submit="submit"/>
 
 	</space-loader>
 
-	<form-fields v-else :posting="posting" @submit="submit"/>
+	<form-fields v-else :posting="posting" :root="root" @submit="submit"/>
 
 </div>
 </template>
@@ -32,15 +32,21 @@ export default {
 	},
 	computed: {
 		parentId() {
-			return this.$route.query.parentId || null;
+			return this.$route.query.parentId ?
+				parseInt(this.$route.query.parentId, 10) : null;
+		},
+		root() {
+			return this.parentId === null;
 		},
 	},
 	methods: {
 		submit(payload) {
 			this.posting = true;
-			ajaxPost('/ajax/space/create/empty', {
+			ajaxPost('/ajax/space/create/space', {
 				parentId: this.parentId,
 				...payload,
+			}, {
+				409: 'The given label already exists at this level.',
 			}).then(response => {
 				this.$router.replace({
 					name: 'space',

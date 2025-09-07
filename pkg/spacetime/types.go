@@ -13,6 +13,8 @@ type Space struct {
 
 	Text *string `json:"text,omitempty"` // tag, title, text
 
+	Label *string `json:"label,omitempty"`
+
 	FinalText  *string    `json:"finalText,omitempty"`  // naked-text
 	ReplayData *NakedText `json:"replayData,omitempty"` // naked-text
 

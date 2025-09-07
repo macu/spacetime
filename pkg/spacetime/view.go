@@ -35,15 +35,19 @@ func LoadSpace(conn *sql.DB, auth *ajax.Auth, id uint) (*Space, error) {
 
 	err := conn.QueryRow(`SELECT space.parent_id, space.space_type,
 		space.created_at, space.created_by,
+		unique_text.text_value AS label,
 		user_account.handle, user_account.display_name,
 		`+bookmarkFieldSql+`
 		FROM space
+		LEFT JOIN subspace ON space.id = subspace.space_id
+		LEFT JOIN unique_text ON unique_text.id = subspace.label_unique_text_id
 		LEFT JOIN user_account ON user_account.id = space.created_by
 		WHERE space.id = `+db.Arg(&args, id)+`
 		LIMIT 1`,
 		args...,
 	).Scan(&space.ParentID, &space.SpaceType,
 		&space.CreatedAt, &space.CreatedBy,
+		&space.Label,
 		&space.AuthorHandle, &space.AuthorDisplayName,
 		&space.UserBookmark,
 	)
@@ -138,11 +142,14 @@ func LoadTopSubspaces(conn *sql.DB, auth *ajax.Auth,
 
 	rows, err := conn.Query(`SELECT space.id,
 		space.space_type, space.created_at, space.created_by,
+		unique_text.text_value AS label,
 		user_account.handle, user_account.display_name,
 		`+bookmarkFieldSql+`,
 		(SELECT COUNT(*) FROM space AS subspace
 			WHERE subspace.parent_id = space.id) AS subspace_count
 		FROM space
+		LEFT JOIN subspace ON subspace.space_id = space.id
+		LEFT JOIN unique_text ON unique_text.id = subspace.label_unique_text_id
 		LEFT JOIN user_account ON user_account.id = space.created_by
 		WHERE `+parentClauseSql+`
 		ORDER BY subspace_count DESC, space.created_at DESC
@@ -163,6 +170,7 @@ func LoadTopSubspaces(conn *sql.DB, auth *ajax.Auth,
 		}
 		err = rows.Scan(&space.ID, &space.SpaceType,
 			&space.CreatedAt, &space.CreatedBy,
+			&space.Label,
 			&space.AuthorHandle, &space.AuthorDisplayName,
 			&space.UserBookmark,
 			&space.TotalSubspaces,

@@ -11,31 +11,53 @@ import (
 	"spacetime/pkg/utils/types"
 )
 
-func AjaxCreateEmptySpace(db *sql.DB, auth ajax.Auth,
+func AjaxCreateSubspace(db *sql.DB, auth ajax.Auth,
 	w http.ResponseWriter, r *http.Request,
 ) (interface{}, int) {
-
-	blocked, err := spacetime.CheckCreateSpaceThrottleBlock(db, auth)
-	if err != nil {
-		logging.LogError(r, &auth, err)
-		return nil, http.StatusInternalServerError
-	}
-	if blocked {
-		return nil, http.StatusTooManyRequests
-	}
 
 	parentId, err := types.AtoUintNilIfEmpty(r.FormValue("parentId"))
 	if err != nil {
 		return nil, http.StatusBadRequest
 	}
 
-	title := strings.TrimSpace(r.FormValue("title")) // optional
+	label := types.NormalizeSpaces(r.FormValue("label")) // label is required
+	if label == "" || !spacetime.ValidateLabel(label) {
+		return nil, http.StatusBadRequest
+	}
 
+	title := types.NormalizeSpaces(r.FormValue("title")) // title is optional
 	if title != "" && !spacetime.ValidateTitle(title) {
 		return nil, http.StatusBadRequest
 	}
 
-	space, err := spacetime.CreateEmptySpace(db, auth, parentId)
+	// check throttle
+	blocked, err := spacetime.CheckCreateSpaceThrottleBlock(db, auth)
+	if err != nil {
+		logging.LogError(r, &auth, err)
+		return nil, http.StatusInternalServerError
+	} else if blocked {
+		return nil, http.StatusTooManyRequests
+	}
+
+	if parentId != nil {
+		// check if parent exists
+		if exists, err := spacetime.CheckSpaceExists(db, *parentId); err != nil {
+			logging.LogError(r, &auth, err)
+			return nil, http.StatusInternalServerError
+		} else if !exists {
+			return nil, http.StatusNotFound
+		}
+	}
+
+	// check if the given label exists under the given parent
+	if exists, err := spacetime.CheckSubspaceLabelExists(db, parentId, label); err != nil {
+		logging.LogError(r, &auth, err)
+		return nil, http.StatusInternalServerError
+	} else if exists {
+		return nil, http.StatusConflict
+	}
+
+	space, err := spacetime.CreateSubspace(db, auth, parentId, label)
 	if err != nil {
 		logging.LogError(r, &auth, err)
 		return nil, http.StatusInternalServerError
@@ -57,6 +79,24 @@ func AjaxCreateLinkSpace(db *sql.DB, auth ajax.Auth,
 	w http.ResponseWriter, r *http.Request,
 ) (interface{}, int) {
 
+	// parent required
+	parentID, err := types.AtoUint(r.FormValue("parentId"))
+	if err != nil {
+		return nil, http.StatusBadRequest
+	}
+
+	// space to link required
+	spaceID, err := types.AtoUint(r.FormValue("spaceId"))
+	if err != nil {
+		return nil, http.StatusBadRequest
+	}
+
+	// title optional
+	title := types.NormalizeSpaces(r.FormValue("title"))
+	if title != "" && !spacetime.ValidateTitle(title) {
+		return nil, http.StatusBadRequest
+	}
+
 	blocked, err := spacetime.CheckCreateSpaceThrottleBlock(db, auth)
 	if err != nil {
 		logging.LogError(r, &auth, err)
@@ -66,19 +106,21 @@ func AjaxCreateLinkSpace(db *sql.DB, auth ajax.Auth,
 		return nil, http.StatusTooManyRequests
 	}
 
-	// parent required
-	parentID, err := types.AtoUint(r.FormValue("parentId"))
-	if err != nil {
-		return nil, http.StatusBadRequest
+	// check if link already exists
+	if exists, err := spacetime.CheckLinkSpaceExists(db, parentID, spaceID); err != nil {
+		logging.LogError(r, &auth, err)
+		return nil, http.StatusInternalServerError
+	} else if exists {
+		return nil, http.StatusConflict
 	}
 
-	// space required
-	spaceID, err := types.AtoUint(r.FormValue("spaceId"))
-	if err != nil {
-		return nil, http.StatusBadRequest
+	// check if parent exists
+	if exists, err := spacetime.CheckSpaceExists(db, parentID); err != nil {
+		logging.LogError(r, &auth, err)
+		return nil, http.StatusInternalServerError
+	} else if !exists {
+		return nil, http.StatusNotFound
 	}
-
-	title := strings.TrimSpace(r.FormValue("title")) // optional
 
 	space, err := spacetime.CreateSpaceLink(db, auth, parentID, spaceID)
 	if err != nil {
@@ -98,7 +140,7 @@ func AjaxCreateLinkSpace(db *sql.DB, auth ajax.Auth,
 
 }
 
-func AjaxCreateCheckinSpace(db *sql.DB, auth ajax.Auth,
+func AjaxCreateCheckin(db *sql.DB, auth ajax.Auth,
 	w http.ResponseWriter, r *http.Request,
 ) (interface{}, int) {
 
@@ -108,12 +150,11 @@ func AjaxCreateCheckinSpace(db *sql.DB, auth ajax.Auth,
 		return nil, http.StatusBadRequest
 	}
 
-	blocked, err := spacetime.CheckCreateCheckinThrottleBlock(db, auth, parentID)
-	if err != nil {
+	// check throttle
+	if blocked, err := spacetime.CheckCreateCheckinThrottleBlock(db, auth, parentID); err != nil {
 		logging.LogError(r, &auth, err)
 		return nil, http.StatusInternalServerError
-	}
-	if blocked {
+	} else if blocked {
 		return nil, http.StatusTooManyRequests
 	}
 
@@ -131,6 +172,17 @@ func AjaxCreateTitleSpace(db *sql.DB, auth ajax.Auth,
 	w http.ResponseWriter, r *http.Request,
 ) (interface{}, int) {
 
+	// parent required
+	parentID, err := types.AtoUint(r.FormValue("parentId"))
+	if err != nil {
+		return nil, http.StatusBadRequest
+	}
+
+	title := types.NormalizeSpaces(r.FormValue("title"))
+	if title == "" || !spacetime.ValidateTitle(title) {
+		return nil, http.StatusBadRequest
+	}
+
 	blocked, err := spacetime.CheckCreateSpaceThrottleBlock(db, auth)
 	if err != nil {
 		logging.LogError(r, &auth, err)
@@ -140,16 +192,20 @@ func AjaxCreateTitleSpace(db *sql.DB, auth ajax.Auth,
 		return nil, http.StatusTooManyRequests
 	}
 
-	// parent required
-	parentID, err := types.AtoUint(r.FormValue("parentId"))
-	if err != nil {
-		return nil, http.StatusBadRequest
+	// check if parent exists
+	if exists, err := spacetime.CheckSpaceExists(db, parentID); err != nil {
+		logging.LogError(r, &auth, err)
+		return nil, http.StatusInternalServerError
+	} else if !exists {
+		return nil, http.StatusNotFound
 	}
 
-	title := strings.TrimSpace(r.FormValue("title"))
-
-	if !spacetime.ValidateTitle(title) {
-		return nil, http.StatusBadRequest
+	// check if title exists
+	if exists, err := spacetime.CheckTitleExists(db, parentID, title); err != nil {
+		logging.LogError(r, &auth, err)
+		return nil, http.StatusInternalServerError
+	} else if exists {
+		return nil, http.StatusConflict
 	}
 
 	space, err := spacetime.CreateTitle(db, auth, parentID, title)
@@ -166,6 +222,17 @@ func AjaxCreateTagSpace(db *sql.DB, auth ajax.Auth,
 	w http.ResponseWriter, r *http.Request,
 ) (interface{}, int) {
 
+	// parent required
+	parentID, err := types.AtoUint(r.FormValue("parentId"))
+	if err != nil {
+		return nil, http.StatusBadRequest
+	}
+
+	tag := types.NormalizeSpaces(strings.TrimSpace(r.FormValue("tag")))
+	if !spacetime.ValidateTag(tag) {
+		return nil, http.StatusBadRequest
+	}
+
 	blocked, err := spacetime.CheckCreateSpaceThrottleBlock(db, auth)
 	if err != nil {
 		logging.LogError(r, &auth, err)
@@ -175,16 +242,20 @@ func AjaxCreateTagSpace(db *sql.DB, auth ajax.Auth,
 		return nil, http.StatusTooManyRequests
 	}
 
-	// parent required
-	parentID, err := types.AtoUint(r.FormValue("parentId"))
-	if err != nil {
-		return nil, http.StatusBadRequest
+	// check if parent exists
+	if exists, err := spacetime.CheckSpaceExists(db, parentID); err != nil {
+		logging.LogError(r, &auth, err)
+		return nil, http.StatusInternalServerError
+	} else if !exists {
+		return nil, http.StatusNotFound
 	}
 
-	tag := strings.TrimSpace(r.FormValue("tag"))
-
-	if !spacetime.ValidateTag(tag) {
-		return nil, http.StatusBadRequest
+	// check if tag exists
+	if exists, err := spacetime.CheckTagExists(db, parentID, tag); err != nil {
+		logging.LogError(r, &auth, err)
+		return nil, http.StatusInternalServerError
+	} else if exists {
+		return nil, http.StatusConflict
 	}
 
 	space, err := spacetime.CreateTag(db, auth, parentID, tag)
@@ -201,6 +272,23 @@ func AjaxCreateTextSpace(db *sql.DB, auth ajax.Auth,
 	w http.ResponseWriter, r *http.Request,
 ) (interface{}, int) {
 
+	// parent optional
+	parentID, err := types.AtoUintNilIfEmpty(r.FormValue("parentId"))
+	if err != nil {
+		return nil, http.StatusBadRequest
+	}
+
+	// title optional
+	title := types.NormalizeSpaces(strings.TrimSpace(r.FormValue("title")))
+	if title != "" && !spacetime.ValidateTitle(title) {
+		return nil, http.StatusBadRequest
+	}
+
+	text := strings.TrimSpace(r.FormValue("text"))
+	if text == "" || !spacetime.ValidateText(text) {
+		return nil, http.StatusBadRequest
+	}
+
 	blocked, err := spacetime.CheckCreateSpaceThrottleBlock(db, auth)
 	if err != nil {
 		logging.LogError(r, &auth, err)
@@ -210,23 +298,14 @@ func AjaxCreateTextSpace(db *sql.DB, auth ajax.Auth,
 		return nil, http.StatusTooManyRequests
 	}
 
-	// parent optional
-	parentID, err := types.AtoUintNilIfEmpty(r.FormValue("parentId"))
-	if err != nil {
-		return nil, http.StatusBadRequest
-	}
-
-	// title optional
-	title := strings.TrimSpace(r.FormValue("title"))
-
-	if title != "" && !spacetime.ValidateTitle(title) {
-		return nil, http.StatusBadRequest
-	}
-
-	text := strings.TrimSpace(r.FormValue("text"))
-
-	if !spacetime.ValidateText(text) {
-		return nil, http.StatusBadRequest
+	// if parentID given, check if parent exists
+	if parentID != nil {
+		if exists, err := spacetime.CheckSpaceExists(db, *parentID); err != nil {
+			logging.LogError(r, &auth, err)
+			return nil, http.StatusInternalServerError
+		} else if !exists {
+			return nil, http.StatusNotFound
+		}
 	}
 
 	space, err := spacetime.CreateText(db, auth, parentID, text)

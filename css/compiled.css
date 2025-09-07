@@ -343,9 +343,11 @@ div.center {
 .space-output > .parent-path > div + div {
   border-top: thin solid black;
 }
-.space-output > .parent-path .space-title {
+.space-output > .parent-path .label {
+  display: inline-block;
   padding-left: 10px;
   padding-right: 10px;
+  font-weight: bold;
 }
 .space-output > .container {
   background-color: white;
@@ -439,11 +441,14 @@ div.center {
   !*** css ./node_modules/css-loader/dist/cjs.js??clonedRuleSet-2.use[1]!./node_modules/vue-loader/dist/stylePostLoader.js!./node_modules/sass-loader/dist/cjs.js??clonedRuleSet-2.use[2]!./node_modules/vue-loader/dist/index.js??ruleSet[1].rules[5].use[0]!./src/widgets/form-field.vue?vue&type=style&index=0&id=09e9792a&lang=scss ***!
   \****************************************************************************************************************************************************************************************************************************************************************************************************************************************/
 .form-layout-form-field {
+  display: flex;
+  flex-direction: column;
+  row-gap: 10px;
   background-color: #eee;
   padding: 10px;
   border-radius: 8px;
 }
-.form-layout-form-field > h3 {
+.form-layout-form-field > .title-row {
   font-weight: bold;
 }
 .form-layout-form-field > .form-field-body {

@@ -34,9 +34,9 @@ var ajaxHandlersAuthRequired = map[string]map[string]ajax.AjaxRouteAuthRequired{
 	http.MethodGet: {},
 	http.MethodPost: {
 		"/ajax/bookmark":             AjaxBookmark,
-		"/ajax/space/create/empty":   AjaxCreateEmptySpace,
+		"/ajax/space/create/space":   AjaxCreateSubspace,
 		"/ajax/space/create/link":    AjaxCreateLinkSpace,
-		"/ajax/space/create/checkin": AjaxCreateCheckinSpace,
+		"/ajax/space/create/checkin": AjaxCreateCheckin,
 		"/ajax/space/create/title":   AjaxCreateTitleSpace,
 		"/ajax/space/create/tag":     AjaxCreateTagSpace,
 		"/ajax/space/create/text":    AjaxCreateTextSpace,

@@ -99,7 +99,7 @@ func CreateTag(conn *sql.DB, auth ajax.Auth, parentID uint, tag string) (*Space,
 		}
 
 		// Create space
-		err = CreateSpace(tx, auth, space, &parentID, SpaceTypeTag)
+		err = CreateSpace(tx, auth, space, parentID, SpaceTypeTag)
 		if err != nil {
 			return err
 		}

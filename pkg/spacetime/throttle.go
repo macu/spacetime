@@ -9,13 +9,13 @@ import (
 
 func CheckCreateSpaceThrottleBlock(db *sql.DB, auth ajax.Auth) (bool, error) {
 
-	// Check if 60 or more spaces were created by the user in the last minute
-	// If so, return true
+	// Check if 12 or more spaces were created by the user in the last minute
+	// If so, return true (throttle block)
 	// Otherwise, return false
 
 	var block bool
 
-	var err = db.QueryRow(`SELECT COUNT(*) >= 60 FROM space
+	var err = db.QueryRow(`SELECT COUNT(*) >= 12 FROM space
 		WHERE created_by = $1
 		AND created_at > NOW() - INTERVAL '1 MINUTE'`,
 		auth.UserID,
@@ -31,21 +31,11 @@ func CheckCreateSpaceThrottleBlock(db *sql.DB, auth ajax.Auth) (bool, error) {
 
 func CheckCreateCheckinThrottleBlock(db *sql.DB, auth ajax.Auth, parentID uint) (bool, error) {
 
-	// Check if 60 or more spaces were created by the user under the given parent in the last hour
-	// If so, return true
-	// Otherwise, return false
+	// Allow 1 check-in per minute per parent space
 
-	block, err := CheckCreateSpaceThrottleBlock(db, auth)
+	var block bool
 
-	if err != nil {
-		return true, err
-	}
-
-	if block {
-		return true, nil
-	}
-
-	err = db.QueryRow(`SELECT COUNT(*) >= 1 FROM space
+	err := db.QueryRow(`SELECT COUNT(*) >= 1 FROM space
 		WHERE created_by = $1
 		AND parent_id = $2
 		AND space_type = $3
