@@ -40,7 +40,7 @@ func LoadSpace(conn *sql.DB, auth *ajax.Auth, id uint) (*Space, error) {
 		`+bookmarkFieldSql+`
 		FROM space
 		LEFT JOIN subspace ON space.id = subspace.space_id
-		LEFT JOIN unique_text ON unique_text.id = subspace.label_unique_text_id
+		LEFT JOIN unique_text ON unique_text.id = subspace.label_text_id
 		LEFT JOIN user_account ON user_account.id = space.created_by
 		WHERE space.id = `+db.Arg(&args, id)+`
 		LIMIT 1`,
@@ -149,7 +149,7 @@ func LoadTopSubspaces(conn *sql.DB, auth *ajax.Auth,
 			WHERE subspace.parent_id = space.id) AS subspace_count
 		FROM space
 		LEFT JOIN subspace ON subspace.space_id = space.id
-		LEFT JOIN unique_text ON unique_text.id = subspace.label_unique_text_id
+		LEFT JOIN unique_text ON unique_text.id = subspace.label_text_id
 		LEFT JOIN user_account ON user_account.id = space.created_by
 		WHERE `+parentClauseSql+`
 		ORDER BY subspace_count DESC, space.created_at DESC
@@ -353,7 +353,7 @@ func loadTitleSpacesContent(conn *sql.DB, spaces []*Space) error {
 		space.id, unique_text.text_value
 		FROM space
 		INNER JOIN title_space ON title_space.space_id = space.id
-		INNER JOIN unique_text ON unique_text.id = title_space.unique_text_id
+		INNER JOIN unique_text ON unique_text.id = title_space.text_id
 		WHERE space.id IN (`+inClauseSql+`)`,
 		args...,
 	)
@@ -404,7 +404,7 @@ func loadTagSpacesContent(conn *sql.DB, spaces []*Space) error {
 		space.id, unique_text.text_value
 		FROM space
 		INNER JOIN tag_space ON tag_space.space_id = space.id
-		INNER JOIN unique_text ON unique_text.id = tag_space.unique_text_id
+		INNER JOIN unique_text ON unique_text.id = tag_space.text_id
 		WHERE space.id IN (`+inClauseSql+`)`,
 		args...,
 	)
@@ -455,7 +455,7 @@ func loadTextSpacesContent(conn *sql.DB, spaces []*Space) error {
 		space.id, unique_text.text_value
 		FROM space
 		INNER JOIN text_space ON text_space.space_id = space.id
-		INNER JOIN unique_text ON unique_text.id = text_space.unique_text_id
+		INNER JOIN unique_text ON unique_text.id = text_space.text_id
 		WHERE space.id IN (`+inClauseSql+`)`,
 		args...,
 	)
@@ -506,7 +506,7 @@ func loadNakedTextSpacesContent(conn *sql.DB, spaces []*Space) error {
 		space.id, unique_text.text_value, naked_text_space.replay_data
 		FROM space
 		INNER JOIN naked_text_space ON naked_text_space.space_id = space.id
-		INNER JOIN unique_text ON unique_text.id = naked_text_space.final_unique_text_id
+		INNER JOIN unique_text ON unique_text.id = naked_text_space.final_text_id
 		WHERE space.id IN (`+inClauseSql+`)`,
 		args...,
 	)

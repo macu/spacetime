@@ -18,7 +18,7 @@ func LoadExistingSpaceLink(conn db.DBConn,
 	}
 
 	err := conn.QueryRow(`SELECT space_id FROM link_space
-		WHERE parent_space_id = $1 AND link_space_id = $2`,
+		WHERE parent_id = $1 AND link_space_id = $2`,
 		parentID, spaceID,
 	).Scan(&space.ID)
 
@@ -84,14 +84,14 @@ func CreateSpaceLink(conn *sql.DB, auth ajax.Auth, parentID, spaceID uint) (*Spa
 		err = db.InTransaction(conn, func(tx *sql.Tx) error {
 
 			// Create space link
-			err = CreateSpace(tx, auth, &space, parentID, SpaceTypeLink)
+			err = CreateSpace(tx, auth, &space, &parentID, SpaceTypeLink)
 			if err != nil {
 				return fmt.Errorf("insert space: %w", err)
 			}
 
 			// Create associated data
 			_, err = tx.Exec(`INSERT INTO link_space
-				(space_id, parent_space_id, link_space_id)
+				(space_id, parent_id, link_space_id)
 				VALUES ($1, $2, $3)`,
 				space.ID, parentID, spaceID,
 			)

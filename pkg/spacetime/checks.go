@@ -43,7 +43,7 @@ func CheckSubspaceLabelExists(conn *sql.DB, parentId *uint, label string) (bool,
 			INNER JOIN subspace
 				ON space.id = subspace.space_id
 			WHERE space.parent_id IS NULL
-			AND subspace.label_unique_text_id = $1
+			AND subspace.label_text_id = $1
 		)`, labelUnitextId).Scan(&exists)
 	} else {
 		// check subspaces
@@ -52,7 +52,7 @@ func CheckSubspaceLabelExists(conn *sql.DB, parentId *uint, label string) (bool,
 			INNER JOIN subspace
 				ON space.id = subspace.space_id
 			WHERE space.parent_id = $1
-			AND subspace.label_unique_text_id = $2
+			AND subspace.label_text_id = $2
 		)`, *parentId, labelUnitextId).Scan(&exists)
 	}
 
@@ -121,7 +121,7 @@ func CheckTitleExists(conn *sql.DB, parentID uint, title string) (bool, error) {
 		INNER JOIN title_space
 			ON space.id = title_space.space_id
 		WHERE space.parent_id = $1
-		AND title_space.unique_text_id = $2
+		AND title_space.text_id = $2
 	)`, parentID, *uniqueTextId).Scan(&exists)
 
 	if err != nil {
@@ -149,7 +149,7 @@ func CheckTagExists(conn *sql.DB, parentID uint, tag string) (bool, error) {
 		INNER JOIN tag_space
 			ON space.id = tag_space.space_id
 		WHERE space.parent_id = $1
-		AND tag_space.tag_unique_text_id = $2
+		AND tag_space.text_id = $2
 	)`, parentID, *tagUniqueTextId).Scan(&exists)
 
 	if err != nil {

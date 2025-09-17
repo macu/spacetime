@@ -54,6 +54,7 @@ func AjaxCreateSubspace(db *sql.DB, auth ajax.Auth,
 		logging.LogError(r, &auth, err)
 		return nil, http.StatusInternalServerError
 	} else if exists {
+		// TODO Return the existing subspace
 		return nil, http.StatusConflict
 	}
 
@@ -106,20 +107,21 @@ func AjaxCreateLinkSpace(db *sql.DB, auth ajax.Auth,
 		return nil, http.StatusTooManyRequests
 	}
 
-	// check if link already exists
-	if exists, err := spacetime.CheckLinkSpaceExists(db, parentID, spaceID); err != nil {
-		logging.LogError(r, &auth, err)
-		return nil, http.StatusInternalServerError
-	} else if exists {
-		return nil, http.StatusConflict
-	}
-
 	// check if parent exists
 	if exists, err := spacetime.CheckSpaceExists(db, parentID); err != nil {
 		logging.LogError(r, &auth, err)
 		return nil, http.StatusInternalServerError
 	} else if !exists {
 		return nil, http.StatusNotFound
+	}
+
+	// check if link already exists
+	if exists, err := spacetime.CheckLinkSpaceExists(db, parentID, spaceID); err != nil {
+		logging.LogError(r, &auth, err)
+		return nil, http.StatusInternalServerError
+	} else if exists {
+		// TODO Return the existing link
+		return nil, http.StatusConflict
 	}
 
 	space, err := spacetime.CreateSpaceLink(db, auth, parentID, spaceID)
@@ -156,6 +158,14 @@ func AjaxCreateCheckin(db *sql.DB, auth ajax.Auth,
 		return nil, http.StatusInternalServerError
 	} else if blocked {
 		return nil, http.StatusTooManyRequests
+	}
+
+	// check if parent exists
+	if exists, err := spacetime.CheckSpaceExists(db, parentID); err != nil {
+		logging.LogError(r, &auth, err)
+		return nil, http.StatusInternalServerError
+	} else if !exists {
+		return nil, http.StatusNotFound
 	}
 
 	space, err := spacetime.CreateCheckin(db, auth, parentID)
@@ -205,6 +215,7 @@ func AjaxCreateTitleSpace(db *sql.DB, auth ajax.Auth,
 		logging.LogError(r, &auth, err)
 		return nil, http.StatusInternalServerError
 	} else if exists {
+		// TODO Return the existing title
 		return nil, http.StatusConflict
 	}
 
@@ -228,8 +239,8 @@ func AjaxCreateTagSpace(db *sql.DB, auth ajax.Auth,
 		return nil, http.StatusBadRequest
 	}
 
-	tag := types.NormalizeSpaces(strings.TrimSpace(r.FormValue("tag")))
-	if !spacetime.ValidateTag(tag) {
+	tag := types.NormalizeSpaces(r.FormValue("tag"))
+	if tag == "" || !spacetime.ValidateTag(tag) {
 		return nil, http.StatusBadRequest
 	}
 
@@ -255,6 +266,7 @@ func AjaxCreateTagSpace(db *sql.DB, auth ajax.Auth,
 		logging.LogError(r, &auth, err)
 		return nil, http.StatusInternalServerError
 	} else if exists {
+		// TODO Return the existing tag
 		return nil, http.StatusConflict
 	}
 
@@ -273,13 +285,13 @@ func AjaxCreateTextSpace(db *sql.DB, auth ajax.Auth,
 ) (interface{}, int) {
 
 	// parent optional
-	parentID, err := types.AtoUintNilIfEmpty(r.FormValue("parentId"))
+	parentID, err := types.AtoUint(r.FormValue("parentId"))
 	if err != nil {
 		return nil, http.StatusBadRequest
 	}
 
 	// title optional
-	title := types.NormalizeSpaces(strings.TrimSpace(r.FormValue("title")))
+	title := types.NormalizeSpaces(r.FormValue("title"))
 	if title != "" && !spacetime.ValidateTitle(title) {
 		return nil, http.StatusBadRequest
 	}
@@ -298,14 +310,12 @@ func AjaxCreateTextSpace(db *sql.DB, auth ajax.Auth,
 		return nil, http.StatusTooManyRequests
 	}
 
-	// if parentID given, check if parent exists
-	if parentID != nil {
-		if exists, err := spacetime.CheckSpaceExists(db, *parentID); err != nil {
-			logging.LogError(r, &auth, err)
-			return nil, http.StatusInternalServerError
-		} else if !exists {
-			return nil, http.StatusNotFound
-		}
+	// Check if parent exists
+	if exists, err := spacetime.CheckSpaceExists(db, parentID); err != nil {
+		logging.LogError(r, &auth, err)
+		return nil, http.StatusInternalServerError
+	} else if !exists {
+		return nil, http.StatusNotFound
 	}
 
 	space, err := spacetime.CreateText(db, auth, parentID, text)

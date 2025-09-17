@@ -3,7 +3,6 @@ package spacetime
 import (
 	"database/sql"
 	"fmt"
-	"strings"
 
 	"spacetime/pkg/utils/ajax"
 	"spacetime/pkg/utils/db"
@@ -26,7 +25,7 @@ func LoadExistingTag(conn *sql.DB,
 	err := conn.QueryRow(`SELECT space.id, space.created_at, space.created_by
 		FROM space
 		INNER JOIN tag_space ON tag_space.space_id = space.id
-		INNER JOIN unique_text ON unique_text.id = tag_space.unique_text_id
+		INNER JOIN unique_text ON unique_text.id = tag_space.text_id
 		WHERE space.parent_id = `+db.Arg(&args, parentID)+`
 		AND space.space_type = `+db.Arg(&args, SpaceTypeTag)+`
 		AND unique_text.text_value = `+db.Arg(&args, tag),
@@ -50,32 +49,8 @@ func CreateTag(conn *sql.DB, auth ajax.Auth, parentID uint, tag string) (*Space,
 	// Create tag space if not exists
 	// Check-in on tag space
 
-	tag = strings.TrimSpace(tag)
-
 	if !ValidateTag(tag) {
 		return nil, fmt.Errorf("invalid tag: %s", tag)
-	}
-
-	// Ensure referenced parent space exists
-	var parentExists, err = CheckSpaceExists(conn, parentID)
-	if err != nil {
-		return nil, err
-	}
-	if !parentExists {
-		return nil, fmt.Errorf("parent space does not exist: %d", parentID)
-	}
-
-	// Check if tag already exists
-	existingTag, err := LoadExistingTag(conn, parentID, tag)
-	if err != nil {
-		return nil, fmt.Errorf("check tag exists: %w", err)
-	}
-	if existingTag != nil {
-		err = LoadSubspaceCount(conn, []*Space{existingTag})
-		if err != nil {
-			return nil, err
-		}
-		return existingTag, nil
 	}
 
 	var space = &Space{
@@ -84,29 +59,24 @@ func CreateTag(conn *sql.DB, auth ajax.Auth, parentID uint, tag string) (*Space,
 		Text:      &tag,
 	}
 
-	err = db.InTransaction(conn, func(tx *sql.Tx) error {
+	err := db.InTransaction(conn, func(tx *sql.Tx) error {
 
-		uniqueTextId, err := GetUniqueTextId(tx, tag)
+		uniqueTextId, err := GetOrCreateUniqueTextId(tx, tag)
 		if err != nil {
 			return err
-		}
-
-		if uniqueTextId == nil {
-			uniqueTextId, err = CreateUniqueText(tx, tag)
-			if err != nil {
-				return err
-			}
+		} else if uniqueTextId == nil {
+			return fmt.Errorf("unique text id is nil")
 		}
 
 		// Create space
-		err = CreateSpace(tx, auth, space, parentID, SpaceTypeTag)
+		err = CreateSpace(tx, auth, space, &parentID, SpaceTypeTag)
 		if err != nil {
 			return err
 		}
 
 		// Create tag_space
 		_, err = tx.Exec(`INSERT INTO tag_space
-			(space_id, parent_space_id, unique_text_id)
+			(space_id, parent_id, text_id)
 			VALUES ($1, $2, $3)`,
 			space.ID, parentID, *uniqueTextId,
 		)
@@ -162,7 +132,7 @@ func LoadMoreTags(conn *sql.DB, parentId uint,
 		COUNT(subspace.id) AS subspace_total
 		FROM space
 		INNER JOIN tag_space ON tag_space.space_id = space.id
-		INNER JOIN unique_text ON unique_text.id = tag_space.unique_text_id
+		INNER JOIN unique_text ON unique_text.id = tag_space.text_id
 		LEFT JOIN space AS subspace ON subspace.parent_id = space.id
 		WHERE space.space_type = $1
 		AND space.parent_id = $2

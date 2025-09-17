@@ -27,7 +27,7 @@ func LoadExistingTitle(conn *sql.DB,
 	err := conn.QueryRow(`SELECT space.id, space.created_at, space.created_by
 		FROM space
 		INNER JOIN title_space ON title_space.space_id = space.id
-		INNER JOIN unique_text ON unique_text.id = title_space.unique_text_id
+		INNER JOIN unique_text ON unique_text.id = title_space.text_id
 		WHERE space.parent_id = `+db.Arg(&args, parentID)+`
 		AND space.space_type = `+db.Arg(&args, SpaceTypeTitle)+`
 		AND unique_text.text_value = `+db.Arg(&args, title),
@@ -57,57 +57,30 @@ func CreateTitle(conn *sql.DB, auth ajax.Auth, parentID uint, title string) (*Sp
 		return nil, fmt.Errorf("invalid title: %s", title)
 	}
 
-	// Ensure referenced parent space exists
-	var parentExists, err = CheckSpaceExists(conn, parentID)
-	if err != nil {
-		return nil, err
-	}
-	if !parentExists {
-		return nil, fmt.Errorf("parent space does not exist: %d", parentID)
-	}
-
-	// Check if title already exists
-	existingTitle, err := LoadExistingTitle(conn, parentID, title)
-	if err != nil {
-		return nil, err
-	}
-	if existingTitle != nil {
-		err = LoadSubspaceCount(conn, []*Space{existingTitle})
-		if err != nil {
-			return nil, err
-		}
-		return existingTitle, nil
-	}
-
 	var space = &Space{
 		ParentID:  &parentID,
 		SpaceType: SpaceTypeTitle,
 		Text:      &title,
 	}
 
-	err = db.InTransaction(conn, func(tx *sql.Tx) error {
+	err := db.InTransaction(conn, func(tx *sql.Tx) error {
 
-		uniqueTextId, err := GetUniqueTextId(tx, title)
+		uniqueTextId, err := GetOrCreateUniqueTextId(tx, title)
 		if err != nil {
 			return err
-		}
-
-		if uniqueTextId == nil {
-			uniqueTextId, err = CreateUniqueText(tx, title)
-			if err != nil {
-				return err
-			}
+		} else if uniqueTextId == nil {
+			return fmt.Errorf("unique text id is nil")
 		}
 
 		// Create space
-		err = CreateSpace(tx, auth, space, parentID, SpaceTypeTitle)
+		err = CreateSpace(tx, auth, space, &parentID, SpaceTypeTitle)
 		if err != nil {
 			return err
 		}
 
 		// Create title_space
 		_, err = tx.Exec(`INSERT INTO title_space
-			(space_id, parent_space_id, unique_text_id)
+			(space_id, parent_id, text_id)
 			VALUES ($1, $2, $3)`,
 			space.ID, parentID, *uniqueTextId,
 		)
@@ -151,7 +124,7 @@ func LoadOriginalTitles(conn *sql.DB, spaces []*Space) error {
 		unique_text.text_value
 		FROM space AS space
 		INNER JOIN title_space ON title_space.space_id = space.id
-		INNER JOIN unique_text ON unique_text.id = title_space.unique_text_id
+		INNER JOIN unique_text ON unique_text.id = title_space.text_id
 		WHERE space.space_type = `+db.Arg(&args, SpaceTypeTitle)+`
 		AND space.parent_id = `+db.Arg(&args, space.ID)+`
 		AND space.created_by = `+db.Arg(&args, space.CreatedBy)+`
@@ -223,7 +196,7 @@ func LoadLastUserTitles(conn *sql.DB, auth ajax.Auth,
 			MAX(checkin_space.created_at) AS last_checkin
 			FROM space AS space
 			INNER JOIN title_space ON title_space.space_id = space.id
-			INNER JOIN unique_text ON unique_text.id = title_space.unique_text_id
+			INNER JOIN unique_text ON unique_text.id = title_space.text_id
 			INNER JOIN space AS checkin_space ON checkin_space.parent_id = space.id
 			WHERE space.space_type = `+db.Arg(&args, SpaceTypeTitle)+`
 			AND space.parent_id = `+db.Arg(&args, space.ID)+`
@@ -291,7 +264,7 @@ func LoadTopTitles(conn *sql.DB, spaces []*Space) error {
 			COUNT(subspace.id) AS subspaces_total
 			FROM space
 			INNER JOIN title_space ON title_space.space_id = space.id
-			INNER JOIN unique_text ON unique_text.id = title_space.unique_text_id
+			INNER JOIN unique_text ON unique_text.id = title_space.text_id
 			LEFT JOIN space AS subspace ON subspace.parent_id = space.id
 			WHERE space.space_type = `+db.Arg(&args, SpaceTypeTitle)+`
 				AND space.parent_id = `+db.Arg(&args, space.ID)+`

@@ -20,21 +20,17 @@ func AjaxBookmark(db *sql.DB, auth ajax.Auth,
 		return nil, http.StatusBadRequest
 	}
 
-	exists, err := spacetime.CheckSpaceExists(db, spaceID)
-	if err != nil {
+	bookmark := types.AtoBool(r.FormValue("bookmark"))
+
+	// check if space exists
+	if exists, err := spacetime.CheckSpaceExists(db, spaceID); err != nil {
 		logging.LogError(r, &auth, err)
 		return nil, http.StatusInternalServerError
-	}
-
-	if !exists {
+	} else if !exists {
 		return nil, http.StatusNotFound
 	}
 
-	bookmark := types.AtoBool(r.FormValue("bookmark"))
-
-	err = user.BookmarkSpace(db, auth.UserID, spaceID, bookmark)
-
-	if err != nil {
+	if err = user.BookmarkSpace(db, auth.UserID, spaceID, bookmark); err != nil {
 		logging.LogError(r, &auth, err)
 		return nil, http.StatusInternalServerError
 	}
