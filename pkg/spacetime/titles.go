@@ -100,7 +100,7 @@ func CreateTitle(conn *sql.DB, auth ajax.Auth, parentID uint, title string) (*Sp
 
 }
 
-func LoadOriginalTitles(conn *sql.DB, spaces []*Space) error {
+func LoadOriginalTitles(conn *sql.DB, spaces []*Space, filter *SpaceFilter) error {
 	// Load earliest associated titles by same creator
 
 	if len(spaces) == 0 {
@@ -159,7 +159,7 @@ func LoadOriginalTitles(conn *sql.DB, spaces []*Space) error {
 
 	}
 
-	err := LoadSubspaceCount(conn, allTitles)
+	err := LoadSubspaceCount(conn, allTitles, filter)
 	if err != nil {
 		return err
 	}
@@ -169,7 +169,7 @@ func LoadOriginalTitles(conn *sql.DB, spaces []*Space) error {
 }
 
 func LoadLastUserTitles(conn *sql.DB, auth ajax.Auth,
-	spaces []*Space,
+	spaces []*Space, filter *SpaceFilter,
 ) error {
 	// Load user titles by last checkin
 
@@ -235,7 +235,7 @@ func LoadLastUserTitles(conn *sql.DB, auth ajax.Auth,
 
 	}
 
-	err := LoadSubspaceCount(conn, allTitles)
+	err := LoadSubspaceCount(conn, allTitles, filter)
 	if err != nil {
 		return err
 	}
@@ -244,7 +244,7 @@ func LoadLastUserTitles(conn *sql.DB, auth ajax.Auth,
 
 }
 
-func LoadTopTitles(conn *sql.DB, spaces []*Space) error {
+func LoadTopTitles(conn *sql.DB, spaces []*Space, filter *SpaceFilter) error {
 
 	if len(spaces) == 0 {
 		return nil

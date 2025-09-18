@@ -193,7 +193,7 @@ func LoadTopSubspaces(conn *sql.DB, auth *ajax.Auth,
 // --------------------------------------------------
 // batch load functions
 
-func LoadSubspaceCount(conn *sql.DB, spaces []*Space) error {
+func LoadSubspaceCount(conn *sql.DB, spaces []*Space, filter *SpaceFilter) error {
 	// Load subspace count for multiple spaces
 
 	if len(spaces) == 0 {

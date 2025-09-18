@@ -14,9 +14,9 @@
 					:parent-id="space.id"
 					:disabled="$store.getters.createDisabled"
 					/>
-				<show-types-filter
+				<subspaces-filter
 					v-if="subspaces"
-					@update:showTypes="showTypes = $event"
+					@update:filter="filter = $event"
 					/>
 			</div>
 
@@ -42,7 +42,7 @@
 import SpaceOutput from '@/widgets/space-output.vue';
 import SpaceList from '@/widgets/spaces-list.vue';
 import CreateDropdown from '@/widgets/create-dropdown.vue';
-import ShowTypesFilter from '@/widgets/show-types-filter.vue';
+import SubspacesFilter from '@/widgets/subspaces-filter.vue';
 
 import {
 	ajaxGet,
@@ -57,14 +57,14 @@ export default {
 		SpaceOutput,
 		SpaceList,
 		CreateDropdown,
-		ShowTypesFilter,
+		SubspacesFilter,
 	},
 	data() {
 		return {
 			loading: true,
 			space: null,
 			subspaces: null,
-			showTypes: [],
+			filter: null,
 			loadingSubspaces: false,
 		};
 	},
@@ -93,7 +93,10 @@ export default {
 				includeTags: true,
 				includeSubspaces: true,
 				includeParentPath: true,
-				excludeTypes: SPACE_TYPES.CHECK_IN,
+				filter: JSON.stringify({
+					...this.filter,
+					excludeTypes: SPACE_TYPES.CHECK_IN,
+				}),
 			}).then(response => {
 				this.space = response;
 				this.subspaces = response.topSubspaces
@@ -111,7 +114,10 @@ export default {
 				parentId: this.space.id,
 				offset: this.subspaces.length,
 				limit: this.$store.getters.maxLimit,
-				excludeTypes: SPACE_TYPES.CHECK_IN,
+				filter: JSON.stringify({
+					...this.filter,
+					excludeTypes: SPACE_TYPES.CHECK_IN,
+				}),
 			}).then(response => {
 				this.subspaces = this.subspaces.concat(response);
 			}).finally(() => {

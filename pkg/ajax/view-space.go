@@ -2,6 +2,7 @@ package ajax
 
 import (
 	"database/sql"
+	"encoding/json"
 	"net/http"
 
 	"spacetime/pkg/spacetime"
@@ -23,6 +24,15 @@ func AjaxLoadSpace(db *sql.DB, auth *ajax.Auth,
 	includeSubspaces := types.AtoBool(r.FormValue("includeSubspaces"))
 	includeParentPath := types.AtoBool(r.FormValue("includeParentPath"))
 
+	filterJSON := r.FormValue("filter")
+	filter := spacetime.SpaceFilter{}
+	if filterJSON != "" {
+		err = json.Unmarshal([]byte(filterJSON), &filter)
+		if err != nil {
+			return nil, http.StatusBadRequest
+		}
+	}
+
 	space, err := spacetime.LoadSpace(db, auth, id)
 	if err != nil {
 		logging.LogError(r, auth, err)
@@ -30,7 +40,7 @@ func AjaxLoadSpace(db *sql.DB, auth *ajax.Auth,
 	}
 
 	err = spacetime.LoadSubspaceCount(db,
-		[]*spacetime.Space{space})
+		[]*spacetime.Space{space}, &filter)
 	if err != nil {
 		logging.LogError(r, auth, err)
 		return nil, http.StatusInternalServerError
@@ -38,7 +48,7 @@ func AjaxLoadSpace(db *sql.DB, auth *ajax.Auth,
 
 	if auth != nil {
 		err = spacetime.LoadLastUserTitles(db, *auth,
-			[]*spacetime.Space{space})
+			[]*spacetime.Space{space}, &filter)
 		if err != nil {
 			logging.LogError(r, auth, err)
 			return nil, http.StatusInternalServerError
@@ -46,14 +56,14 @@ func AjaxLoadSpace(db *sql.DB, auth *ajax.Auth,
 	}
 
 	err = spacetime.LoadOriginalTitles(db,
-		[]*spacetime.Space{space})
+		[]*spacetime.Space{space}, &filter)
 	if err != nil {
 		logging.LogError(r, auth, err)
 		return nil, http.StatusInternalServerError
 	}
 
 	err = spacetime.LoadTopTitles(db,
-		[]*spacetime.Space{space})
+		[]*spacetime.Space{space}, &filter)
 	if err != nil {
 		logging.LogError(r, auth, err)
 		return nil, http.StatusInternalServerError
@@ -78,20 +88,20 @@ func AjaxLoadSpace(db *sql.DB, auth *ajax.Auth,
 
 		if auth != nil {
 			err = spacetime.LoadLastUserTitles(db, *auth,
-				content)
+				content, &filter)
 			if err != nil {
 				logging.LogError(r, auth, err)
 				return nil, http.StatusInternalServerError
 			}
 		}
 
-		err = spacetime.LoadOriginalTitles(db, content)
+		err = spacetime.LoadOriginalTitles(db, content, &filter)
 		if err != nil {
 			logging.LogError(r, auth, err)
 			return nil, http.StatusInternalServerError
 		}
 
-		err = spacetime.LoadTopTitles(db, content)
+		err = spacetime.LoadTopTitles(db, content, &filter)
 		if err != nil {
 			logging.LogError(r, auth, err)
 			return nil, http.StatusInternalServerError

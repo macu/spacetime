@@ -22,7 +22,7 @@ func CreateText(conn *sql.DB, auth ajax.Auth, parentID uint, text string) (*Spac
 
 	err := db.InTransaction(conn, func(tx *sql.Tx) error {
 
-		uniqueTextId, err := GetOrCreateUniqueTextId(conn, text)
+		uniqueTextId, err := GetOrCreateUniqueTextId(tx, text)
 		if err != nil {
 			return err
 		} else if uniqueTextId == nil {

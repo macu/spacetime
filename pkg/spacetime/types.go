@@ -37,3 +37,10 @@ type Space struct {
 
 	ParentPath *[]*Space `json:"parentPath,omitempty"`
 }
+
+// simple search filter for now
+type SpaceFilter struct {
+	Mode   string     `json:"mode"`             // "top-subspaces", "most-recent"
+	Date   *time.Time `json:"date,omitempty"`   // null for 'now'
+	Window *string    `json:"window,omitempty"` // "day", "week", "month", "year"; null for all-time
+}

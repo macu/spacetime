@@ -37,15 +37,6 @@ func CreateSpaceLink(conn *sql.DB, auth ajax.Auth, parentID, spaceID uint) (*Spa
 	// Create new space link
 	// If space itself belongs to parent space, create checkin under the space
 
-	// Ensure referenced parent space exists
-	var parentExists, err = CheckSpaceExists(conn, parentID)
-	if err != nil {
-		return nil, err
-	}
-	if !parentExists {
-		return nil, fmt.Errorf("parent space does not exist: %d", parentID)
-	}
-
 	// Get details about space to check in
 	linkedSpace, err := GetSpace(conn, spaceID)
 	if err != nil {
