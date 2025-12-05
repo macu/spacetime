@@ -2,7 +2,6 @@ package spacetime
 
 import (
 	"database/sql"
-	"encoding/json"
 
 	"spacetime/pkg/utils/ajax"
 )
@@ -10,14 +9,10 @@ import (
 type NakedTextDelta struct {
 	Timestamp uint `json:"ts"`
 
-	// key presses (like backspace)
-	Key *uint `json:"k,omitempty"`
+	Event string `json:"e"` // "change", "select"
 
-	// added text (one char at a time)
-	AddText *rune `json:"t,omitempty"`
-
-	// cursor positioning
-	Cursor *uint `json:"c,omitempty"`
+	// added text (or blank if removed)
+	Text *string `json:"t,omitempty"`
 
 	// selections
 	SelectStart *uint `json:"ss,omitempty"`
@@ -25,41 +20,6 @@ type NakedTextDelta struct {
 }
 
 type NakedText []NakedTextDelta
-
-func (d *NakedTextDelta) MarshalJSON() ([]byte, error) {
-	type Alias NakedTextDelta
-	return json.Marshal(&struct {
-		AddText *string `json:"t,omitempty"`
-		*Alias
-	}{
-		AddText: func() *string {
-			if d.AddText != nil {
-				s := string(*d.AddText)
-				return &s
-			}
-			return nil
-		}(),
-		Alias: (*Alias)(d),
-	})
-}
-
-func (d *NakedTextDelta) UnmarshalJSON(data []byte) error {
-	type Alias NakedTextDelta
-	aux := &struct {
-		AddText *string `json:"t,omitempty"`
-		*Alias
-	}{
-		Alias: (*Alias)(d),
-	}
-	if err := json.Unmarshal(data, aux); err != nil {
-		return err
-	}
-	if aux.AddText != nil && len(*aux.AddText) > 0 {
-		r := []rune(*aux.AddText)
-		d.AddText = &r[0]
-	}
-	return nil
-}
 
 func ValidateNakedText(text NakedText) bool {
 
@@ -83,17 +43,20 @@ func ValidateNakedText(text NakedText) bool {
 	// Ensure full data is available for each type of delta
 	for _, delta := range text {
 
-		hasAddText := delta.AddText != nil
-		hasKey := delta.Key != nil
-		hasCursor := delta.Cursor != nil
-		hasSelect := delta.SelectStart != nil && delta.SelectEnd != nil
-		hasPartialSelect := (delta.SelectStart != nil || delta.SelectEnd != nil) && !hasSelect
-
-		if !hasAddText && !hasKey && !hasCursor && !hasSelect {
+		hasEvent := delta.Event != ""
+		if !hasEvent {
+			return false
+		}
+		if delta.Event != "change" && delta.Event != "select" {
 			return false
 		}
 
-		if (hasAddText || hasKey || hasSelect) && hasCursor {
+		hasAddText := delta.Text != nil
+
+		hasSelect := delta.SelectStart != nil && delta.SelectEnd != nil
+		hasPartialSelect := (delta.SelectStart != nil || delta.SelectEnd != nil) && !hasSelect
+
+		if !hasAddText && !hasSelect {
 			return false
 		}
 

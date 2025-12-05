@@ -22,7 +22,7 @@
 					<material-icon :icon="SPACE_TYPE_ICONS[SPACE_TYPES.TEXT]"/>
 					<span>Create text</span>
 				</el-dropdown-item>
-				<el-dropdown-item disabled command="create-naked-text">
+				<el-dropdown-item command="create-text?t=n">
 					<material-icon :icon="SPACE_TYPE_ICONS[SPACE_TYPES.NAKED_TEXT]"/>
 					<span>Create naked text</span>
 				</el-dropdown-item>
@@ -74,10 +74,20 @@ export default {
 	},
 	methods: {
 		create(routeName) {
+			let query = {};
+			if (routeName.includes('?')) {
+				let queryString;
+				[routeName, queryString] = routeName.split('?');
+				const params = new URLSearchParams(queryString);
+				for (const [key, value] of params.entries()) {
+					query[key] = value;
+				}
+			}
 			this.$router.push({
 				name: routeName,
 				query: {
 					parentId: this.parentId,
+					...query,
 				},
 			});
 		},

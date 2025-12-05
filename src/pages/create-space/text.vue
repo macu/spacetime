@@ -3,7 +3,11 @@
 
 	<space-loader v-if="parentId" :space-id="parentId" include-parent-path>
 
-		<form-fields :posting="posting" @submit="submit"/>
+		<form-fields
+			:posting="posting"
+			:initial-save-recording="initialSaveRecording"
+			@submit="submit"
+			/>
 
 	</space-loader>
 
@@ -35,6 +39,12 @@ export default {
 	computed: {
 		parentId() {
 			return this.$route.query.parentId || null;
+		},
+		queryType() {
+			return this.$route.query.t || null;
+		},
+		initialSaveRecording() {
+			return this.queryType === 'n';
 		},
 	},
 	methods: {
