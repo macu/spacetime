@@ -138,16 +138,21 @@ export default {
 		let textarea = this.$refs.textBodyWrapper.querySelector('textarea');
 		if (textarea) {
 			textarea.focus();
-			// Add selection change and text change events
+			// Add selection change
 			textarea.addEventListener('select', this.onSelect);
-			textarea.addEventListener('input', this.onInput);
+			// Add cursor position change
+			textarea.addEventListener('keyup', this.onSelect);
+			textarea.addEventListener('click', this.onSelect);
+			textarea.addEventListener('focus', this.onSelect);
 		}
 	},
 	beforeUnmount() {
 		let textarea = this.$refs.textBodyWrapper.querySelector('textarea');
 		if (textarea) {
 			textarea.removeEventListener('select', this.onSelect);
-			textarea.removeEventListener('input', this.onInput);
+			textarea.removeEventListener('keyup', this.onSelect);
+			textarea.removeEventListener('click', this.onSelect);
+			textarea.removeEventListener('focus', this.onSelect);
 		}
 	},
 	methods: {
@@ -158,12 +163,34 @@ export default {
 			return this.startedAt;
 		},
 		onSelect(event) {
+			// Track cursor navigation
+			if (event.type === 'keyup') {
+				const allowedKeys = [
+					'ArrowLeft',
+					'ArrowRight',
+					'ArrowUp',
+					'ArrowDown',
+					'Home',
+					'End',
+					'PageUp',
+					'PageDown',
+					// Try to catch combo movements
+					'Control',
+					'Alt',
+					'Meta',
+					'Shift',
+				];
+				if (!allowedKeys.includes(event.key)) {
+					return;
+				}
+			}
+
 			const textarea = event.target;
 			const selectionStart = textarea.selectionStart;
 			const selectionEnd = textarea.selectionEnd;
 			const timestamp = Date.now() - this.getStartedAt();
 			this.recording.push({
-				event: 'select',
+				event: selectionStart === selectionEnd ? 'cursor' : 'select',
 				ts: timestamp,
 				ss: selectionStart,
 				se: selectionEnd,
