@@ -126,7 +126,7 @@ export default {
 
 			// Add delta
 			this.recording.push({
-				event: 'change',
+				et: 'change',
 				ts: Date.now() - this.getStartedAt(),
 				ss: changeStart, // selection applied before delta
 				se: oldValueChangeEnd + 1,
@@ -190,7 +190,7 @@ export default {
 			const selectionEnd = textarea.selectionEnd;
 			const timestamp = Date.now() - this.getStartedAt();
 			this.recording.push({
-				event: selectionStart === selectionEnd ? 'cursor' : 'select',
+				et: selectionStart === selectionEnd ? 'cursor' : 'select',
 				ts: timestamp,
 				ss: selectionStart,
 				se: selectionEnd,

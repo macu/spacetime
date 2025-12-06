@@ -12,19 +12,29 @@
 		v-if="playing && recording.length > 0"
 		:percentage="percentage"
 		:show-text="false"
+		:text="progressDisplay"
 		/>
 	<div class="actions flex-row">
-		<el-button @click="playing = !playing" size="small">
+		<el-button @click="playing = !playing" size="small" :type="playing ? 'default' : 'primary'">
 			{{ playing ? 'Pause' : 'Play' }}
 		</el-button>
-		<el-button @click="restart()" size="small">
-			Restart
+		<el-button v-if="playing" @click="stop()" type="warning" size="small">
+			Stop
+		</el-button>
+		<el-button v-if="showSkipAhead" @click="skipToNext()" type="primary" size="small">
+			Skip to next event ({{displayTimeToNextEvent}})
 		</el-button>
 	</div>
 </div>
 </template>
 
 <script>
+import {formatTimestamp} from '@/utils/time.js';
+
+const PADDING_START = 1000; // 1 second at start before first event
+const PADDING_END = 5000; // 5 seconds at end before stop
+const SKIP_AHEAD_THRESHOLD = 3000; // 10 seconds ahead to skip to end
+
 export default {
 	emits: [
 		'finished',
@@ -43,6 +53,13 @@ export default {
 			default: false,
 		},
 	},
+	setup() {
+		return {
+			// non-reactive properties
+			timeout: null,
+			currentTimeInterval: null,
+		};
+	},
 	data() {
 		return {
 			playing: this.initialPlaying,
@@ -50,19 +67,27 @@ export default {
 			currentText: '',
 			currentEvent: null,
 			startPlayingAt: null,
+			currentTime: 0,
 		};
 	},
 	computed: {
 		currentSpans() {
-			if (!this.playing || !this.currentEvent) {
+			if (!this.playing) {
 				return null;
+			}
+
+			if (!this.currentEvent) {
+				// Padding time before first event
+				return [
+					{ text: '', classes: ['cursor'] },
+				];
 			}
 
 			let before = this.currentText.slice(0, this.currentEvent.ss);
 			let inserted = this.currentEvent.t || '';
 			let after = this.currentText.slice(this.currentEvent.se + inserted.length);
 
-			if (this.currentEvent.event === 'change') {
+			if (this.currentEvent.et === 'change') {
 				// This is a text insertion/deletion
 				// Display cursor after newly inserted text
 
@@ -73,7 +98,7 @@ export default {
 					{ text: after, classes: [] },
 				];
 
-			} else if (this.currentEvent.event === 'cursor') {
+			} else if (this.currentEvent.et === 'cursor') {
 				// Cursor placement
 
 				return [
@@ -82,7 +107,7 @@ export default {
 					{ text: after, classes: [] },
 				];
 
-			} else if (this.currentEvent.event === 'select') {
+			} else if (this.currentEvent.et === 'select') {
 				// Text selection
 
 				let selectedText = this.currentText.slice(
@@ -105,6 +130,29 @@ export default {
 		percentage() {
 			return (this.currentIndex / this.recording.length) * 100;
 		},
+		progressDisplay() {
+			return `${this.currentIndex} / ${this.recording.length}`;
+		},
+		timeToNextEvent() {
+			if (!this.playing || !this.currentEvent ||
+				this.currentIndex >= (this.recording.length - 1)
+			) {
+				return null;
+			}
+			return this.startPlayingAt +
+				this.recording[this.currentIndex + 1].ts - this.currentTime;
+		},
+		showSkipAhead() {
+			if (!this.timeToNextEvent) {
+				return false;
+			}
+			return this.timeToNextEvent > SKIP_AHEAD_THRESHOLD;
+		},
+		displayTimeToNextEvent() {
+			return this.timeToNextEvent
+				? `in ${formatTimestamp(this.timeToNextEvent)}`
+				: null;
+		},
 	},
 	watch: {
 		playing: {
@@ -112,15 +160,34 @@ export default {
 			handler(newVal) {
 				if (newVal) {
 					this.playNext();
+				} else {
+					if (this.timeout) {
+						clearTimeout(this.timeout);
+						this.timeout = null;
+					}
+					if (this.currentTimeInterval) {
+						clearInterval(this.currentTimeInterval);
+						this.currentTimeInterval = null;
+					}
 				}
 			},
 		},
 	},
 	methods: {
+		skipToNext() {
+			if (!this.playing || this.currentIndex >= (this.recording.length - 1)) {
+				return;
+			}
+
+			this.startPlayingAt = (Date.now() - this.recording[this.currentIndex + 1].ts);
+
+			this.playNext();
+		},
 		playNext() {
 			if (!this.playing) {
 				return;
 			}
+
 			if (this.currentIndex >= this.recording.length) {
 				this.stop();
 				this.$emit('finished');
@@ -128,12 +195,19 @@ export default {
 			}
 
 			if (this.startPlayingAt === null) {
-				this.startPlayingAt = Date.now();
+				this.startPlayingAt = Date.now() + PADDING_START;
+				this.timeout = setTimeout(() => {
+					this.playNext();
+				}, PADDING_START);
+				this.currentTimeInterval = setInterval(() => {
+					this.currentTime = Date.now();
+				}, 1000);
+				return;
 			}
 
 			this.currentEvent = this.recording[this.currentIndex];
 
-			if (this.currentEvent.event === 'change') {
+			if (this.currentEvent.et === 'change') {
 				// Apply diff to currentText
 				let before = this.currentText.slice(0, this.currentEvent.ss);
 				let after = this.currentText.slice(this.currentEvent.se);
@@ -145,12 +219,14 @@ export default {
 			if (this.currentIndex < this.recording.length) {
 				let nextEvent = this.recording[this.currentIndex];
 				let delay = this.startPlayingAt + nextEvent.ts - Date.now();
-				setTimeout(() => {
+				this.timeout = setTimeout(() => {
 					this.playNext();
 				}, Math.max(0, delay));
 			} else {
 				// Finished
-				this.playing = false;
+				this.timeout = setTimeout(() => {
+					this.stop();
+				}, PADDING_END);
 			}
 
 		},
@@ -160,13 +236,16 @@ export default {
 			this.startPlayingAt = null;
 			this.currentText = '';
 			this.currentIndex = 0;
-		},
-		restart() {
-			this.currentIndex = 0;
-			this.currentText = '';
-			this.currentEvent = null;
-			this.startPlayingAt = null;
-			this.playing = true;
+			if (this.timeout) {
+				clearTimeout(this.timeout);
+				this.timeout = null;
+			}
+			if (this.currentTimeInterval) {
+				clearInterval(this.currentTimeInterval);
+				this.currentTimeInterval = null;
+			}
+			this.currentTime = 0;
+			this.$emit('finished');
 		},
 	},
 };
