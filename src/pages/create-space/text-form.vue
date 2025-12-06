@@ -31,7 +31,10 @@
 	</form-actions>
 
 	<form-actions v-if="saveRecording">
-		<el-button @click="preview()" :disabled="recording.length === 0">
+		<el-button v-if="previewing" @click="previewing = false">
+			Close preview
+		</el-button>
+		<el-button v-else @click="preview()" :disabled="recording.length === 0">
 			Preview
 		</el-button>
 	</form-actions>

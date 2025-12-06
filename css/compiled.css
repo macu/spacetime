@@ -412,6 +412,40 @@ div.center {
   white-space: pre-wrap;
   word-break: break-word;
 }
+.naked-text-replay > div:not([class]) > span.inserted-text {
+  background-color: #d4f8d4;
+  animation: highlight-insert 2s ease-out;
+}
+.naked-text-replay > div:not([class]) > span.selected-text {
+  background-color: #add8ff;
+}
+.naked-text-replay > div:not([class]) > span.cursor {
+  display: inline-block;
+  width: 1px;
+  background-color: black;
+  height: 1em;
+  animation: blink 1s steps(1) infinite;
+  vertical-align: bottom;
+}
+@keyframes blink {
+0% {
+    opacity: 1;
+}
+50% {
+    opacity: 0;
+}
+100% {
+    opacity: 1;
+}
+}
+@keyframes highlight-insert {
+0% {
+    background-color: #d4f8d4;
+}
+100% {
+    background-color: white;
+}
+}
 /*!*******************************************************************************************************************************************************************************************************************************************************************************************************************************************!*\
   !*** css ./node_modules/css-loader/dist/cjs.js??clonedRuleSet-2.use[1]!./node_modules/vue-loader/dist/stylePostLoader.js!./node_modules/sass-loader/dist/cjs.js??clonedRuleSet-2.use[2]!./node_modules/vue-loader/dist/index.js??ruleSet[1].rules[5].use[0]!./src/widgets/material-icon.vue?vue&type=style&index=0&id=55e49714&lang=scss ***!
   \*******************************************************************************************************************************************************************************************************************************************************************************************************************************************/

@@ -26,6 +26,9 @@
 
 <script>
 export default {
+	emits: [
+		'finished',
+	],
 	props: {
 		recording: {
 			type: Array,
@@ -57,9 +60,9 @@ export default {
 
 			let before = this.currentText.slice(0, this.currentEvent.ss);
 			let inserted = this.currentEvent.t || '';
-			let after = this.currentText.slice(this.currentEvent.ss + inserted.length + 1);
+			let after = this.currentText.slice(this.currentEvent.se + inserted.length);
 
-			if (this.currentEvent.t) {
+			if (this.currentEvent.event === 'change') {
 				// This is a text insertion/deletion
 				// Display cursor after newly inserted text
 
@@ -70,35 +73,29 @@ export default {
 					{ text: after, classes: [] },
 				];
 
-			} else if (
-				this.currentEvent.ss !== undefined &&
-				this.currentEvent.se !== undefined
-			) {
-				if (this.currentEvent.ss === this.currentEvent.se) {
-					// Cursor placement
+			} else if (this.currentEvent.event === 'cursor') {
+				// Cursor placement
 
-					return [
-						{ text: before, classes: [] },
-						{ text: '', classes: ['cursor'] },
-						{ text: after, classes: [] },
-					];
+				return [
+					{ text: before, classes: [] },
+					{ text: '', classes: ['cursor'] },
+					{ text: after, classes: [] },
+				];
 
-				} else {
-					// Text selection
+			} else if (this.currentEvent.event === 'select') {
+				// Text selection
 
-					let selectedText = this.currentText.slice(
-						this.currentEvent.ss,
-						this.currentEvent.se,
-					);
+				let selectedText = this.currentText.slice(
+					this.currentEvent.ss,
+					this.currentEvent.se,
+				);
 
-					return [
-						{ text: before, classes: [] },
-						{ text: selectedText, classes: ['selected-text'] },
-						{ text: '', classes: ['cursor'] },
-						{ text: after, classes: [] },
-					];
+				return [
+					{ text: before, classes: [] },
+					{ text: selectedText, classes: ['selected-text'] },
+					{ text: after, classes: [] },
+				];
 
-				}
 			}
 
 			return [
@@ -125,6 +122,8 @@ export default {
 				return;
 			}
 			if (this.currentIndex >= this.recording.length) {
+				this.stop();
+				this.$emit('finished');
 				return;
 			}
 
@@ -132,13 +131,14 @@ export default {
 				this.startPlayingAt = Date.now();
 			}
 
-			let event = this.recording[this.currentIndex];
-			this.currentEvent = event;
+			this.currentEvent = this.recording[this.currentIndex];
 
-			// Apply diff to currentText
-			let before = this.currentText.slice(0, event.ss);
-			let after = this.currentText.slice(event.se);
-			this.currentText = before + (event.t || '') + after;
+			if (this.currentEvent.event === 'change') {
+				// Apply diff to currentText
+				let before = this.currentText.slice(0, this.currentEvent.ss);
+				let after = this.currentText.slice(this.currentEvent.se);
+				this.currentText = before + (this.currentEvent.t || '') + after;
+			}
 
 			this.currentIndex++;
 
@@ -153,6 +153,13 @@ export default {
 				this.playing = false;
 			}
 
+		},
+		stop() {
+			this.playing = false;
+			this.currentEvent = null;
+			this.startPlayingAt = null;
+			this.currentText = '';
+			this.currentIndex = 0;
 		},
 		restart() {
 			this.currentIndex = 0;
@@ -179,11 +186,36 @@ export default {
 	>div:not([class]) {
 		white-space: pre-wrap;
 		word-break: break-word;
+		>span {
+			&.inserted-text {
+				background-color: #d4f8d4;
+				// animate background to white and stop
+				animation: highlight-insert 2s ease-out;
+			}
+			&.selected-text {
+				background-color: #add8ff;
+			}
+			&.cursor {
+				display: inline-block;
+				width: 1px;
+				background-color: black;
+				height: 1em;
+				animation: blink 1s steps(1) infinite;
+				vertical-align: bottom;
+			}
+		}
 	}
 
-	>div.actions {
+}
 
-	}
+@keyframes blink {
+	0% { opacity: 1; }
+	50% { opacity: 0; }
+	100% { opacity: 1; }
+}
 
+@keyframes highlight-insert {
+	0% { background-color: #d4f8d4; }
+	100% { background-color: white; }
 }
 </style>
