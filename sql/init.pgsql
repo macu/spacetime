@@ -6,7 +6,6 @@ DROP INDEX IF EXISTS space_user_throttle;
 DROP TABLE IF EXISTS user_space_bookmark CASCADE;
 DROP TABLE IF EXISTS user_space CASCADE;
 DROP TABLE IF EXISTS json_attribute_space CASCADE;
-DROP TABLE IF EXISTS naked_text_space CASCADE;
 DROP TABLE IF EXISTS stream_of_consciousness_space CASCADE;
 DROP TABLE IF EXISTS text_space CASCADE;
 DROP TABLE IF EXISTS tag_space CASCADE;
@@ -100,8 +99,7 @@ CREATE TYPE space_type AS ENUM (
 	'space-link', -- user linking in a space to another space
 	'title', -- plain text (no newlines), special handling to give a space an active title
 	'tag', -- plain text (no newlines), special handling to give a space a set of active tags
-	'text', -- plain text entered by a user
-	'naked-text', -- text with realtime replay data
+	'text', -- plain text entered by a user, with optional replay data
 	'stream-of-consciousness', -- contains a stream of text checkins ("text-radio")
 	'json-attribute' -- URL and json path and refresh rate
 
@@ -167,16 +165,9 @@ CREATE TABLE tag_space (
 CREATE TABLE text_space (
 	space_id INTEGER PRIMARY KEY REFERENCES space (id) ON DELETE CASCADE,
 	parent_id INTEGER NOT NULL REFERENCES space (id) ON DELETE CASCADE,
-	text_id INTEGER NOT NULL REFERENCES unique_text (id)
-);
-
-CREATE TABLE naked_text_space (
-	-- allow duplicates of final text (replay data will probably always be unique)
-	space_id INTEGER PRIMARY KEY REFERENCES space (id) ON DELETE CASCADE,
-	parent_id INTEGER NOT NULL REFERENCES space (id) ON DELETE CASCADE,
-	final_text_id INTEGER NOT NULL REFERENCES unique_text (id),
-	replay_data TEXT NOT NULL,
-	typing_start_at TIMESTAMPTZ
+	text_id INTEGER NOT NULL REFERENCES unique_text (id),
+	recording TEXT, -- optional recording of text changes as JSON
+	started_at TIMESTAMPTZ, -- null if no recording
 );
 
 CREATE TABLE stream_of_consciousness_space (

@@ -414,7 +414,7 @@ div.center {
 }
 .naked-text-replay > div:not([class]) > span.inserted-text {
   background-color: #d4f8d4;
-  animation: highlight-insert 2s ease-out;
+  animation: highlight-insert 2s ease-out forwards;
 }
 .naked-text-replay > div:not([class]) > span.selected-text {
   background-color: #add8ff;

@@ -40,7 +40,6 @@ var ajaxHandlersAuthRequired = map[string]map[string]ajax.AjaxRouteAuthRequired{
 		"/ajax/space/create/title":   AjaxCreateTitleSpace,
 		"/ajax/space/create/tag":     AjaxCreateTagSpace,
 		"/ajax/space/create/text":    AjaxCreateTextSpace,
-		"/ajax/space/create/naked":   AjaxCreateNakedTextSpace,
 		"/ajax/space/create/stream":  AjaxCreateStreamOfConsciousnessSpace,
 		"/ajax/space/stream/close":   AjaxCloseStreamOfConsciousnessSpace,
 

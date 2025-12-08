@@ -2,8 +2,11 @@ package ajax
 
 import (
 	"database/sql"
+	"encoding/json"
+	"fmt"
 	"net/http"
 	"strings"
+	"time"
 
 	"spacetime/pkg/spacetime"
 	"spacetime/pkg/utils/ajax"
@@ -301,6 +304,9 @@ func AjaxCreateTextSpace(db *sql.DB, auth ajax.Auth,
 		return nil, http.StatusBadRequest
 	}
 
+	// Normalize line endings
+	text = strings.ReplaceAll(text, "\r\n", "\n")
+
 	blocked, err := spacetime.CheckCreateSpaceThrottleBlock(db, auth)
 	if err != nil {
 		logging.LogError(r, &auth, err)
@@ -318,7 +324,29 @@ func AjaxCreateTextSpace(db *sql.DB, auth ajax.Auth,
 		return nil, http.StatusNotFound
 	}
 
-	space, err := spacetime.CreateText(db, auth, parentID, text)
+	recording := r.FormValue("recording")
+	var recordingData *spacetime.NakedText
+	var startedAtTime *time.Time
+	if recording != "" {
+		err = json.Unmarshal([]byte(recording), &recordingData)
+		if err != nil {
+			return nil, http.StatusBadRequest
+		}
+
+		startedAt, err := types.AtoInt64(r.FormValue("startedAt")) // Unix timestamp
+		if err != nil {
+			return nil, http.StatusBadRequest
+		}
+		startedAtTimeValue := time.Unix(startedAt, 0)
+		startedAtTime = &startedAtTimeValue
+
+		if !spacetime.ValidateNakedText(*recordingData, text) {
+			logging.LogError(r, &auth, fmt.Errorf("invalid naked text recording"))
+			return nil, http.StatusBadRequest
+		}
+	}
+
+	space, err := spacetime.CreateText(db, auth, parentID, text, recordingData, startedAtTime)
 	if err != nil {
 		logging.LogError(r, &auth, err)
 		return nil, http.StatusInternalServerError
@@ -333,23 +361,6 @@ func AjaxCreateTextSpace(db *sql.DB, auth ajax.Auth,
 	}
 
 	return space, http.StatusCreated
-
-}
-
-func AjaxCreateNakedTextSpace(db *sql.DB, auth ajax.Auth,
-	w http.ResponseWriter, r *http.Request,
-) (interface{}, int) {
-
-	blocked, err := spacetime.CheckCreateSpaceThrottleBlock(db, auth)
-	if err != nil {
-		logging.LogError(r, &auth, err)
-		return nil, http.StatusInternalServerError
-	}
-	if blocked {
-		return nil, http.StatusTooManyRequests
-	}
-
-	return nil, http.StatusNotImplemented
 
 }
 

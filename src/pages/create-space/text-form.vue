@@ -11,7 +11,20 @@
 			/>
 	</form-field>
 
+	<form-actions>
+		<el-checkbox v-model="saveRecording" :disabled="disableRecordingOption">
+			Include typing record for replay
+		</el-checkbox>
+	</form-actions>
+
 	<form-field title="Text" required>
+		<el-progress
+			v-if="saveRecording"
+			:percentage="(recording.length / $store.getters.nakedTextMaxDeltas) * 100"
+			:format="pct => Math.floor(pct) + '%'"
+			:stroke-width="24"
+			show-text
+			/>
 		<div ref="textBodyWrapper">
 			<el-input
 				type="textarea"
@@ -19,23 +32,17 @@
 				:maxlength="$store.getters.textMaxLength"
 				show-word-limit
 				:autosize="{minRows: 3}"
-				:disabled="posting"
+				:disabled="disableTextarea"
 				/>
 		</div>
 	</form-field>
-
-	<form-actions>
-		<el-checkbox v-model="saveRecording" :disabled="posting">
-			Include typing record for replay
-		</el-checkbox>
-	</form-actions>
 
 	<form-actions v-if="saveRecording">
 		<el-button v-if="previewing" @click="previewing = false">
 			Close preview
 		</el-button>
 		<el-button v-else @click="preview()" :disabled="recording.length === 0">
-			Preview
+			Preview recording
 		</el-button>
 	</form-actions>
 
@@ -84,8 +91,17 @@ export default {
 		};
 	},
 	computed: {
+		recordingMaxed() {
+			return this.recording.length > this.$store.getters.nakedTextMaxDeltas;
+		},
 		createDisabled() {
 			return this.posting || !this.text.trim();
+		},
+		disableRecordingOption() {
+			return this.posting || (!this.saveRecording && this.recordingMaxed);
+		},
+		disableTextarea() {
+			return this.posting || (this.saveRecording && this.recordingMaxed);
 		},
 	},
 	watch: {
@@ -99,6 +115,17 @@ export default {
 				// Should be safe using maxlength on input
 				newValue = newValue.slice(0, this.$store.getters.textMaxLength);
 			}
+
+			// Ensure the first timestamp is 0
+			let timestamp;
+			if (this.startedAt) {
+				timestamp = Date.now() - this.startedAt;
+			} else {
+				this.startedAt = Date.now();
+				timestamp = 0;
+			}
+
+			// TODO Use selection for accurate positioning in repeated strings
 
 			// Find start of delta in old value
 			let changeStart = 0;
@@ -127,7 +154,7 @@ export default {
 			// Add delta
 			this.recording.push({
 				et: 'change',
-				ts: Date.now() - this.getStartedAt(),
+				ts: timestamp,
 				ss: changeStart, // selection applied before delta
 				se: oldValueChangeEnd + 1,
 				t: newValue.slice(changeStart, newValueEndIndex + 1),
@@ -156,12 +183,6 @@ export default {
 		}
 	},
 	methods: {
-		getStartedAt() {
-			if (!this.startedAt) {
-				this.startedAt = Date.now();
-			}
-			return this.startedAt;
-		},
 		onSelect(event) {
 			// Track cursor navigation
 			if (event.type === 'keyup') {
@@ -185,10 +206,28 @@ export default {
 				}
 			}
 
+			// Ensure the first timestamp is 0
+			let timestamp;
+			if (this.startedAt) {
+				timestamp = Date.now() - this.startedAt;
+			} else {
+				this.startedAt = Date.now();
+				timestamp = 0;
+			}
+
 			const textarea = event.target;
 			const selectionStart = textarea.selectionStart;
 			const selectionEnd = textarea.selectionEnd;
-			const timestamp = Date.now() - this.getStartedAt();
+
+			if (selectionStart === selectionEnd &&
+				this.recording.length > 0 &&
+				this.recording[this.recording.length - 1].et === 'cursor' &&
+				this.recording[this.recording.length - 1].ss === selectionStart
+			) {
+				// No change in cursor position
+				return;
+			}
+
 			this.recording.push({
 				et: selectionStart === selectionEnd ? 'cursor' : 'select',
 				ts: timestamp,
@@ -206,9 +245,9 @@ export default {
 			this.$emit('submit', {
 				title: this.title.trim(),
 				text: this.text.trim(),
-				saveRecording: this.saveRecording,
+				recording: this.saveRecording ? JSON.stringify(this.recording) : null,
 				startedAt: this.startedAt,
-				recording: this.saveRecording ? this.recording : [],
+				finalText: JSON.stringify(this.text.trim()),
 			});
 		},
 	},

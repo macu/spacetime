@@ -1,6 +1,6 @@
 <template>
 <div class="naked-text-replay">
-	<div v-if="playing && currentSpans">
+	<div v-if="currentSpans">
 		<span
 			v-for="s in currentSpans"
 			v-text="s.text"
@@ -15,11 +15,11 @@
 		:text="progressDisplay"
 		/>
 	<div class="actions flex-row">
-		<el-button @click="playing = !playing" size="small" :type="playing ? 'default' : 'primary'">
-			{{ playing ? 'Pause' : 'Play' }}
-		</el-button>
 		<el-button v-if="playing" @click="stop()" type="warning" size="small">
 			Stop
+		</el-button>
+		<el-button v-else @click="playing = true" size="small" type="primary">
+			Play
 		</el-button>
 		<el-button v-if="showSkipAhead" @click="skipToNext()" type="primary" size="small">
 			Skip to next event ({{displayTimeToNextEvent}})
@@ -173,6 +173,16 @@ export default {
 			},
 		},
 	},
+	beforeUnmount() {
+		if (this.timeout) {
+			clearTimeout(this.timeout);
+			this.timeout = null;
+		}
+		if (this.currentTimeInterval) {
+			clearInterval(this.currentTimeInterval);
+			this.currentTimeInterval = null;
+		}
+	},
 	methods: {
 		skipToNext() {
 			if (!this.playing || this.currentIndex >= (this.recording.length - 1)) {
@@ -269,7 +279,7 @@ export default {
 			&.inserted-text {
 				background-color: #d4f8d4;
 				// animate background to white and stop
-				animation: highlight-insert 2s ease-out;
+				animation: highlight-insert 2s ease-out forwards;
 			}
 			&.selected-text {
 				background-color: #add8ff;

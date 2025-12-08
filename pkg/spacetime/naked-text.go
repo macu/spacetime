@@ -1,81 +1,105 @@
 package spacetime
 
 import (
-	"database/sql"
-
-	"spacetime/pkg/utils/ajax"
+	"fmt"
+	"spacetime/pkg/utils/logging"
+	"strings"
 )
 
 type NakedTextDelta struct {
 	Timestamp uint `json:"ts"`
 
-	Event string `json:"e"` // "change", "select"
+	EventType string `json:"et"` // "change", "select", "cursor"
 
 	// added text (or blank if removed)
 	Text *string `json:"t,omitempty"`
 
-	// selections
-	SelectStart *uint `json:"ss,omitempty"`
-	SelectEnd   *uint `json:"se,omitempty"`
+	// modification, selection, and cursor positions
+	SelectStart uint `json:"ss"`
+	SelectEnd   uint `json:"se"`
 }
 
 type NakedText []NakedTextDelta
 
-func ValidateNakedText(text NakedText) bool {
+func ValidateNakedText(recording NakedText, finalText string) bool {
 
 	// Ensure has count
-	if len(text) == 0 || len(text) > NakedTextMaxDeltas {
+	if len(recording) == 0 || len(recording) > NakedTextMaxDeltas {
+		logging.LogError(nil, nil, fmt.Errorf("naked text recording has invalid number of deltas"))
 		return false
 	}
 
 	// Ensure first delta at timestamp 0
-	if text[0].Timestamp != 0 {
+	if recording[0].Timestamp != 0 {
+		logging.LogError(nil, nil, fmt.Errorf("naked text first delta timestamp not zero"))
 		return false
 	}
 
 	// Ensure timestamps increment
-	for i := 1; i < len(text); i++ {
-		if text[i].Timestamp >= text[i-1].Timestamp {
+	for i := 1; i < len(recording); i++ {
+		if recording[i].Timestamp < recording[i-1].Timestamp {
+			logging.LogError(nil, nil, fmt.Errorf("naked text delta timestamps not increasing"))
 			return false
 		}
 	}
 
 	// Ensure full data is available for each type of delta
-	for _, delta := range text {
+	var currentText string
+	for _, delta := range recording {
 
-		hasEvent := delta.Event != ""
-		if !hasEvent {
-			return false
-		}
-		if delta.Event != "change" && delta.Event != "select" {
-			return false
-		}
+		switch delta.EventType {
 
-		hasAddText := delta.Text != nil
+		case "change":
+			if delta.Text == nil || len(*delta.Text) > TextMaxLength {
+				logging.LogError(nil, nil, fmt.Errorf("invalid change delta text"))
+				return false
+			}
+			// Apply change
+			currentText = currentText[:delta.SelectStart] +
+				*delta.Text +
+				currentText[delta.SelectEnd:]
+			logging.LogNotice(nil, fmt.Sprintf("Applied change delta %v, new text: %s\n", delta, currentText))
+			// Check length
+			if len(currentText) > TextMaxLength {
+				logging.LogError(nil, nil, fmt.Errorf("text exceeds max length"))
+				return false
+			}
 
-		hasSelect := delta.SelectStart != nil && delta.SelectEnd != nil
-		hasPartialSelect := (delta.SelectStart != nil || delta.SelectEnd != nil) && !hasSelect
+		case "select":
+			if delta.Text != nil {
+				logging.LogError(nil, nil, fmt.Errorf("select delta with text"))
+				return false
+			}
+			if delta.SelectStart == delta.SelectEnd {
+				logging.LogError(nil, nil, fmt.Errorf("select delta with no selection"))
+				return false
+			}
+			if delta.SelectStart > delta.SelectEnd ||
+				delta.SelectEnd > uint(len(currentText)) {
+				logging.LogError(nil, nil, fmt.Errorf("invalid select delta"))
+				return false
+			}
 
-		if !hasAddText && !hasSelect {
-			return false
-		}
+		case "cursor":
+			if delta.SelectStart != delta.SelectEnd {
+				return false
+			}
+			if delta.SelectStart > uint(len(currentText)) {
+				return false
+			}
 
-		if hasPartialSelect {
+		default:
 			return false
 		}
 
 	}
 
+	// Ensure final text matches
+	if strings.TrimSpace(currentText) != strings.TrimSpace(finalText) {
+		logging.LogError(nil, nil, fmt.Errorf("final text does not match, %s, %s", currentText, finalText))
+		return false
+	}
+
 	return true
-
-}
-
-func CreateNakedText(conn *sql.DB, auth ajax.Auth,
-	parentID uint, finalText, replayData string,
-) (*Space, error) {
-
-	// Create naked text space with given replay data
-
-	return nil, nil
 
 }

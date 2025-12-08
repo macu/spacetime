@@ -69,8 +69,11 @@ export const store = createStore({
 		textMaxLength() {
 			return window.appConstants.textMaxLength;
 		},
-		maxLimit() {
-			return window.appConstants.maxLimit;
+		maxPageLimit() {
+			return window.appConstants.maxPageLimit;
+		},
+		nakedTextMaxDeltas() {
+			return window.appConstants.nakedTextMaxDeltas;
 		},
 	},
 	mutations: {

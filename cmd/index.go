@@ -24,7 +24,7 @@ func indexHandler(db *sql.DB, user *ajax.Auth, w http.ResponseWriter, r *http.Re
 		TagMaxLength       uint
 		TextMaxLength      uint
 		NakedTextMaxDeltas uint
-		MaxLimit           uint
+		MaxPageLimit       uint
 	}{
 		env.IsLocal(),
 		env.GetCacheControlVersionStamp(),

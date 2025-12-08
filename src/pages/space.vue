@@ -113,7 +113,7 @@ export default {
 			ajaxGet('/ajax/subspaces', {
 				parentId: this.space.id,
 				offset: this.subspaces.length,
-				limit: this.$store.getters.maxLimit,
+				limit: this.$store.getters.maxPageLimit,
 				filter: JSON.stringify({
 					...this.filter,
 					excludeTypes: SPACE_TYPES.CHECK_IN,

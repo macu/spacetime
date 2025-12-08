@@ -3,15 +3,21 @@ package spacetime
 import (
 	"database/sql"
 	"fmt"
+	"time"
 
 	"spacetime/pkg/utils/ajax"
 	"spacetime/pkg/utils/db"
 )
 
-func CreateText(conn *sql.DB, auth ajax.Auth, parentID uint, text string) (*Space, error) {
+func CreateText(conn *sql.DB, auth ajax.Auth, parentID uint,
+	text string, recording *NakedText, startTime *time.Time) (*Space, error) {
 
 	if !ValidateText(text) {
 		return nil, fmt.Errorf("invalid text")
+	}
+
+	if recording != nil && !ValidateNakedText(*recording, text) {
+		return nil, fmt.Errorf("invalid text recording")
 	}
 
 	var space = &Space{
