@@ -167,7 +167,7 @@ CREATE TABLE text_space (
 	parent_id INTEGER NOT NULL REFERENCES space (id) ON DELETE CASCADE,
 	text_id INTEGER NOT NULL REFERENCES unique_text (id),
 	recording TEXT, -- optional recording of text changes as JSON
-	started_at TIMESTAMPTZ, -- null if no recording
+	started_at TIMESTAMPTZ -- null if no recording
 );
 
 CREATE TABLE stream_of_consciousness_space (

@@ -15,8 +15,10 @@ type Space struct {
 
 	Label *string `json:"label,omitempty"`
 
-	FinalText  *string    `json:"finalText,omitempty"`  // naked-text
-	ReplayData *NakedText `json:"replayData,omitempty"` // naked-text
+	FinalText    *string    `json:"finalText,omitempty"`    // naked-text
+	ReplayData   *NakedText `json:"recording,omitempty"`    // naked-text
+	HasRecording *bool      `json:"hasRecording,omitempty"` // naked-text
+	StartedAt    *time.Time `json:"startedAt,omitempty"`    // naked-text
 
 	StreamClosedAt **time.Time `json:"streamClosedAt,omitempty"`
 	StreamTexts    *[]*Space   `json:"streamTexts,omitempty"`

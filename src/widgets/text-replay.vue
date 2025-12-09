@@ -1,5 +1,5 @@
 <template>
-<div class="naked-text-replay">
+<div class="naked-text-replay" :class="{ 'inline': inline }">
 	<div v-if="currentSpans">
 		<span
 			v-for="s in currentSpans"
@@ -49,6 +49,10 @@ export default {
 			required: true,
 		},
 		initialPlaying: {
+			type: Boolean,
+			default: false,
+		},
+		inline: {
 			type: Boolean,
 			default: false,
 		},
@@ -264,9 +268,11 @@ export default {
 <style lang="scss">
 .naked-text-replay {
 
-	padding: 1em;
-	background: white;
-	border: 1px solid #ccc;
+	&:not(.inline) {
+		padding: 1em;
+		background: white;
+		border: 1px solid #ccc;
+	}
 
 	display: flex;
 	flex-direction: column;

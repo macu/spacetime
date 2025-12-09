@@ -247,7 +247,6 @@ export default {
 				text: this.text.trim(),
 				recording: this.saveRecording ? JSON.stringify(this.recording) : null,
 				startedAt: this.startedAt,
-				finalText: JSON.stringify(this.text.trim()),
 			});
 		},
 	},

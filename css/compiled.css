@@ -311,6 +311,57 @@ div.center {
   overflow: hidden;
   text-overflow: ellipsis;
 }
+/*!*****************************************************************************************************************************************************************************************************************************************************************************************************************************************!*\
+  !*** css ./node_modules/css-loader/dist/cjs.js??clonedRuleSet-2.use[1]!./node_modules/vue-loader/dist/stylePostLoader.js!./node_modules/sass-loader/dist/cjs.js??clonedRuleSet-2.use[2]!./node_modules/vue-loader/dist/index.js??ruleSet[1].rules[5].use[0]!./src/widgets/text-replay.vue?vue&type=style&index=0&id=a1112944&lang=scss ***!
+  \*****************************************************************************************************************************************************************************************************************************************************************************************************************************************/
+.naked-text-replay {
+  display: flex;
+  flex-direction: column;
+  gap: 1em;
+}
+.naked-text-replay:not(.inline) {
+  padding: 1em;
+  background: white;
+  border: 1px solid #ccc;
+}
+.naked-text-replay > div:not([class]) {
+  white-space: pre-wrap;
+  word-break: break-word;
+}
+.naked-text-replay > div:not([class]) > span.inserted-text {
+  background-color: #d4f8d4;
+  animation: highlight-insert 2s ease-out forwards;
+}
+.naked-text-replay > div:not([class]) > span.selected-text {
+  background-color: #add8ff;
+}
+.naked-text-replay > div:not([class]) > span.cursor {
+  display: inline-block;
+  width: 1px;
+  background-color: black;
+  height: 1em;
+  animation: blink 1s steps(1) infinite;
+  vertical-align: bottom;
+}
+@keyframes blink {
+0% {
+    opacity: 1;
+}
+50% {
+    opacity: 0;
+}
+100% {
+    opacity: 1;
+}
+}
+@keyframes highlight-insert {
+0% {
+    background-color: #d4f8d4;
+}
+100% {
+    background-color: white;
+}
+}
 /*!****************************************************************************************************************************************************************************************************************************************************************************************************************************************!*\
   !*** css ./node_modules/css-loader/dist/cjs.js??clonedRuleSet-2.use[1]!./node_modules/vue-loader/dist/stylePostLoader.js!./node_modules/sass-loader/dist/cjs.js??clonedRuleSet-2.use[2]!./node_modules/vue-loader/dist/index.js??ruleSet[1].rules[5].use[0]!./src/widgets/space-text.vue?vue&type=style&index=0&id=15d15a8d&lang=scss ***!
   \****************************************************************************************************************************************************************************************************************************************************************************************************************************************/
@@ -323,6 +374,12 @@ div.center {
   padding: 20px;
   font-size: 1.2em;
   white-space: pre-wrap;
+  display: flex;
+  flex-direction: column;
+  gap: 1em;
+}
+.space-text > .el-button {
+  align-self: flex-start;
 }
 /*!******************************************************************************************************************************************************************************************************************************************************************************************************************************************!*\
   !*** css ./node_modules/css-loader/dist/cjs.js??clonedRuleSet-2.use[1]!./node_modules/vue-loader/dist/stylePostLoader.js!./node_modules/sass-loader/dist/cjs.js??clonedRuleSet-2.use[2]!./node_modules/vue-loader/dist/index.js??ruleSet[1].rules[5].use[0]!./src/widgets/space-output.vue?vue&type=style&index=0&id=6b8af261&lang=scss ***!
@@ -397,55 +454,6 @@ div.center {
   !*** css ./node_modules/css-loader/dist/cjs.js??clonedRuleSet-2.use[1]!./node_modules/vue-loader/dist/stylePostLoader.js!./node_modules/sass-loader/dist/cjs.js??clonedRuleSet-2.use[2]!./node_modules/vue-loader/dist/index.js??ruleSet[1].rules[5].use[0]!./src/pages/space.vue?vue&type=style&index=0&id=68c3739c&lang=scss ***!
   \*********************************************************************************************************************************************************************************************************************************************************************************************************************************/
 
-/*!*****************************************************************************************************************************************************************************************************************************************************************************************************************************************!*\
-  !*** css ./node_modules/css-loader/dist/cjs.js??clonedRuleSet-2.use[1]!./node_modules/vue-loader/dist/stylePostLoader.js!./node_modules/sass-loader/dist/cjs.js??clonedRuleSet-2.use[2]!./node_modules/vue-loader/dist/index.js??ruleSet[1].rules[5].use[0]!./src/widgets/text-replay.vue?vue&type=style&index=0&id=a1112944&lang=scss ***!
-  \*****************************************************************************************************************************************************************************************************************************************************************************************************************************************/
-.naked-text-replay {
-  padding: 1em;
-  background: white;
-  border: 1px solid #ccc;
-  display: flex;
-  flex-direction: column;
-  gap: 1em;
-}
-.naked-text-replay > div:not([class]) {
-  white-space: pre-wrap;
-  word-break: break-word;
-}
-.naked-text-replay > div:not([class]) > span.inserted-text {
-  background-color: #d4f8d4;
-  animation: highlight-insert 2s ease-out forwards;
-}
-.naked-text-replay > div:not([class]) > span.selected-text {
-  background-color: #add8ff;
-}
-.naked-text-replay > div:not([class]) > span.cursor {
-  display: inline-block;
-  width: 1px;
-  background-color: black;
-  height: 1em;
-  animation: blink 1s steps(1) infinite;
-  vertical-align: bottom;
-}
-@keyframes blink {
-0% {
-    opacity: 1;
-}
-50% {
-    opacity: 0;
-}
-100% {
-    opacity: 1;
-}
-}
-@keyframes highlight-insert {
-0% {
-    background-color: #d4f8d4;
-}
-100% {
-    background-color: white;
-}
-}
 /*!*******************************************************************************************************************************************************************************************************************************************************************************************************************************************!*\
   !*** css ./node_modules/css-loader/dist/cjs.js??clonedRuleSet-2.use[1]!./node_modules/vue-loader/dist/stylePostLoader.js!./node_modules/sass-loader/dist/cjs.js??clonedRuleSet-2.use[2]!./node_modules/vue-loader/dist/index.js??ruleSet[1].rules[5].use[0]!./src/widgets/material-icon.vue?vue&type=style&index=0&id=55e49714&lang=scss ***!
   \*******************************************************************************************************************************************************************************************************************************************************************************************************************************************/

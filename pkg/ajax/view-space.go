@@ -136,3 +136,31 @@ func AjaxLoadSpace(db *sql.DB, auth *ajax.Auth,
 	return space, http.StatusOK
 
 }
+
+func AjaxLoadTextSpaceRecording(db *sql.DB, auth *ajax.Auth,
+	w http.ResponseWriter, r *http.Request,
+) (interface{}, int) {
+
+	id, err := types.AtoUint(r.FormValue("spaceId"))
+	if err != nil {
+		return nil, http.StatusBadRequest
+	}
+
+	space, err := spacetime.LoadSpace(db, auth, id)
+	if err != nil {
+		logging.LogError(r, auth, err)
+		return nil, http.StatusInternalServerError
+	}
+
+	if space.SpaceType != spacetime.SpaceTypeText {
+		return nil, http.StatusBadRequest
+	}
+
+	err = spacetime.LoadTextRecording(db, space)
+	if err != nil {
+		logging.LogError(r, auth, err)
+		return nil, http.StatusInternalServerError
+	}
+
+	return space.ReplayData, http.StatusOK
+}

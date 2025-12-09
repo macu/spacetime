@@ -2,7 +2,6 @@ package spacetime
 
 import (
 	"database/sql"
-	"encoding/json"
 	"fmt"
 	"time"
 
@@ -275,14 +274,6 @@ func LoadSpaceContent(conn *sql.DB, auth *ajax.Auth,
 		}
 	}
 
-	if hasSpacesOfType(spaces, SpaceTypeNaked) {
-		err := loadNakedTextSpacesContent(conn,
-			extractSpacesByType(spaces, SpaceTypeNaked))
-		if err != nil {
-			return err
-		}
-	}
-
 	if loadLinkedSpaces && hasSpacesOfType(spaces, SpaceTypeLink) {
 		err := loadLinkSpaceDetails(conn, auth,
 			extractSpacesByType(spaces, SpaceTypeLink))
@@ -452,7 +443,8 @@ func loadTextSpacesContent(conn *sql.DB, spaces []*Space) error {
 	}
 
 	rows, err := conn.Query(`SELECT
-		space.id, unique_text.text_value
+		space.id, unique_text.text_value,
+		CASE WHEN text_space.recording IS NOT NULL THEN TRUE ELSE FALSE END AS has_recording
 		FROM space
 		INNER JOIN text_space ON text_space.space_id = space.id
 		INNER JOIN unique_text ON unique_text.id = text_space.text_id
@@ -469,71 +461,15 @@ func loadTextSpacesContent(conn *sql.DB, spaces []*Space) error {
 	for rows.Next() {
 		var spaceID uint
 		var text string
-		err = rows.Scan(&spaceID, &text)
+		var hasRecording bool
+		err = rows.Scan(&spaceID, &text, &hasRecording)
 		if err != nil {
 			return fmt.Errorf("loading text spaces content: %w", err)
 		}
 		for _, space := range spaces {
 			if space.ID == spaceID {
 				space.Text = &text
-			}
-		}
-	}
-
-	return nil
-
-}
-
-func loadNakedTextSpacesContent(conn *sql.DB, spaces []*Space) error {
-	// Load naked text
-
-	if len(spaces) == 0 {
-		return nil
-	}
-
-	var args = []interface{}{}
-
-	var inClauseSql string
-
-	for i, space := range spaces {
-		if i > 0 {
-			inClauseSql += `, `
-		}
-		inClauseSql += db.Arg(&args, space.ID)
-	}
-
-	rows, err := conn.Query(`SELECT
-		space.id, unique_text.text_value, naked_text_space.replay_data
-		FROM space
-		INNER JOIN naked_text_space ON naked_text_space.space_id = space.id
-		INNER JOIN unique_text ON unique_text.id = naked_text_space.final_text_id
-		WHERE space.id IN (`+inClauseSql+`)`,
-		args...,
-	)
-
-	if err != nil {
-		return fmt.Errorf("loading title spaces content: %w", err)
-	}
-
-	defer rows.Close()
-
-	for rows.Next() {
-		var spaceID uint
-		var text string
-		var replayJSON string
-		var replayData NakedText
-		err = rows.Scan(&spaceID, &text, &replayJSON)
-		if err != nil {
-			return fmt.Errorf("loading title spaces content: %w", err)
-		}
-		err = json.Unmarshal([]byte(replayJSON), &replayData)
-		if err != nil {
-			return fmt.Errorf("unmarshalling naked text replay: %w", err)
-		}
-		for _, space := range spaces {
-			if space.ID == spaceID {
-				space.Text = &text
-				space.ReplayData = &replayData
+				space.HasRecording = &hasRecording
 			}
 		}
 	}

@@ -15,10 +15,11 @@ import (
 
 var ajaxHandlersAuthOptional = map[string]map[string]ajax.AjaxRouteAuthOptional{
 	http.MethodGet: {
-		"/ajax/space":     AjaxLoadSpace,
-		"/ajax/subspaces": AjaxLoadTopSubspaces,
-		"/ajax/titles":    AjaxLoadTopTitles,
-		"/ajax/tags":      AjaxLoadTopTags,
+		"/ajax/space":       AjaxLoadSpace,
+		"/ajax/subspaces":   AjaxLoadTopSubspaces,
+		"/ajax/titles":      AjaxLoadTopTitles,
+		"/ajax/tags":        AjaxLoadTopTags,
+		"/ajax/text-replay": AjaxLoadTextSpaceRecording,
 
 		"/ajax/load-login":  auth.AjaxLoadLogin,
 		"/ajax/load-signup": auth.AjaxLoadSignup,

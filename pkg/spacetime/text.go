@@ -2,6 +2,7 @@ package spacetime
 
 import (
 	"database/sql"
+	"encoding/json"
 	"fmt"
 	"time"
 
@@ -40,11 +41,22 @@ func CreateText(conn *sql.DB, auth ajax.Auth, parentID uint,
 			return err
 		}
 
+		var recordingJson *[]byte
+		if recording != nil {
+			recordingJsonData, err := json.Marshal(recording)
+			if err != nil {
+				return fmt.Errorf("marshal text recording: %w", err)
+			}
+			recordingJson = &recordingJsonData
+		} else {
+			startTime = nil
+		}
+
 		// Create text_space
 		if _, err = tx.Exec(`INSERT INTO text_space
-			(space_id, parent_id, text_id)
-			VALUES ($1, $2, $3)`,
-			space.ID, parentID, *uniqueTextId,
+			(space_id, parent_id, text_id, recording, started_at)
+			VALUES ($1, $2, $3, $4, $5)`,
+			space.ID, parentID, *uniqueTextId, recordingJson, startTime,
 		); err != nil {
 			return fmt.Errorf("insert text_space: %w", err)
 		}
@@ -59,4 +71,32 @@ func CreateText(conn *sql.DB, auth ajax.Auth, parentID uint,
 
 	return space, nil
 
+}
+
+func LoadTextRecording(conn *sql.DB, space *Space) error {
+	var jsonData []byte
+
+	err := conn.QueryRow(`SELECT recording, started_at
+		FROM text_space
+		WHERE space_id = $1`, space.ID,
+	).Scan(&jsonData, &space.StartedAt)
+
+	if err != nil {
+		return fmt.Errorf("load text recording: %w", err)
+	}
+
+	if jsonData != nil {
+		var recording NakedText
+		if err = json.Unmarshal(jsonData, &recording); err != nil {
+			return fmt.Errorf("unmarshal text recording: %w", err)
+		}
+		space.ReplayData = &recording
+		hasRecording := true
+		space.HasRecording = &hasRecording
+	} else {
+		hasRecording := false
+		space.HasRecording = &hasRecording
+	}
+
+	return nil
 }
