@@ -109,8 +109,10 @@ export default {
 			this.previewing = false;
 
 			if (newValue === oldValue) {
+				// TODO Insert cursor event
 				return;
 			}
+
 			if (newValue.length > this.$store.getters.textMaxLength) {
 				// Should be safe using maxlength on input
 				newValue = newValue.slice(0, this.$store.getters.textMaxLength);
@@ -151,14 +153,45 @@ export default {
 
 			let inserted = newValue.slice(changeStart, newValueEndIndex + 1);
 
-			// Look at cursor position for adjustment, needed with repeated strings
-			let textarea = this.$refs.textBodyWrapper.querySelector('textarea');
-			let selectionStart = textarea.selectionStart;
-			if (selectionStart != changeStart) {
-				// Adjust for cursor position
-				let diff = changeStart - (selectionStart - inserted.length);
-				changeStart -= diff;
-				oldValueChangeEnd -= diff;
+			if (this.recording.length > 0) {
+
+				let lastDelta = this.recording[this.recording.length - 1];
+
+				switch (lastDelta.et) {
+
+					case 'change':
+						if (lastDelta.t) {
+							changeStart = lastDelta.ss + lastDelta.t.length;
+							oldValueChangeEnd = lastDelta.ss + lastDelta.t.length - 1;
+						} else {
+							changeStart = lastDelta.ss;
+							oldValueChangeEnd = changeStart - 1;
+						}
+						break;
+
+					case 'cursor':
+						var expecdedNewValue = oldValue.slice(0, lastDelta.ss) +
+							inserted + oldValue.slice(lastDelta.ss);
+						if (newValue === expecdedNewValue) {
+							// Insertion at cursor
+							changeStart = lastDelta.ss;
+							oldValueChangeEnd = lastDelta.ss - 1;
+						}
+						break;
+
+					case 'select':
+						let replaced = oldValue.slice(lastDelta.ss, lastDelta.se);
+						var expecdedNewValue = oldValue.slice(0, lastDelta.ss) +
+							inserted + oldValue.slice(lastDelta.se);
+						if (newValue === expecdedNewValue) {
+							// Selection replacement
+							changeStart = lastDelta.ss;
+							oldValueChangeEnd = lastDelta.se - 1;
+						}
+						break;
+
+				}
+
 			}
 
 			// Add delta
