@@ -12,9 +12,12 @@ func LoadExistingSpaceLink(conn db.DBConn,
 	parentID, spaceID uint,
 ) (*Space, error) {
 
+	var spaceIDPtr = &spaceID
+
 	var space = &Space{
-		ParentID:  &parentID,
-		SpaceType: SpaceTypeLink,
+		ParentID:    &parentID,
+		SpaceType:   SpaceTypeLink,
+		LinkSpaceID: &spaceIDPtr,
 	}
 
 	err := conn.QueryRow(`SELECT space_id FROM link_space

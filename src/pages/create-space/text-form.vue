@@ -125,8 +125,6 @@ export default {
 				timestamp = 0;
 			}
 
-			// TODO Use selection for accurate positioning in repeated strings
-
 			// Find start of delta in old value
 			let changeStart = 0;
 			while (
@@ -151,13 +149,25 @@ export default {
 				newValueEndIndex--;
 			}
 
+			let inserted = newValue.slice(changeStart, newValueEndIndex + 1);
+
+			// Look at cursor position for adjustment, needed with repeated strings
+			let textarea = this.$refs.textBodyWrapper.querySelector('textarea');
+			let selectionStart = textarea.selectionStart;
+			if (selectionStart != changeStart) {
+				// Adjust for cursor position
+				let diff = changeStart - (selectionStart - inserted.length);
+				changeStart -= diff;
+				oldValueChangeEnd -= diff;
+			}
+
 			// Add delta
 			this.recording.push({
 				et: 'change',
 				ts: timestamp,
 				ss: changeStart, // selection applied before delta
 				se: oldValueChangeEnd + 1,
-				t: newValue.slice(changeStart, newValueEndIndex + 1),
+				t: inserted,
 			});
 		},
 	},

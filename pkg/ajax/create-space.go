@@ -385,15 +385,6 @@ func AjaxCloseStreamOfConsciousnessSpace(db *sql.DB, auth ajax.Auth,
 	w http.ResponseWriter, r *http.Request,
 ) (interface{}, int) {
 
-	blocked, err := spacetime.CheckCreateSpaceThrottleBlock(db, auth)
-	if err != nil {
-		logging.LogError(r, &auth, err)
-		return nil, http.StatusInternalServerError
-	}
-	if blocked {
-		return nil, http.StatusTooManyRequests
-	}
-
 	return nil, http.StatusNotImplemented
 
 }

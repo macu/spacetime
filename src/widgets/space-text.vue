@@ -1,5 +1,5 @@
 <template>
-<div class="space-text">
+<div class="space-text" @click.stop>
 
 	<el-button v-if="showLoadRecording" type="primary" @click="loadRecording()">
 		<material-icon icon="play_circle" />
