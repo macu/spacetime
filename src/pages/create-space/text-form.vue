@@ -139,59 +139,30 @@ export default {
 
 			// Find end of delta in old value
 			// Search from end of both strings
-			let oldValueChangeEnd = oldValue.length - 1;
-			let newValueEndIndex = newValue.length - 1;
+			let oldValueChangeEnd = oldValue.length;
+			let newValueEndIndex = newValue.length;
 			while (
-				oldValueChangeEnd >= changeStart &&
-				oldValueChangeEnd >= 0 &&
-				newValueEndIndex >= 0 &&
-				newValue[newValueEndIndex] === oldValue[oldValueChangeEnd]
+				oldValueChangeEnd > changeStart &&
+				oldValueChangeEnd > 0 &&
+				newValueEndIndex > changeStart &&
+				newValueEndIndex > 0 &&
+				newValue[newValueEndIndex - 1] === oldValue[oldValueChangeEnd - 1]
 			) {
 				oldValueChangeEnd--;
 				newValueEndIndex--;
 			}
 
-			let inserted = newValue.slice(changeStart, newValueEndIndex + 1);
+			let inserted = newValue.slice(changeStart, newValueEndIndex);
 
-			if (this.recording.length > 0) {
-
-				let lastDelta = this.recording[this.recording.length - 1];
-
-				switch (lastDelta.et) {
-
-					case 'change':
-						if (lastDelta.t) {
-							changeStart = lastDelta.ss + lastDelta.t.length;
-							oldValueChangeEnd = lastDelta.ss + lastDelta.t.length - 1;
-						} else {
-							changeStart = lastDelta.ss;
-							oldValueChangeEnd = changeStart - 1;
-						}
-						break;
-
-					case 'cursor':
-						var expecdedNewValue = oldValue.slice(0, lastDelta.ss) +
-							inserted + oldValue.slice(lastDelta.ss);
-						if (newValue === expecdedNewValue) {
-							// Insertion at cursor
-							changeStart = lastDelta.ss;
-							oldValueChangeEnd = lastDelta.ss - 1;
-						}
-						break;
-
-					case 'select':
-						let replaced = oldValue.slice(lastDelta.ss, lastDelta.se);
-						var expecdedNewValue = oldValue.slice(0, lastDelta.ss) +
-							inserted + oldValue.slice(lastDelta.se);
-						if (newValue === expecdedNewValue) {
-							// Selection replacement
-							changeStart = lastDelta.ss;
-							oldValueChangeEnd = lastDelta.se - 1;
-						}
-						break;
-
-				}
-
+			// Get current cursor position to ensure correct indexing
+			let textarea = this.$refs.textBodyWrapper.querySelector('textarea');
+			let selectionEnd = textarea.selectionEnd;
+			let deltaStart = selectionEnd - inserted.length;
+			if (deltaStart < changeStart) {
+				// Adjust for cases where text is inserted in middle of existing text
+				let diff = changeStart - deltaStart;
+				changeStart -= diff;
+				oldValueChangeEnd -= diff;
 			}
 
 			// Add delta
@@ -199,7 +170,7 @@ export default {
 				et: 'change',
 				ts: timestamp,
 				ss: changeStart, // selection applied before delta
-				se: oldValueChangeEnd + 1,
+				se: oldValueChangeEnd,
 				t: inserted,
 			});
 		},

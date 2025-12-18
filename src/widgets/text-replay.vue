@@ -69,6 +69,7 @@ export default {
 			playing: this.initialPlaying,
 			currentIndex: 0,
 			currentText: '',
+			previousText: '',
 			currentEvent: null,
 			startPlayingAt: null,
 			currentTime: 0,
@@ -87,9 +88,9 @@ export default {
 				];
 			}
 
-			let before = this.currentText.slice(0, this.currentEvent.ss);
+			let before = this.previousText.slice(0, this.currentEvent.ss);
 			let inserted = this.currentEvent.t || '';
-			let after = this.currentText.slice(this.currentEvent.se + inserted.length);
+			let after = this.previousText.slice(this.currentEvent.se);
 
 			if (this.currentEvent.et === 'change') {
 				// This is a text insertion/deletion
@@ -204,7 +205,6 @@ export default {
 
 			if (this.currentIndex >= this.recording.length) {
 				this.stop();
-				this.$emit('finished');
 				return;
 			}
 
@@ -220,6 +220,7 @@ export default {
 			}
 
 			this.currentEvent = this.recording[this.currentIndex];
+			this.previousText = this.currentText;
 
 			if (this.currentEvent.et === 'change') {
 				// Apply diff to currentText
@@ -232,7 +233,7 @@ export default {
 
 			if (this.currentIndex < this.recording.length) {
 				let nextEvent = this.recording[this.currentIndex];
-				let delay = this.startPlayingAt + nextEvent.ts - Date.now();
+				let delay = (this.startPlayingAt + nextEvent.ts) - Date.now();
 				this.timeout = setTimeout(() => {
 					this.playNext();
 				}, Math.max(0, delay));
@@ -249,6 +250,7 @@ export default {
 			this.currentEvent = null;
 			this.startPlayingAt = null;
 			this.currentText = '';
+			this.previousText = '';
 			this.currentIndex = 0;
 			if (this.timeout) {
 				clearTimeout(this.timeout);
