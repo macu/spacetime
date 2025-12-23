@@ -20,7 +20,7 @@
 	<form-field title="Text" required>
 		<el-progress
 			v-if="saveRecording"
-			:percentage="(recording.length / $store.getters.nakedTextMaxDeltas) * 100"
+			:percentage="(recordDeltas / $store.getters.nakedTextMaxDeltasSoft) * 100"
 			:format="pct => Math.floor(pct) + '%'"
 			:stroke-width="24"
 			show-text
@@ -84,24 +84,34 @@ export default {
 			title: '',
 			text: '',
 			saveRecording: this.initialSaveRecording,
+
 			startedAt: null,
 			recording: [],
+			lastSelection: {start: 0, end: 0}, // avoid duplicate selection events
+			insertedTextLength: 0, // count inserted text toward max deltas
 
 			previewing: false,
 		};
 	},
 	computed: {
-		recordingMaxed() {
-			return this.recording.length > this.$store.getters.nakedTextMaxDeltas;
-		},
 		createDisabled() {
 			return this.posting || !this.text.trim();
 		},
-		disableRecordingOption() {
-			return this.posting || (!this.saveRecording && this.recordingMaxed);
+		recordLength() {
+			return this.recording.length;
+		},
+		recordDeltas() {
+			return this.recordLength + this.insertedTextLength;
+		},
+		recordingMaxed() {
+			// disable textarea at soft limit
+			return this.recordDeltas >= this.$store.getters.nakedTextMaxDeltasSoft;
 		},
 		disableTextarea() {
 			return this.posting || (this.saveRecording && this.recordingMaxed);
+		},
+		disableRecordingOption() {
+			return this.posting || (!this.saveRecording && this.recordingMaxed);
 		},
 	},
 	watch: {
@@ -153,17 +163,31 @@ export default {
 			}
 
 			let inserted = newValue.slice(changeStart, newValueEndIndex);
+			this.insertedTextLength += inserted.length;
 
 			// Get current cursor position to ensure correct indexing
+			// E.g. inserting 'AAA' in middle of existing 'AAA' text
 			let textarea = this.$refs.textBodyWrapper.querySelector('textarea');
 			let selectionEnd = textarea.selectionEnd;
 			let deltaStart = selectionEnd - inserted.length;
 			if (deltaStart < changeStart) {
 				// Adjust for cases where text is inserted in middle of existing text
 				let diff = changeStart - deltaStart;
-				changeStart -= diff;
-				oldValueChangeEnd -= diff;
+				// Verify shifted coordinates
+				if (
+					(oldValue.slice(0, changeStart - diff) + inserted +
+					oldValue.slice(oldValueChangeEnd - diff)) === newValue
+				) {
+					console.debug('adjusting changeStart and oldValueChangeEnd by', diff);
+					changeStart -= diff;
+					oldValueChangeEnd -= diff;
+				}
 			}
+
+			// Log cursor position
+			this.lastSelection = {start: selectionEnd, end: selectionEnd};
+
+			// console.debug({et: 'change', ss: changeStart, se: oldValueChangeEnd, t: inserted});
 
 			// Add delta
 			this.recording.push({
@@ -241,6 +265,16 @@ export default {
 				// No change in cursor position
 				return;
 			}
+
+			// Avoid inserting duplicate selection events
+			if (
+				selectionStart === this.lastSelection.start &&
+				selectionEnd === this.lastSelection.end
+			) {
+				return;
+			}
+
+			this.lastSelection = {start: selectionStart, end: selectionEnd};
 
 			this.recording.push({
 				et: selectionStart === selectionEnd ? 'cursor' : 'select',

@@ -16,15 +16,16 @@ var indexTemplate = template.Must(template.ParseFiles("html/index.html"))
 
 func indexHandler(db *sql.DB, user *ajax.Auth, w http.ResponseWriter, r *http.Request) {
 	indexTemplate.Execute(w, struct {
-		Local              bool
-		VersionStamp       string
-		PasswordMinLength  uint
-		LabelMaxLength     uint
-		TitleMaxLength     uint
-		TagMaxLength       uint
-		TextMaxLength      uint
-		NakedTextMaxDeltas uint
-		MaxPageLimit       uint
+		Local                  bool
+		VersionStamp           string
+		PasswordMinLength      uint
+		LabelMaxLength         uint
+		TitleMaxLength         uint
+		TagMaxLength           uint
+		TextMaxLength          uint
+		NakedTextMaxDeltas     uint
+		NakedTextMaxDeltasSoft uint
+		MaxPageLimit           uint
 	}{
 		env.IsLocal(),
 		env.GetCacheControlVersionStamp(),
@@ -34,6 +35,7 @@ func indexHandler(db *sql.DB, user *ajax.Auth, w http.ResponseWriter, r *http.Re
 		spacetime.TagMaxLength,
 		spacetime.TextMaxLength,
 		spacetime.NakedTextMaxDeltas,
+		spacetime.NakedTextMaxDeltasSoft,
 		spacetime.MaxSubspacesPageLimit,
 	})
 }

@@ -72,6 +72,9 @@ export const store = createStore({
 		maxPageLimit() {
 			return window.appConstants.maxPageLimit;
 		},
+		nakedTextMaxDeltasSoft() {
+			return window.appConstants.nakedTextMaxDeltasSoft;
+		},
 		nakedTextMaxDeltas() {
 			return window.appConstants.nakedTextMaxDeltas;
 		},

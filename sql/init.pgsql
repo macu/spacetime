@@ -95,7 +95,6 @@ CREATE TABLE unique_text (
 CREATE TYPE space_type AS ENUM (
 	'user', -- user's personal space
 	'space', -- (nameless; contains titles and other spaces)
-	'check-in', -- user checking in directly on a space
 	'space-link', -- user linking in a space to another space
 	'title', -- plain text (no newlines), special handling to give a space an active title
 	'tag', -- plain text (no newlines), special handling to give a space a set of active tags
@@ -126,6 +125,8 @@ CREATE TABLE space ( -- a domain that contains subspaces
 CREATE INDEX space_time_idx ON space (parent_id, created_at); -- for top queries
 CREATE INDEX space_type_time_idx ON space (parent_id, space_type, created_at);
 CREATE INDEX space_user_throttle ON space (created_by, created_at);
+
+-- todo checkins are private/anonymous
 
 CREATE TABLE subspace (
 	space_id INTEGER NOT NULL REFERENCES space (id) ON DELETE CASCADE,

@@ -45,7 +45,10 @@ func ValidateNakedText(recording NakedText, finalText string) bool {
 
 	// Ensure full data is available for each type of delta
 	var currentText string
+	var totalDeltas uint
 	for _, delta := range recording {
+
+		totalDeltas++
 
 		switch delta.EventType {
 
@@ -62,6 +65,12 @@ func ValidateNakedText(recording NakedText, finalText string) bool {
 			// Check length
 			if len(currentText) > TextMaxLength {
 				logging.LogError(nil, nil, fmt.Errorf("text exceeds max length"))
+				return false
+			}
+			// Count added text towards total deltas
+			totalDeltas += uint(len(*delta.Text))
+			if totalDeltas > NakedTextMaxDeltas {
+				logging.LogError(nil, nil, fmt.Errorf("naked text exceeds max deltas"))
 				return false
 			}
 
