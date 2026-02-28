@@ -8,9 +8,12 @@ DROP TABLE IF EXISTS user_space CASCADE;
 DROP TABLE IF EXISTS json_attribute_space CASCADE;
 DROP TABLE IF EXISTS stream_of_consciousness_space CASCADE;
 DROP TABLE IF EXISTS text_space CASCADE;
+DROP TABLE IF EXISTS text_space_revision CASCADE;
 DROP TABLE IF EXISTS tag_space CASCADE;
 DROP TABLE IF EXISTS title_space CASCADE;
 DROP TABLE IF EXISTS link_space CASCADE;
+DROP TABLE IF EXISTS space_config_revision CASCADE;
+DROP TABLE IF EXISTS space_config CASCADE;
 DROP TABLE IF EXISTS subspace CASCADE;
 DROP TABLE IF EXISTS space CASCADE;
 DROP TABLE IF EXISTS unique_text CASCADE;
@@ -94,19 +97,20 @@ CREATE TABLE unique_text (
 
 CREATE TYPE space_type AS ENUM (
 	'user', -- user's personal space
-	'space', -- (nameless; contains titles and other spaces)
-	'space-link', -- user linking in a space to another space
+	'group', -- a space for a group of users (has a name and members)
+	'space', -- (has a label unique to its parent)
+	'link', -- user linking in a space to another space
 	'title', -- plain text (no newlines), special handling to give a space an active title
 	'tag', -- plain text (no newlines), special handling to give a space a set of active tags
-	'text', -- plain text entered by a user, with optional replay data
-	'stream-of-consciousness', -- contains a stream of text checkins ("text-radio")
-	'json-attribute' -- URL and json path and refresh rate
+	'text' -- plain text entered by a user, with optional replay data
+	--'stream-of-consciousness', -- contains a stream of text checkins ("text-radio")
+	--'json-attribute' -- URL and json path and refresh rate
 
 	-- 'picture',
 	-- 'audio',
 	-- 'video',
 
-	-- monetization -- fee is 1¢. per second
+	-- monetization -- fee is 1¢ per second
 	-- 'rental-space',
 	-- 'rental-payment',
 	-- 'rental-donor',
@@ -126,9 +130,21 @@ CREATE INDEX space_time_idx ON space (parent_id, created_at); -- for top queries
 CREATE INDEX space_type_time_idx ON space (parent_id, space_type, created_at);
 CREATE INDEX space_user_throttle ON space (created_by, created_at);
 
+CREATE TABLE space_config (
+	space_id INTEGER PRIMARY KEY REFERENCES space (id) ON DELETE CASCADE,
+	config JSON NOT NULL -- config applied by owner (pinned subspaces, etc.)
+);
+
+CREATE TABLE space_config_revision (
+	space_id INTEGER NOT NULL REFERENCES space (id) ON DELETE CASCADE,
+	revision_datetime TIMESTAMPTZ NOT NULL,
+	config JSON NOT NULL,
+	PRIMARY KEY (space_id, revision_datetime)
+);
+
 -- todo checkins are private/anonymous
 
-CREATE TABLE subspace (
+CREATE TABLE subspace ( -- all 'space' type spaces (even at root) are subspaces
 	space_id INTEGER NOT NULL REFERENCES space (id) ON DELETE CASCADE,
 	parent_id INTEGER NOT NULL, -- 0 for root spaces
 	label_text_id INTEGER NOT NULL REFERENCES unique_text (id),
@@ -148,6 +164,7 @@ CREATE TABLE link_space ( -- a link to another space somewhere else
 	UNIQUE (parent_id, link_space_id)
 );
 
+-- TODO Remove titles? Too much going on
 CREATE TABLE title_space (
 	space_id INTEGER PRIMARY KEY REFERENCES space (id) ON DELETE CASCADE,
 	parent_id INTEGER NOT NULL REFERENCES space (id) ON DELETE CASCADE,
@@ -166,9 +183,19 @@ CREATE TABLE tag_space (
 CREATE TABLE text_space (
 	space_id INTEGER PRIMARY KEY REFERENCES space (id) ON DELETE CASCADE,
 	parent_id INTEGER NOT NULL REFERENCES space (id) ON DELETE CASCADE,
+	title_id INTEGER REFERENCES unique_text (id), -- optional title for text space
 	text_id INTEGER NOT NULL REFERENCES unique_text (id),
 	recording TEXT, -- optional recording of text changes as JSON
 	started_at TIMESTAMPTZ -- null if no recording
+);
+
+-- record history of changes
+CREATE TABLE text_space_revision (
+	space_id INTEGER NOT NULL REFERENCES text_space (space_id) ON DELETE CASCADE,
+	revision_datetime TIMESTAMPTZ NOT NULL,
+	title_id INTEGER REFERENCES unique_text (id), -- optional title for text space
+	text_id INTEGER NOT NULL REFERENCES unique_text (id),
+	PRIMARY KEY (space_id, revision_datetime)
 );
 
 CREATE TABLE stream_of_consciousness_space (

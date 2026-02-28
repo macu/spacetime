@@ -5,7 +5,7 @@ const TitleMaxLength = 256
 const TagMaxLength = 128
 const TextMaxLength = 2048
 const NakedTextMaxDeltasSoft = TextMaxLength * 5
-const NakedTextMaxDeltas = TextMaxLength*6 + 1 // may paste textarea maxlength at end
+const NakedTextMaxDeltas = TextMaxLength * 6
 
 const SpaceTypeSpace = "space"
 const SpaceTypeUser = "user"

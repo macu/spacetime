@@ -69,6 +69,9 @@ func ValidateNakedText(recording NakedText, finalText string) bool {
 			}
 			// Count added text towards total deltas
 			totalDeltas += uint(len(*delta.Text))
+			if len(*delta.Text) > 0 {
+				totalDeltas-- // Only count inserted text length
+			}
 			if totalDeltas > NakedTextMaxDeltas {
 				logging.LogError(nil, nil, fmt.Errorf("naked text exceeds max deltas"))
 				return false

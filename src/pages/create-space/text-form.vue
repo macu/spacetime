@@ -89,6 +89,7 @@ export default {
 			recording: [],
 			lastSelection: {start: 0, end: 0}, // avoid duplicate selection events
 			insertedTextLength: 0, // count inserted text toward max deltas
+			insertDeltaCount: 0, // subtract 1 per delta that involves insertion
 
 			previewing: false,
 		};
@@ -101,7 +102,7 @@ export default {
 			return this.recording.length;
 		},
 		recordDeltas() {
-			return this.recordLength + this.insertedTextLength;
+			return this.recordLength + this.insertedTextLength - this.insertDeltaCount;
 		},
 		recordingMaxed() {
 			// disable textarea at soft limit
@@ -164,6 +165,9 @@ export default {
 
 			let inserted = newValue.slice(changeStart, newValueEndIndex);
 			this.insertedTextLength += inserted.length;
+			if (inserted.length) {
+				this.insertDeltaCount++;
+			}
 
 			// Get current cursor position to ensure correct indexing
 			// E.g. inserting 'AAA' in middle of existing 'AAA' text
