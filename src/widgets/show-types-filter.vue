@@ -65,13 +65,10 @@ export default {
 		},
 		titlesByType() {
 			return {
-				[SPACE_TYPES.SPACE]: 'Space',
-				[SPACE_TYPES.SPACE_LINK]: 'Space link',
-				[SPACE_TYPES.CHECK_IN]: 'Check in',
-				[SPACE_TYPES.TITLE]: 'Title',
+				[SPACE_TYPES.BRANCH]: 'Space',
+				[SPACE_TYPES.LINK]: 'Space link',
 				[SPACE_TYPES.TAG]: 'Tag',
 				[SPACE_TYPES.TEXT]: 'Text',
-				[SPACE_TYPES.NAKED_TEXT]: 'Naked text',
 				[SPACE_TYPES.STREAM_OC]: 'Stream of consciousness',
 				[SPACE_TYPES.JSON_AR]: 'JSON attribute',
 			};

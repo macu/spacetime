@@ -1,10 +1,13 @@
 <template>
 <div class="space-text" @click.stop>
 
+	<h2 v-if="space.title" v-text="space.title"/>
+
 	<el-button v-if="showLoadRecording" type="primary" @click="loadRecording()">
 		<material-icon icon="play_circle" />
 		<span>Play recording</span>
 	</el-button>
+
 	<loading-message v-else-if="loading"/>
 
 	<text-replay
@@ -14,6 +17,7 @@
 		initial-playing
 		inline
 	/>
+
 	<div v-else-if="!loading" v-text="textOutput"/>
 
 </div>
@@ -74,14 +78,16 @@ export default {
 	border-radius: $border-radius;
 	box-shadow: $text-inner-drop-shadow;
 
-	padding: 20px;
-
 	font-size: 1.2em;
 	white-space: pre-wrap;
 
 	display: flex;
 	flex-direction: column;
 	gap: 1em;
+
+	>* {
+		margin: 0;
+	}
 
 	>.el-button {
 		align-self: flex-start;

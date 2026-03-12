@@ -17,7 +17,6 @@ var ajaxHandlersAuthOptional = map[string]map[string]ajax.AjaxRouteAuthOptional{
 	http.MethodGet: {
 		"/ajax/space":       AjaxLoadSpace,
 		"/ajax/subspaces":   AjaxLoadTopSubspaces,
-		"/ajax/titles":      AjaxLoadTopTitles,
 		"/ajax/tags":        AjaxLoadTopTags,
 		"/ajax/text-replay": AjaxLoadTextSpaceRecording,
 
@@ -34,15 +33,14 @@ var ajaxHandlersAuthOptional = map[string]map[string]ajax.AjaxRouteAuthOptional{
 var ajaxHandlersAuthRequired = map[string]map[string]ajax.AjaxRouteAuthRequired{
 	http.MethodGet: {},
 	http.MethodPost: {
-		"/ajax/bookmark":             AjaxBookmark,
-		"/ajax/space/create/space":   AjaxCreateSubspace,
-		"/ajax/space/create/link":    AjaxCreateLinkSpace,
-		"/ajax/space/create/checkin": AjaxCreateCheckin,
-		"/ajax/space/create/title":   AjaxCreateTitleSpace,
-		"/ajax/space/create/tag":     AjaxCreateTagSpace,
-		"/ajax/space/create/text":    AjaxCreateTextSpace,
-		"/ajax/space/create/stream":  AjaxCreateStreamOfConsciousnessSpace,
-		"/ajax/space/stream/close":   AjaxCloseStreamOfConsciousnessSpace,
+		"/ajax/bookmark":            AjaxBookmark,
+		"/ajax/create/checkin":      AjaxCreateCheckin,
+		"/ajax/space/create/branch": AjaxCreateBranch,
+		"/ajax/space/create/text":   AjaxCreateTextSpace,
+		"/ajax/space/create/link":   AjaxCreateLinkSpace,
+		"/ajax/space/create/tag":    AjaxCreateTagSpace,
+		"/ajax/space/create/stream": AjaxCreateStreamOfConsciousnessSpace,
+		"/ajax/space/stream/close":  AjaxCloseStreamOfConsciousnessSpace,
 
 		"/ajax/logout": auth.AjaxLogout,
 	},

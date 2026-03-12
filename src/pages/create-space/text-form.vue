@@ -248,15 +248,6 @@ export default {
 				}
 			}
 
-			// Ensure the first timestamp is 0
-			let timestamp;
-			if (this.startedAt) {
-				timestamp = Date.now() - this.startedAt;
-			} else {
-				this.startedAt = Date.now();
-				timestamp = 0;
-			}
-
 			const textarea = event.target;
 			const selectionStart = textarea.selectionStart;
 			const selectionEnd = textarea.selectionEnd;
@@ -276,6 +267,16 @@ export default {
 				selectionEnd === this.lastSelection.end
 			) {
 				return;
+			}
+
+			// Ensure the first timestamp is 0
+			// Set startedAt after all early exits to ensure 0 on first timestamp
+			let timestamp;
+			if (this.startedAt) {
+				timestamp = Date.now() - this.startedAt;
+			} else {
+				this.startedAt = Date.now();
+				timestamp = 0;
 			}
 
 			this.lastSelection = {start: selectionStart, end: selectionEnd};

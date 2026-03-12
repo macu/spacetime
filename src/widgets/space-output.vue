@@ -12,13 +12,8 @@
 
 			<space-type :space="p"/>
 
-			<span v-if="p.spaceType === SPACE_TYPES.SPACE"
+			<span v-if="p.spaceType === SPACE_TYPES.BRANCH"
 				v-text="p.label"
-				class="label"
-				/>
-
-			<span v-else-if="p.spaceType === SPACE_TYPES.TITLE"
-				v-text="p.text"
 				class="label"
 				/>
 
@@ -46,30 +41,10 @@
 			</div>
 			<space-creator :space="space"/>
 			<div class="align-end flex-row-md">
-				<el-button v-if="!expandTitles" @click="expandTitles = true" size="small">
-					Show titles
-				</el-button>
 				<el-button v-if="!showTags" @click="expandTags = true" class="align-end" size="small">
 					Show tags
 				</el-button>
 			</div>
-		</div>
-
-		<div v-if="expandTitles" class="space-titles-bar flex-row-md" @click.stop>
-			<strong class="label">Title(s)</strong>
-			<add-title
-				:parent-id="space.id"
-				@added="titleSpace => userTitleAdded(titleSpace)"
-				@update:adding="addingTitle = $event"
-				:class="{'flex-100': addingTitle}"
-				/>
-			<space-title
-				v-for="title in titles"
-				:space="title"
-				@click-title="gotoSpace(title)"
-				:label="title.label"
-				/>
-			<el-button size="small" @click="showAllTitles = true">Load more</el-button>
 		</div>
 
 		<div v-if="showTags" class="space-tags-bar flex-row-md" @click.stop>
@@ -92,12 +67,6 @@
 			v-if="space.spaceType === SPACE_TYPES.CHECK_IN && !!space.checkinSpace"
 			:space="space.checkinSpace"
 			show-path
-			/>
-
-		<space-title
-			v-else-if="space.spaceType === SPACE_TYPES.TITLE"
-			:space="space"
-			:show-checkin="false"
 			/>
 
 		<space-tag
@@ -125,10 +94,8 @@ import CheckinButton from './checkin-button.vue';
 import BookmarkButton from './bookmark-button.vue';
 import SpaceType from './space-type.vue';
 import SpaceCreator from './space-creator.vue';
-import SpaceTitle from './space-title.vue';
 import SpaceTag from './space-tag.vue';
 import SpaceText from './space-text.vue';
-import AddTitle from './add-title-button.vue';
 import AddTag from './add-tag-button.vue';
 
 import {
@@ -142,10 +109,8 @@ export default {
 		BookmarkButton,
 		SpaceType,
 		SpaceCreator,
-		SpaceTitle,
 		SpaceTag,
 		SpaceText,
-		AddTitle,
 		AddTag,
 	},
 	props: {
@@ -160,73 +125,17 @@ export default {
 	},
 	data() {
 		return {
-			addingTitle: false,
-			newTitles: [],
-			expandTitles: false,
-			loadingTitles: false,
-			moreTitles: [],
-
 			addingTag: false,
 			newTags: [],
 			expandTags: false,
-
-			titlesExpanded: false,
 		};
 	},
 	computed: {
 		SPACE_TYPES() {
 			return SPACE_TYPES;
 		},
-		topTitles() {
-			return this.space.topTitles || [];
-		},
-		hasTopTitles() {
-			return this.topTitles.length > 0;
-		},
 		hasParentPath() {
 			return !!this.space.parentPath && this.space.parentPath.length > 0;
-		},
-		titles() {
-			let titles = this.newTitles.map(t => {
-				return {
-					...t,
-					label: '(New title)',
-				};
-			});
-
-			if (this.space.userTitle) {
-				titles.push({
-					...this.space.userTitle,
-					label: '(Your title)',
-				});
-			}
-
-			if (this.space.topTitle) {
-				titles.push({
-					...this.space.topTitle,
-					label: '(Top title)',
-				});
-			}
-
-			if (this.space.originalTitle) {
-				titles.push({
-					...this.space.originalTitle,
-					label: '(Original title)',
-				});
-			}
-
-			return titles.concat(this.moreTitles.map(t => {
-				return {
-					...t,
-					label: null,
-				};
-			}));
-		},
-		firstTitle() {
-			if (this.titles.length > 0) {
-				return this.titles[0];
-			}
-			return null;
 		},
 		topTags() {
 			return this.space.topTags || [];
@@ -246,9 +155,6 @@ export default {
 		},
 	},
 	methods: {
-		userTitleAdded(titleSpace) {
-			this.newTitles.unshift(titleSpace); // add to start
-		},
 		userTagAdded(tagSpace) {
 			this.newTags.unshift(tagSpace); // add to start
 		},
@@ -259,9 +165,6 @@ export default {
 					spaceId: s ? s.id : this.space.id,
 				},
 			});
-		},
-		loadMoreTitles() {
-			this.titlesExpanded = true;
 		},
 	},
 };

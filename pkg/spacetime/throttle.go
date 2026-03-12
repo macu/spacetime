@@ -35,14 +35,12 @@ func CheckCreateCheckinThrottleBlock(db *sql.DB, auth ajax.Auth, parentID uint) 
 
 	var block bool
 
-	err := db.QueryRow(`SELECT COUNT(*) >= 1 FROM space
-		WHERE created_by = $1
-		AND parent_id = $2
-		AND space_type = $3
+	err := db.QueryRow(`SELECT COUNT(*) >= 1 FROM checkin
+		WHERE user_id = $1
+		AND space_id = $2
 		AND created_at > NOW() - INTERVAL '1 MINUTE'`,
 		auth.UserID,
 		parentID,
-		SpaceTypeCheckin,
 	).Scan(&block)
 
 	if err != nil {

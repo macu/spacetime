@@ -9,9 +9,11 @@ type Space struct {
 	CreatedAt time.Time `json:"createdAt"`
 	CreatedBy uint      `json:"createdBy"`
 
-	TotalSubspaces uint `json:"totalSubspaces"`
+	// TotalSubspaces uint `json:"totalSubspaces"`
+	CheckinCount uint `json:"checkinCount"`
 
-	Text *string `json:"text,omitempty"` // tag, title, text
+	Text  *string  `json:"text,omitempty"` // tag, text
+	Title **string `json:"title,omitempty"`
 
 	Label *string `json:"label,omitempty"`
 
@@ -31,11 +33,8 @@ type Space struct {
 
 	UserBookmark *bool `json:"userBookmark,omitempty"`
 
-	UserTitle     **Space   `json:"userTitle,omitempty"` // last title by user check-in
-	OriginalTitle **Space   `json:"originalTitle,omitempty"`
-	TopTitle      **Space   `json:"topTitle,omitempty"`
-	TopTags       *[]*Space `json:"topTags,omitempty"`
-	TopSubspaces  *[]*Space `json:"topSubspaces,omitempty"`
+	TopTags      *[]*Space `json:"topTags,omitempty"`
+	TopSubspaces *[]*Space `json:"topSubspaces,omitempty"`
 
 	ParentPath *[]*Space `json:"parentPath,omitempty"`
 }

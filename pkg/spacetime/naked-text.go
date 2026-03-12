@@ -57,16 +57,18 @@ func ValidateNakedText(recording NakedText, finalText string) bool {
 				logging.LogError(nil, nil, fmt.Errorf("invalid change delta text"))
 				return false
 			}
+
 			// Apply change
 			currentText = currentText[:delta.SelectStart] +
 				*delta.Text +
 				currentText[delta.SelectEnd:]
-			logging.LogNotice(nil, fmt.Sprintf("Applied change delta %v, new text: %s\n", delta, currentText))
+
 			// Check length
 			if len(currentText) > TextMaxLength {
 				logging.LogError(nil, nil, fmt.Errorf("text exceeds max length"))
 				return false
 			}
+
 			// Count added text towards total deltas
 			totalDeltas += uint(len(*delta.Text))
 			if len(*delta.Text) > 0 {

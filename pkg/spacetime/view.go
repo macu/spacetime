@@ -24,9 +24,9 @@ func LoadSpace(conn *sql.DB, auth *ajax.Auth, id uint) (*Space, error) {
 
 	var bookmarkFieldSql string
 	if auth != nil {
-		bookmarkFieldSql = `EXISTS(SELECT * FROM user_space_bookmark
-			WHERE user_space_bookmark.space_id=space.id
-			AND user_space_bookmark.user_id = ` + db.Arg(&args, auth.UserID) + `
+		bookmarkFieldSql = `EXISTS(SELECT * FROM user_bookmark
+			WHERE user_bookmark.space_id=space.id
+			AND user_bookmark.user_id = ` + db.Arg(&args, auth.UserID) + `
 			) AS user_bookmark`
 	} else {
 		bookmarkFieldSql = `FALSE AS user_bookmark`
@@ -38,8 +38,8 @@ func LoadSpace(conn *sql.DB, auth *ajax.Auth, id uint) (*Space, error) {
 		user_account.handle, user_account.display_name,
 		`+bookmarkFieldSql+`
 		FROM space
-		LEFT JOIN subspace ON space.id = subspace.space_id
-		LEFT JOIN unique_text ON unique_text.id = subspace.label_text_id
+		LEFT JOIN branch_space ON space.id = branch_space.space_id
+		LEFT JOIN unique_text ON unique_text.id = branch_space.label_text_id
 		LEFT JOIN user_account ON user_account.id = space.created_by
 		WHERE space.id = `+db.Arg(&args, id)+`
 		LIMIT 1`,
@@ -93,14 +93,6 @@ func LoadParentPath(conn *sql.DB, auth *ajax.Auth, id uint) ([]*Space, error) {
 		id = *space.ParentID
 	}
 
-	if hasSpacesOfType(spaces, SpaceTypeTitle) {
-		err := loadTitleSpacesContent(conn,
-			extractSpacesByType(spaces, SpaceTypeTitle))
-		if err != nil {
-			return nil, err
-		}
-	}
-
 	if hasSpacesOfType(spaces, SpaceTypeTag) {
 		err := loadTagSpacesContent(conn,
 			extractSpacesByType(spaces, SpaceTypeTag))
@@ -125,9 +117,9 @@ func LoadTopSubspaces(conn *sql.DB, auth *ajax.Auth,
 
 	var bookmarkFieldSql string
 	if auth != nil {
-		bookmarkFieldSql = `EXISTS(SELECT 1 FROM user_space_bookmark
-			WHERE user_space_bookmark.user_id = ` + db.Arg(&args, auth.UserID) + `
-			AND user_space_bookmark.space_id = space.id) AS user_bookmark`
+		bookmarkFieldSql = `EXISTS(SELECT 1 FROM user_bookmark
+			WHERE user_bookmark.user_id = ` + db.Arg(&args, auth.UserID) + `
+			AND user_bookmark.space_id = space.id) AS user_bookmark`
 	} else {
 		bookmarkFieldSql = `FALSE AS user_bookmark`
 	}
@@ -144,14 +136,14 @@ func LoadTopSubspaces(conn *sql.DB, auth *ajax.Auth,
 		unique_text.text_value AS label,
 		user_account.handle, user_account.display_name,
 		`+bookmarkFieldSql+`,
-		(SELECT COUNT(*) FROM space AS subspace
-			WHERE subspace.parent_id = space.id) AS subspace_count
+		(SELECT COUNT(*) FROM checkin
+			WHERE checkin.space_id = space.id) AS checkin_count
 		FROM space
 		LEFT JOIN subspace ON subspace.space_id = space.id
 		LEFT JOIN unique_text ON unique_text.id = subspace.label_text_id
 		LEFT JOIN user_account ON user_account.id = space.created_by
 		WHERE `+parentClauseSql+`
-		ORDER BY subspace_count DESC, space.created_at DESC
+		ORDER BY checkin_count DESC, space.created_at DESC
 		LIMIT `+db.Arg(&args, limit)+`
 		OFFSET `+db.Arg(&args, offset),
 		args...,
@@ -172,7 +164,7 @@ func LoadTopSubspaces(conn *sql.DB, auth *ajax.Auth,
 			&space.Label,
 			&space.AuthorHandle, &space.AuthorDisplayName,
 			&space.UserBookmark,
-			&space.TotalSubspaces,
+			&space.CheckinCount,
 		)
 		if err != nil {
 			return nil, fmt.Errorf("loading top spaces: %w", err)
@@ -192,6 +184,57 @@ func LoadTopSubspaces(conn *sql.DB, auth *ajax.Auth,
 // --------------------------------------------------
 // batch load functions
 
+func LoadCheckinCount(conn *sql.DB, spaces []*Space) error {
+
+	if len(spaces) == 0 {
+		return nil
+	}
+
+	var args = []interface{}{}
+
+	var inClauseSql string
+
+	for i, space := range spaces {
+		if i > 0 {
+			inClauseSql += `, `
+		}
+		inClauseSql += db.Arg(&args, space.ID)
+	}
+
+	rows, err := conn.Query(`SELECT space.id,
+		(SELECT COUNT(*) FROM checkin
+			WHERE checkin.space_id = space.id) AS checkin_count
+		FROM space
+		WHERE space.id IN (`+inClauseSql+`)`,
+		args...,
+	)
+
+	if err != nil {
+		return fmt.Errorf("loading check-in count: %w", err)
+	}
+
+	defer rows.Close()
+
+	for rows.Next() {
+		var spaceID uint
+		var checkinCount uint
+		err = rows.Scan(&spaceID, &checkinCount)
+		if err != nil {
+			return fmt.Errorf("loading check-in count: %w", err)
+		}
+		for _, space := range spaces {
+			if space.ID == spaceID {
+				space.CheckinCount = checkinCount
+				break
+			}
+		}
+	}
+
+	return nil
+
+}
+
+/*
 func LoadSubspaceCount(conn *sql.DB, spaces []*Space, filter *SpaceFilter) error {
 	// Load subspace count for multiple spaces
 
@@ -243,20 +286,13 @@ func LoadSubspaceCount(conn *sql.DB, spaces []*Space, filter *SpaceFilter) error
 	return nil
 
 }
+*/
 
 func LoadSpaceContent(conn *sql.DB, auth *ajax.Auth,
 	spaces []*Space,
 	loadLinkedSpaces bool, // prevent recursion
 ) error {
 	// Load content for multiple spaces
-
-	if hasSpacesOfType(spaces, SpaceTypeTitle) {
-		err := loadTitleSpacesContent(conn,
-			extractSpacesByType(spaces, SpaceTypeTitle))
-		if err != nil {
-			return err
-		}
-	}
 
 	if hasSpacesOfType(spaces, SpaceTypeTag) {
 		err := loadTagSpacesContent(conn,
@@ -443,11 +479,12 @@ func loadTextSpacesContent(conn *sql.DB, spaces []*Space) error {
 	}
 
 	rows, err := conn.Query(`SELECT
-		space.id, unique_text.text_value,
+		space.id, text_unique_text.text_value, title_unique_text.text_value,
 		CASE WHEN text_space.recording IS NOT NULL THEN TRUE ELSE FALSE END AS has_recording
 		FROM space
 		INNER JOIN text_space ON text_space.space_id = space.id
-		INNER JOIN unique_text ON unique_text.id = text_space.text_id
+		INNER JOIN unique_text AS text_unique_text ON text_unique_text.id = text_space.text_id
+		LEFT JOIN unique_text AS title_unique_text ON title_unique_text.id = text_space.title_id
 		WHERE space.id IN (`+inClauseSql+`)`,
 		args...,
 	)
@@ -461,14 +498,16 @@ func loadTextSpacesContent(conn *sql.DB, spaces []*Space) error {
 	for rows.Next() {
 		var spaceID uint
 		var text string
+		var title *string
 		var hasRecording bool
-		err = rows.Scan(&spaceID, &text, &hasRecording)
+		err = rows.Scan(&spaceID, &text, &title, &hasRecording)
 		if err != nil {
 			return fmt.Errorf("loading text spaces content: %w", err)
 		}
 		for _, space := range spaces {
 			if space.ID == spaceID {
 				space.Text = &text
+				space.Title = &title
 				space.HasRecording = &hasRecording
 			}
 		}
@@ -504,10 +543,10 @@ func loadLinkSpaceDetails(conn *sql.DB, auth *ajax.Auth, spaces []*Space) error 
 
 	var bookmarkFieldSql string
 	if auth != nil {
-		bookmarkFieldSql = `EXISTS(SELECT * FROM user_space_bookmark
+		bookmarkFieldSql = `EXISTS(SELECT * FROM user_bookmark
 			WHERE linked_space.id IS NOT NULL
-			AND user_space_bookmark.space_id = linked_space.id
-			AND user_space_bookmark.user_id = ` + db.Arg(&args, auth.UserID) + `
+			AND user_bookmark.space_id = linked_space.id
+			AND user_bookmark.user_id = ` + db.Arg(&args, auth.UserID) + `
 		) AS user_bookmark`
 	} else {
 		bookmarkFieldSql = `FALSE AS user_bookmark`

@@ -7,14 +7,18 @@ import (
 	"spacetime/pkg/utils/ajax"
 )
 
-func CreateCheckin(conn *sql.DB, auth ajax.Auth, parentID uint) (*Space, error) {
+func CreateCheckin(conn *sql.DB, auth ajax.Auth, parentID uint) error {
 
-	var space = Space{}
+	_, err := conn.Exec(`INSERT INTO checkin (space_id, user_id, created_at)
+	VALUES ($1, $2, NOW())`,
+		parentID,
+		auth.UserID,
+	)
 
-	if err := CreateSpace(conn, auth, &space, &parentID, SpaceTypeCheckin); err != nil {
-		return nil, fmt.Errorf("create checkin: %w", err)
+	if err != nil {
+		return fmt.Errorf("create checkin: %w", err)
 	}
 
-	return &space, nil
+	return nil
 
 }

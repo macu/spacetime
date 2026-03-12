@@ -24,13 +24,13 @@ func CheckSpaceExists(conn *sql.DB, spaceID uint) (bool, error) {
 
 }
 
-func CheckSubspaceLabelExists(conn *sql.DB, parentId *uint, label string) (bool, error) {
+func CheckBranchLabelExists(conn *sql.DB, parentId *uint, label string) (bool, error) {
 
 	labelUnitextId, err := GetUniqueTextId(conn, label)
 	if err != nil {
 		return false, fmt.Errorf("get label unique text id: %w", err)
 	} else if labelUnitextId == nil {
-		// label does not exist, so subspace with this label cannot exist
+		// label does not exist, so branch space with this label cannot exist
 		return false, nil
 	}
 
@@ -40,24 +40,24 @@ func CheckSubspaceLabelExists(conn *sql.DB, parentId *uint, label string) (bool,
 		// check root spaces
 		err = conn.QueryRow(`SELECT EXISTS (
 			SELECT 1 FROM space
-			INNER JOIN subspace
-				ON space.id = subspace.space_id
+			INNER JOIN branch_space
+				ON space.id = branch_space.space_id
 			WHERE space.parent_id IS NULL
-			AND subspace.label_text_id = $1
+			AND branch_space.label_text_id = $1
 		)`, labelUnitextId).Scan(&exists)
 	} else {
 		// check subspaces
 		err = conn.QueryRow(`SELECT EXISTS (
 			SELECT 1 FROM space
-			INNER JOIN subspace
-				ON space.id = subspace.space_id
+			INNER JOIN branch_space
+				ON space.id = branch_space.space_id
 			WHERE space.parent_id = $1
-			AND subspace.label_text_id = $2
+			AND branch_space.label_text_id = $2
 		)`, *parentId, labelUnitextId).Scan(&exists)
 	}
 
 	if err != nil {
-		return false, fmt.Errorf("check subspace label exists: %w", err)
+		return false, fmt.Errorf("check branch space label exists: %w", err)
 	}
 
 	return exists, nil
@@ -160,13 +160,13 @@ func CheckTagExists(conn *sql.DB, parentID uint, tag string) (bool, error) {
 
 }
 
-func ValidateTitle(title string) bool {
-	if len(title) == 0 || len(title) > TitleMaxLength {
+func ValidateTag(tag string) bool {
+	if len(tag) == 0 || len(tag) > TagMaxLength {
 		return false
 	}
 
 	// Check for newlines and invalid characters
-	for _, c := range title {
+	for _, c := range tag {
 		if c < 32 {
 			return false
 		}
@@ -175,13 +175,13 @@ func ValidateTitle(title string) bool {
 	return true
 }
 
-func ValidateTag(tag string) bool {
-	if len(tag) == 0 || len(tag) > TagMaxLength {
+func ValidateTitle(title string) bool {
+	if len(title) == 0 || len(title) > TitleMaxLength {
 		return false
 	}
 
 	// Check for newlines and invalid characters
-	for _, c := range tag {
+	for _, c := range title {
 		if c < 32 {
 			return false
 		}

@@ -1,5 +1,5 @@
 <template>
-<div class="create-empty-space-page flex-column-lg page-width-md">
+<div class="create-branch-space-page flex-column-lg page-width-md">
 
 	<space-loader v-if="parentId" :space-id="parentId" include-parent-path>
 
@@ -42,7 +42,7 @@ export default {
 	methods: {
 		submit(payload) {
 			this.posting = true;
-			ajaxPost('/ajax/space/create/space', {
+			ajaxPost('/ajax/space/create/branch', {
 				parentId: this.parentId,
 				...payload,
 			}, {

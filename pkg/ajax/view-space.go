@@ -39,35 +39,19 @@ func AjaxLoadSpace(db *sql.DB, auth *ajax.Auth,
 		return nil, http.StatusInternalServerError
 	}
 
-	err = spacetime.LoadSubspaceCount(db,
-		[]*spacetime.Space{space}, &filter)
+	err = spacetime.LoadCheckinCount(db,
+		[]*spacetime.Space{space})
 	if err != nil {
 		logging.LogError(r, auth, err)
 		return nil, http.StatusInternalServerError
 	}
 
-	if auth != nil {
-		err = spacetime.LoadLastUserTitles(db, *auth,
-			[]*spacetime.Space{space}, &filter)
-		if err != nil {
-			logging.LogError(r, auth, err)
-			return nil, http.StatusInternalServerError
-		}
-	}
-
-	err = spacetime.LoadOriginalTitles(db,
-		[]*spacetime.Space{space}, &filter)
-	if err != nil {
-		logging.LogError(r, auth, err)
-		return nil, http.StatusInternalServerError
-	}
-
-	err = spacetime.LoadTopTitles(db,
-		[]*spacetime.Space{space}, &filter)
-	if err != nil {
-		logging.LogError(r, auth, err)
-		return nil, http.StatusInternalServerError
-	}
+	// err = spacetime.LoadSubspaceCount(db,
+	// 	[]*spacetime.Space{space}, &filter)
+	// if err != nil {
+	// 	logging.LogError(r, auth, err)
+	// 	return nil, http.StatusInternalServerError
+	// }
 
 	if includeTags {
 		err = spacetime.LoadTopTags(db,
@@ -81,27 +65,6 @@ func AjaxLoadSpace(db *sql.DB, auth *ajax.Auth,
 	if includeSubspaces {
 		content, err := spacetime.LoadTopSubspaces(db, auth,
 			&id, 0, spacetime.MaxSubspacesPageLimit, nil, nil)
-		if err != nil {
-			logging.LogError(r, auth, err)
-			return nil, http.StatusInternalServerError
-		}
-
-		if auth != nil {
-			err = spacetime.LoadLastUserTitles(db, *auth,
-				content, &filter)
-			if err != nil {
-				logging.LogError(r, auth, err)
-				return nil, http.StatusInternalServerError
-			}
-		}
-
-		err = spacetime.LoadOriginalTitles(db, content, &filter)
-		if err != nil {
-			logging.LogError(r, auth, err)
-			return nil, http.StatusInternalServerError
-		}
-
-		err = spacetime.LoadTopTitles(db, content, &filter)
 		if err != nil {
 			logging.LogError(r, auth, err)
 			return nil, http.StatusInternalServerError
@@ -202,36 +165,6 @@ func AjaxLoadTopSubspaces(db *sql.DB, auth *ajax.Auth,
 	}
 
 	return spaces, http.StatusOK
-
-}
-
-// Load titles ordered by most subspaces.
-func AjaxLoadTopTitles(db *sql.DB, auth *ajax.Auth,
-	w http.ResponseWriter, r *http.Request,
-) (interface{}, int) {
-
-	parentId, err := types.AtoUint(r.FormValue("parentId"))
-	if err != nil {
-		return nil, http.StatusBadRequest
-	}
-
-	offset, err := types.AtoUint(r.FormValue("offset"))
-	if err != nil {
-		return nil, http.StatusBadRequest
-	}
-
-	limit, err := types.AtoUint(r.FormValue("limit"))
-	if err != nil {
-		return nil, http.StatusBadRequest
-	}
-
-	titles, err := spacetime.LoadMoreTitles(db, parentId, offset, limit)
-	if err != nil {
-		logging.LogError(r, auth, err)
-		return nil, http.StatusInternalServerError
-	}
-
-	return titles, http.StatusOK
 
 }
 

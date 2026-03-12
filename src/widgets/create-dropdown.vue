@@ -1,30 +1,27 @@
 <template>
 <div class="create-dropdown" :class="{'sticky': sticky}">
 	<div>
-		<el-dropdown @command="create" :disabled="disabled" placement="bottom-start">
+		<el-dropdown v-if="hasParentId"
+			@command="create" :disabled="disabled" placement="bottom-start">
 			<el-button type="primary" :disabled="disabled">
 				<material-icon icon="add"/>
 				<span>Create</span>
 				<material-icon icon="arrow_drop_down"/>
 			</el-button>
 			<template #dropdown>
-				<el-dropdown-item command="create-empty-space">
-					<material-icon :icon="SPACE_TYPE_ICONS[SPACE_TYPES.SPACE]"/>
-					<span>Create empty space</span>
+				<el-dropdown-item command="create-branch">
+					<material-icon :icon="SPACE_TYPE_ICONS[SPACE_TYPES.BRANCH]"/>
+					<span>Create branch</span>
 				</el-dropdown-item>
 				<template v-if="hasParentId">
 					<el-dropdown-item command="create-space-link">
-						<material-icon :icon="SPACE_TYPE_ICONS[SPACE_TYPES.SPACE_LINK]"/>
+						<material-icon :icon="SPACE_TYPE_ICONS[SPACE_TYPES.LINK]"/>
 						<span>Create space link</span>
 					</el-dropdown-item>
 				</template>
 				<el-dropdown-item command="create-text">
 					<material-icon :icon="SPACE_TYPE_ICONS[SPACE_TYPES.TEXT]"/>
 					<span>Create text</span>
-				</el-dropdown-item>
-				<el-dropdown-item command="create-text?t=n">
-					<material-icon :icon="SPACE_TYPE_ICONS[SPACE_TYPES.NAKED_TEXT]"/>
-					<span>Create naked text</span>
 				</el-dropdown-item>
 				<el-dropdown-item disabled command="create-stream-oc">
 					<material-icon :icon="SPACE_TYPE_ICONS[SPACE_TYPES.STREAM_OC]"/>
@@ -36,6 +33,12 @@
 				</el-dropdown-item>
 			</template>
 		</el-dropdown>
+		<el-button v-else
+			@click="create('create-branch')"
+			type="primary" :disabled="disabled">
+			<material-icon icon="add"/>
+			<span>Create space</span>
+		</el-button>
 	</div>
 </div>
 </template>

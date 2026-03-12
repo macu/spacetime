@@ -24,18 +24,12 @@ export default {
 				case SPACE_TYPES.USER:
 					return this.space.authorHandle ||
 						this.space.authorDisplayName || 'User';
-				case SPACE_TYPES.SPACE:
-					return 'Space';
-				case SPACE_TYPES.CHECK_IN:
-					return 'Check in';
-				case SPACE_TYPES.TITLE:
-					return 'Title';
+				case SPACE_TYPES.BRANCH:
+					return 'Branch';
 				case SPACE_TYPES.TAG:
 					return 'Tag';
 				case SPACE_TYPES.TEXT:
 					return 'Text';
-				case SPACE_TYPES.NAKED_TEXT:
-					return 'Naked text';
 				case SPACE_TYPES.STREAM_OC:
 					return 'Stream of consciousness';
 				case SPACE_TYPES.JSON_AR:

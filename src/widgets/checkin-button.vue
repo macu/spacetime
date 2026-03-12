@@ -3,8 +3,8 @@
 	<el-button @click="addCheckIn()" :disabled="disabled">
 		<material-icon icon="check"/>
 	</el-button>
-	<el-button v-if="totalSubspaces > 0" @click="showStats()">
-		<span v-text="totalSubspaces"/>
+	<el-button v-if="checkinCount > 0" @click="showStats()">
+		<span v-text="checkinCount"/>
 	</el-button>
 </el-button-group>
 </template>
@@ -37,7 +37,7 @@ export default {
 	data() {
 		return {
 			hasUserCheckin: false,
-			totalSubspaces: this.space.totalSubspaces || 0,
+			checkinCount: this.space.checkinCount || 0,
 		};
 	},
 	computed: {
@@ -49,25 +49,25 @@ export default {
 		},
 	},
 	mounted() {
-		bus.on('direct-check-in', this.incrementSubspaces);
+		bus.on('direct-check-in', this.incrementCheckins);
 	},
 	beforeUnmount() {
-		bus.off('direct-check-in', this.incrementSubspaces);
+		bus.off('direct-check-in', this.incrementCheckins);
 	},
 	methods: {
-		incrementSubspaces({spaceId}) {
+		incrementCheckins({spaceId}) {
 			if (this.space.id === spaceId) {
 				this.hasUserCheckin = true;
-				this.totalSubspaces++;
+				this.checkinCount++;
 			}
 		},
 		addCheckIn() {
-			ajaxPost('/ajax/space/create/checkin', {
+			ajaxPost('/ajax/create/checkin', {
 				parentId: this.space.id,
 			}, {
 				429() {
 					ElMessage({
-						message: 'Rate limit exceeded. Max 1 check-in per minute.',
+						message: 'Rate limit exceeded. Max 1 check-in per space per minute.',
 						type: 'error',
 						showClose: true,
 					});

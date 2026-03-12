@@ -273,25 +273,6 @@ div.center {
   text-shadow: 2px 2px 3px white;
   font-size: larger;
 }
-/*!*****************************************************************************************************************************************************************************************************************************************************************************************************************************************!*\
-  !*** css ./node_modules/css-loader/dist/cjs.js??clonedRuleSet-2.use[1]!./node_modules/vue-loader/dist/stylePostLoader.js!./node_modules/sass-loader/dist/cjs.js??clonedRuleSet-2.use[2]!./node_modules/vue-loader/dist/index.js??ruleSet[1].rules[5].use[0]!./src/widgets/space-title.vue?vue&type=style&index=0&id=658550a8&lang=scss ***!
-  \*****************************************************************************************************************************************************************************************************************************************************************************************************************************************/
-.space-title {
-  padding: 0 0 5px;
-  background-color: white;
-  border-bottom: medium solid green;
-  color: black;
-  overflow: hidden;
-  cursor: pointer;
-}
-.space-title > .text {
-  font-size: 150%;
-}
-.space-title.ellipsis > .text {
-  white-space: nowrap;
-  overflow: hidden;
-  text-overflow: ellipsis;
-}
 /*!***************************************************************************************************************************************************************************************************************************************************************************************************************************************!*\
   !*** css ./node_modules/css-loader/dist/cjs.js??clonedRuleSet-2.use[1]!./node_modules/vue-loader/dist/stylePostLoader.js!./node_modules/sass-loader/dist/cjs.js??clonedRuleSet-2.use[2]!./node_modules/vue-loader/dist/index.js??ruleSet[1].rules[5].use[0]!./src/widgets/space-tag.vue?vue&type=style&index=0&id=43250aea&lang=scss ***!
   \***************************************************************************************************************************************************************************************************************************************************************************************************************************************/
@@ -371,12 +352,14 @@ div.center {
   color: black;
   border-radius: 10px;
   box-shadow: inset 0 0 10px 0 rgba(0, 0, 0, 0.1);
-  padding: 20px;
   font-size: 1.2em;
   white-space: pre-wrap;
   display: flex;
   flex-direction: column;
   gap: 1em;
+}
+.space-text > * {
+  margin: 0;
 }
 .space-text > .el-button {
   align-self: flex-start;

@@ -12,8 +12,7 @@ import SignupVerifyPage from '@/pages/user-account/signup-verify.vue';
 
 import UserPage from './pages/user.vue';
 import SpacePage from './pages/space.vue';
-import CreateEmptySpacePage from './pages/create-space/empty.vue';
-import CreateTitleSpacePage from './pages/create-space/title.vue';
+import CreateBranchSpacePage from './pages/create-space/empty.vue';
 import CreateTagSpacePage from './pages/create-space/tag.vue';
 import CreateTextSpacePage from './pages/create-space/text.vue';
 
@@ -51,14 +50,9 @@ const router = createRouter({
 			component: SpacePage,
 		},
 		{
-			path: '/space/create/empty',
-			name: 'create-empty-space',
-			component: CreateEmptySpacePage,
-		},
-		{
-			path: '/space/create/title',
-			name: 'create-title',
-			component: CreateTitleSpacePage,
+			path: '/space/create/branch',
+			name: 'create-branch',
+			component: CreateBranchSpacePage,
 		},
 		{
 			path: '/space/create/tag',

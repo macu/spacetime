@@ -49,17 +49,8 @@ func CreateSpaceLink(conn *sql.DB, auth ajax.Auth, parentID, spaceID uint) (*Spa
 		return nil, fmt.Errorf("space to check in does not exist: %d", spaceID)
 	}
 
-	// Check if space belongs directly to parent space
 	if linkedSpace.ParentID != nil && *linkedSpace.ParentID == parentID {
-
-		// Create direct checkin under existing space
-		_, err := CreateCheckin(conn, auth, linkedSpace.ID)
-		if err != nil {
-			return nil, err
-		}
-
-		return linkedSpace, nil
-
+		return nil, fmt.Errorf("space %d already belongs to parent space %d", spaceID, parentID)
 	}
 
 	// Check if this link already exists

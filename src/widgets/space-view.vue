@@ -3,33 +3,6 @@
 
 	<check-in-button :parent-id="space.id"/>
 
-	<header class="titles-area flex-row-md" :class="{'show-all': showingAllTitles}">
-
-		<div class="flex-1 flex-row-md nowrap horizontal-scroll">
-
-			<el-input v-if="addingTitle" v-model="newTitle" placeholder="Title">
-				<template slot="append">
-					<el-button @click="addingTitle = false">Cancel</el-button>
-					<el-button @click="addTitle()">Add</el-button>
-				</template>
-			</el-input>
-			<el-button v-else @click="addingTitle = true">Add title</el-button>
-
-			<template v-if="titleSearchResults.length">
-				<el-divider>Search results</el-divider>
-				<space-title v-for="t in titleSearchResults" :title="t"/>
-			</template>
-			<template v-else>
-				<space-title v-if="lastUserTitle" :title="lastUserTitle"/>
-				<space-title v-for="t in space.top_titles" :title="t"/>
-			</template>
-
-		</div>
-
-		<el-button v-if="!showingAllTitles">Show all titles</el-button>
-
-	</header>
-
 	<horizontal-controls class="nowrap horizontal-scroll">
 
 		<create-dropdown :parent-id="space.id"/>

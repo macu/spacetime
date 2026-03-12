@@ -17,7 +17,7 @@ func CheckAdmin(db db.DBConn, userID uint) bool {
 
 func BookmarkSpace(db db.DBConn, userID uint, spaceID uint, bookmark bool) error {
 	if bookmark {
-		_, err := db.Exec(`INSERT INTO user_space_bookmark
+		_, err := db.Exec(`INSERT INTO user_bookmark
 			(user_id, space_id, created_at)
 			VALUES ($1, $2, $3)
 			ON CONFLICT (user_id, space_id) DO UPDATE SET created_at = $3`,
@@ -26,7 +26,7 @@ func BookmarkSpace(db db.DBConn, userID uint, spaceID uint, bookmark bool) error
 			return fmt.Errorf("failed to bookmark space: %w", err)
 		}
 	} else {
-		_, err := db.Exec(`DELETE FROM user_space_bookmark
+		_, err := db.Exec(`DELETE FROM user_bookmark
 			WHERE user_id = $1 AND space_id = $2`,
 			userID, spaceID)
 		if err != nil {

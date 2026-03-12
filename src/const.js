@@ -1,25 +1,19 @@
 export const SPACE_TYPES = {
 	USER: 'user',
-	SPACE: 'space',
-	CHECK_IN: 'check-in',
-	SPACE_LINK: 'space-link',
-	TITLE: 'title',
-	TAG: 'tag',
+	BRANCH: 'branch',
 	TEXT: 'text',
-	NAKED_TEXT: 'naked-text',
+	LINK: 'link',
+	TAG: 'tag',
 	STREAM_OC: 'stream-of-consciousness',
 	JSON_AR: 'json-attribute',
 };
 
 export const SPACE_TYPE_ICONS = {
 	[SPACE_TYPES.USER]: 'person',
-	[SPACE_TYPES.SPACE]: 'orbit',
-	[SPACE_TYPES.SPACE_LINK]: 'link',
-	[SPACE_TYPES.CHECK_IN]: 'check_circle',
-	[SPACE_TYPES.TITLE]: 'title',
-	[SPACE_TYPES.TAG]: 'label',
+	[SPACE_TYPES.BRANCH]: 'fork_right',
 	[SPACE_TYPES.TEXT]: 'description',
-	[SPACE_TYPES.NAKED_TEXT]: 'sms',
+	[SPACE_TYPES.LINK]: 'link',
+	[SPACE_TYPES.TAG]: 'label',
 	[SPACE_TYPES.STREAM_OC]: 'stream',
 	[SPACE_TYPES.JSON_AR]: 'code',
 };

@@ -129,15 +129,15 @@ func LoadMoreTags(conn *sql.DB, parentId uint,
 ) (*[]*Space, error) {
 
 	rows, err := conn.Query(`SELECT space.id, unique_text.text_value,
-		COUNT(subspace.id) AS subspace_total
+		(SELECT COUNT(*) FROM checkin
+			WHERE checkin.space_id = space.id) AS checkin_count
 		FROM space
 		INNER JOIN tag_space ON tag_space.space_id = space.id
 		INNER JOIN unique_text ON unique_text.id = tag_space.text_id
-		LEFT JOIN space AS subspace ON subspace.parent_id = space.id
 		WHERE space.space_type = $1
 		AND space.parent_id = $2
 		GROUP BY space.id, unique_text.text_value
-		ORDER BY subspace_total DESC
+		ORDER BY checkin_count DESC
 		OFFSET $3
 		LIMIT $4`,
 		SpaceTypeTag, parentId, offset, limit,
@@ -154,16 +154,16 @@ func LoadMoreTags(conn *sql.DB, parentId uint,
 	for rows.Next() {
 		var spaceID uint
 		var text string
-		var subspacesTotal uint
-		err = rows.Scan(&spaceID, &text, &subspacesTotal)
+		var checkinCount uint
+		err = rows.Scan(&spaceID, &text, &checkinCount)
 		if err != nil {
 			return nil, fmt.Errorf("scanning top tags: %w", err)
 		}
 		var tag = &Space{
-			ID:             spaceID,
-			SpaceType:      SpaceTypeTag,
-			Text:           &text,
-			TotalSubspaces: subspacesTotal,
+			ID:           spaceID,
+			SpaceType:    SpaceTypeTag,
+			Text:         &text,
+			CheckinCount: checkinCount,
 		}
 		tags = append(tags, tag)
 	}

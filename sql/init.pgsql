@@ -3,18 +3,17 @@
 DROP INDEX IF EXISTS space_time_idx;
 DROP INDEX IF EXISTS space_type_time_idx;
 DROP INDEX IF EXISTS space_user_throttle;
-DROP TABLE IF EXISTS user_space_bookmark CASCADE;
+DROP TABLE IF EXISTS user_bookmark CASCADE;
 DROP TABLE IF EXISTS user_space CASCADE;
+DROP TABLE IF EXISTS user_space_config CASCADE;
 DROP TABLE IF EXISTS json_attribute_space CASCADE;
 DROP TABLE IF EXISTS stream_of_consciousness_space CASCADE;
-DROP TABLE IF EXISTS text_space CASCADE;
 DROP TABLE IF EXISTS text_space_revision CASCADE;
+DROP TABLE IF EXISTS text_space CASCADE;
 DROP TABLE IF EXISTS tag_space CASCADE;
-DROP TABLE IF EXISTS title_space CASCADE;
 DROP TABLE IF EXISTS link_space CASCADE;
-DROP TABLE IF EXISTS space_config_revision CASCADE;
-DROP TABLE IF EXISTS space_config CASCADE;
-DROP TABLE IF EXISTS subspace CASCADE;
+DROP TABLE IF EXISTS branch_space CASCADE;
+DROP TABLE IF EXISTS checkin CASCADE;
 DROP TABLE IF EXISTS space CASCADE;
 DROP TABLE IF EXISTS unique_text CASCADE;
 DROP TYPE IF EXISTS space_type;
@@ -96,13 +95,11 @@ CREATE TABLE unique_text (
 );
 
 CREATE TYPE space_type AS ENUM (
-	'user', -- user's personal space
-	'group', -- a space for a group of users (has a name and members)
-	'space', -- (has a label unique to its parent)
-	'link', -- user linking in a space to another space
-	'title', -- plain text (no newlines), special handling to give a space an active title
+	'user', -- a user's personal space (always at root)
+	'branch', -- has a label unique to its parent
+	'text', -- plain text entered by a user, with optional replay data
 	'tag', -- plain text (no newlines), special handling to give a space a set of active tags
-	'text' -- plain text entered by a user, with optional replay data
+	'link' -- user linking in a space to another space
 	--'stream-of-consciousness', -- contains a stream of text checkins ("text-radio")
 	--'json-attribute' -- URL and json path and refresh rate
 
@@ -130,25 +127,11 @@ CREATE INDEX space_time_idx ON space (parent_id, created_at); -- for top queries
 CREATE INDEX space_type_time_idx ON space (parent_id, space_type, created_at);
 CREATE INDEX space_user_throttle ON space (created_by, created_at);
 
-CREATE TABLE space_config (
-	space_id INTEGER PRIMARY KEY REFERENCES space (id) ON DELETE CASCADE,
-	config JSON NOT NULL -- config applied by owner (pinned subspaces, etc.)
-);
-
-CREATE TABLE space_config_revision (
+CREATE TABLE checkin (
+	id SERIAL PRIMARY KEY,
 	space_id INTEGER NOT NULL REFERENCES space (id) ON DELETE CASCADE,
-	revision_datetime TIMESTAMPTZ NOT NULL,
-	config JSON NOT NULL,
-	PRIMARY KEY (space_id, revision_datetime)
-);
-
--- todo checkins are private/anonymous
-
-CREATE TABLE subspace ( -- all 'space' type spaces (even at root) are subspaces
-	space_id INTEGER NOT NULL REFERENCES space (id) ON DELETE CASCADE,
-	parent_id INTEGER NOT NULL, -- 0 for root spaces
-	label_text_id INTEGER NOT NULL REFERENCES unique_text (id),
-	UNIQUE (parent_id, label_text_id)
+	user_id INTEGER NOT NULL REFERENCES user_account (id),
+	created_at TIMESTAMPTZ NOT NULL
 );
 
 CREATE TABLE user_space ( -- a user's personal space (always at root)
@@ -157,19 +140,24 @@ CREATE TABLE user_space ( -- a user's personal space (always at root)
 	UNIQUE (user_id)
 );
 
+CREATE TABLE user_space_config ( -- config for a user's personal space and subspaces
+	space_id INTEGER PRIMARY KEY REFERENCES space (id) ON DELETE CASCADE,
+	allow_public_subspaces BOOLEAN NOT NULL DEFAULT FALSE,
+	selected_subspaces INTEGER[] NOT NULL DEFAULT '{}'
+);
+
+CREATE TABLE branch_space (
+	space_id INTEGER NOT NULL REFERENCES space (id) ON DELETE CASCADE,
+	parent_id INTEGER NOT NULL, -- 0 for root spaces
+	label_text_id INTEGER NOT NULL REFERENCES unique_text (id),
+	UNIQUE (parent_id, label_text_id)
+);
+
 CREATE TABLE link_space ( -- a link to another space somewhere else
 	parent_id INTEGER NOT NULL REFERENCES space (id),
 	space_id INTEGER PRIMARY KEY REFERENCES space (id) ON DELETE CASCADE,
 	link_space_id INTEGER NOT NULL REFERENCES space (id),
 	UNIQUE (parent_id, link_space_id)
-);
-
--- TODO Remove titles? Too much going on
-CREATE TABLE title_space (
-	space_id INTEGER PRIMARY KEY REFERENCES space (id) ON DELETE CASCADE,
-	parent_id INTEGER NOT NULL REFERENCES space (id) ON DELETE CASCADE,
-	text_id INTEGER NOT NULL REFERENCES unique_text (id),
-	UNIQUE (parent_id, text_id)
 );
 
 CREATE TABLE tag_space (
@@ -213,7 +201,7 @@ CREATE TABLE json_attribute_space (
 	UNIQUE (parent_id, url, json_path, refresh_rate)
 );
 
-CREATE TABLE user_space_bookmark (
+CREATE TABLE user_bookmark (
 	user_id INTEGER NOT NULL REFERENCES user_account (id) ON DELETE CASCADE,
 	space_id INTEGER NOT NULL REFERENCES space (id) ON DELETE CASCADE,
 	created_at TIMESTAMPTZ NOT NULL,

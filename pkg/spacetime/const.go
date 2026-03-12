@@ -1,49 +1,42 @@
 package spacetime
 
 const LabelMaxLength = 128
+const TextMaxLength = 2048
 const TitleMaxLength = 256
 const TagMaxLength = 128
-const TextMaxLength = 2048
-const NakedTextMaxDeltasSoft = TextMaxLength * 5
-const NakedTextMaxDeltas = TextMaxLength * 6
+const NakedTextMaxDeltasSoft = TextMaxLength * 3
+const NakedTextMaxDeltas = TextMaxLength * 4
 
-const SpaceTypeSpace = "space"
 const SpaceTypeUser = "user"
-const SpaceTypeLink = "space-link"
-const SpaceTypeCheckin = "check-in"
-const SpaceTypeTitle = "title"
+const SpaceTypeBranch = "branch"
+const SpaceTypeLink = "link"
 const SpaceTypeTag = "tag"
 const SpaceTypeText = "text"
-const SpaceTypePicture = "picture"
-const SpaceTypeAudio = "audio"
-const SpaceTypeVideo = "video"
 const SpaceTypeStream = "stream-of-consciousness"
 const SpaceTypeJson = "json-attribute"
-
-func IsValidTitle(title string) bool {
-	return len(title) > 0 && len(title) <= TitleMaxLength
-}
-
-func IsValidTag(tag string) bool {
-	return len(tag) > 0 && len(tag) <= TagMaxLength
-}
-
-func IsValidText(text string) bool {
-	return len(text) > 0 && len(text) <= TextMaxLength
-}
 
 func IsValidSpaceType(spaceType string) bool {
 	switch spaceType {
 
-	case SpaceTypeSpace,
+	case SpaceTypeBranch,
+		SpaceTypeText,
 		SpaceTypeLink,
-		SpaceTypeCheckin,
-		SpaceTypeTitle, SpaceTypeTag,
-		SpaceTypeText:
+		SpaceTypeTag:
 		return true
 
 	default:
-		// Not yet inplemented
+		// Not yet implemented
+		return false
+	}
+}
+
+func IsValidRootSpaceType(spaceType string) bool {
+	switch spaceType {
+
+	case SpaceTypeBranch:
+		return true
+
+	default:
 		return false
 	}
 }
