@@ -1,4 +1,4 @@
-.flex-row, .flex-row-md, .flex-row-lg {
+.flex-row, .flex-row-sm, .flex-row-md, .flex-row-lg {
 	display: flex;
 	flex-direction: row;
 	flex-wrap: wrap;
@@ -30,17 +30,22 @@
 }
 
 .flex-row {
-	row-gap: 5px;
+	row-gap: 10px;
 	column-gap: 10px;
 }
 
+.flex-row-sm {
+	row-gap: 5px;
+	column-gap: 5px;
+}
+
 .flex-row-md {
-	row-gap: 10px;
+	row-gap: 20px;
 	column-gap: 20px;
 }
 
 .flex-row-lg {
-	row-gap: 20px;
+	row-gap: 40px;
 	column-gap: 40px;
 }
 

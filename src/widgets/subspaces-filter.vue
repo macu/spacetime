@@ -16,6 +16,10 @@
 				<material-icon icon="history"/>
 				<span>Most recent</span>
 			</el-dropdown-item>
+			<el-dropdown-item v-if="showing != MODES.PINNED" :command="MODES.PINNED">
+				<material-icon icon="push_pin"/>
+				<span>Pinned</span>
+			</el-dropdown-item>
 		</template>
 	</el-dropdown>
 
@@ -25,6 +29,7 @@
 const MODES = {
 	TOP: 'top-subspaces',
 	RECENT: 'most-recent',
+	PINNED: 'pinned',
 };
 
 export default {
@@ -39,6 +44,21 @@ export default {
 			showing: this.modelValue?.mode || MODES.TOP,
 		};
 	},
+	computed: {
+		MODES() {
+			return MODES;
+		},
+		showingLabel() {
+			if (this.showing === MODES.TOP) {
+				return 'Showing top all-time';
+			} else if (this.showing === MODES.RECENT) {
+				return 'Showing most recent';
+			} else if (this.showing === MODES.PINNED) {
+				return 'Showing pinned';
+			}
+			return 'Filter';
+		},
+	},
 	watch: {
 		showing: {
 			immediate: true,
@@ -49,19 +69,6 @@ export default {
 					window: null,
 				});
 			},
-		},
-	},
-	computed: {
-		MODES() {
-			return MODES;
-		},
-		showingLabel() {
-			if (this.showing === MODES.TOP) {
-				return 'Showing top all-time';
-			} else if (this.showing === MODES.RECENT) {
-				return 'Showing most recent';
-			}
-			return 'Filter';
 		},
 	},
 };

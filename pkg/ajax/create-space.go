@@ -10,11 +10,12 @@ import (
 
 	"spacetime/pkg/spacetime"
 	"spacetime/pkg/utils/ajax"
+	"spacetime/pkg/utils/db"
 	"spacetime/pkg/utils/logging"
 	"spacetime/pkg/utils/types"
 )
 
-func AjaxCreateBranch(db *sql.DB, auth ajax.Auth,
+func AjaxCreateBranch(conn *sql.DB, auth ajax.Auth,
 	w http.ResponseWriter, r *http.Request,
 ) (interface{}, int) {
 
@@ -28,8 +29,21 @@ func AjaxCreateBranch(db *sql.DB, auth ajax.Auth,
 		return nil, http.StatusBadRequest
 	}
 
+	// whether to pin to parent
+	pin := types.AtoBool(r.FormValue("pin"))
+	if pin && parentId == nil {
+		// cannot pin if no parent
+		return nil, http.StatusBadRequest
+	}
+
+	formTags, err := spacetime.UnmarshalFormTags(r)
+	if err != nil {
+		logging.LogError(r, &auth, err)
+		return nil, http.StatusBadRequest
+	}
+
 	// check throttle
-	blocked, err := spacetime.CheckCreateSpaceThrottleBlock(db, auth)
+	blocked, err := spacetime.CheckCreateSpaceThrottleBlock(conn, auth)
 	if err != nil {
 		logging.LogError(r, &auth, err)
 		return nil, http.StatusInternalServerError
@@ -37,9 +51,27 @@ func AjaxCreateBranch(db *sql.DB, auth ajax.Auth,
 		return nil, http.StatusTooManyRequests
 	}
 
+	// check pinning permissions
+	if pin {
+		if allowed, err := spacetime.AllowsPinToParent(conn, auth, auth.UserID, *parentId); err != nil {
+			logging.LogError(r, &auth, err)
+			return nil, http.StatusInternalServerError
+		} else if !allowed {
+			return nil, http.StatusForbidden
+		}
+	}
+	if len(formTags.PinnedTags) > 0 {
+		if allowed, err := spacetime.AllowsPinningUnderCreateSpace(conn, auth, auth.UserID, *parentId, spacetime.SpaceTypeBranch); err != nil {
+			logging.LogError(r, &auth, err)
+			return nil, http.StatusInternalServerError
+		} else if !allowed {
+			return nil, http.StatusForbidden
+		}
+	}
+
 	if parentId != nil {
 		// check if parent exists
-		if exists, err := spacetime.CheckSpaceExists(db, *parentId); err != nil {
+		if exists, err := spacetime.CheckSpaceExists(conn, *parentId); err != nil {
 			logging.LogError(r, &auth, err)
 			return nil, http.StatusInternalServerError
 		} else if !exists {
@@ -48,7 +80,7 @@ func AjaxCreateBranch(db *sql.DB, auth ajax.Auth,
 	}
 
 	// check if the given label exists under the given parent
-	if exists, err := spacetime.CheckBranchLabelExists(db, parentId, label); err != nil {
+	if exists, err := spacetime.CheckBranchLabelExists(conn, parentId, label); err != nil {
 		logging.LogError(r, &auth, err)
 		return nil, http.StatusInternalServerError
 	} else if exists {
@@ -56,7 +88,33 @@ func AjaxCreateBranch(db *sql.DB, auth ajax.Auth,
 		return nil, http.StatusConflict
 	}
 
-	space, err := spacetime.CreateBranchSpace(db, auth, parentId, label)
+	var space *spacetime.Space
+
+	err = db.InTransaction(conn, func(tx *sql.Tx) error {
+
+		var err error
+
+		space, err = spacetime.CreateBranchSpace(tx, auth, parentId, label)
+		if err != nil {
+			return fmt.Errorf("create branch space: %w", err)
+		}
+
+		tags, err := spacetime.BatchCreateTags(tx, auth, space.ID, formTags)
+		if err != nil {
+			return fmt.Errorf("batch create tags: %w", err)
+		}
+		space.TopTags = &tags
+
+		if pin {
+			if err := spacetime.PinSpace(tx, auth, space); err != nil {
+				return fmt.Errorf("pin space: %w", err)
+			}
+		}
+
+		return nil
+
+	})
+
 	if err != nil {
 		logging.LogError(r, &auth, err)
 		return nil, http.StatusInternalServerError
@@ -66,7 +124,7 @@ func AjaxCreateBranch(db *sql.DB, auth ajax.Auth,
 
 }
 
-func AjaxCreateLinkSpace(db *sql.DB, auth ajax.Auth,
+func AjaxCreateLinkSpace(conn *sql.DB, auth ajax.Auth,
 	w http.ResponseWriter, r *http.Request,
 ) (interface{}, int) {
 
@@ -82,7 +140,7 @@ func AjaxCreateLinkSpace(db *sql.DB, auth ajax.Auth,
 		return nil, http.StatusBadRequest
 	}
 
-	blocked, err := spacetime.CheckCreateSpaceThrottleBlock(db, auth)
+	blocked, err := spacetime.CheckCreateSpaceThrottleBlock(conn, auth)
 	if err != nil {
 		logging.LogError(r, &auth, err)
 		return nil, http.StatusInternalServerError
@@ -92,7 +150,7 @@ func AjaxCreateLinkSpace(db *sql.DB, auth ajax.Auth,
 	}
 
 	// check if parent exists
-	if exists, err := spacetime.CheckSpaceExists(db, parentID); err != nil {
+	if exists, err := spacetime.CheckSpaceExists(conn, parentID); err != nil {
 		logging.LogError(r, &auth, err)
 		return nil, http.StatusInternalServerError
 	} else if !exists {
@@ -100,7 +158,7 @@ func AjaxCreateLinkSpace(db *sql.DB, auth ajax.Auth,
 	}
 
 	// check if link already exists
-	if exists, err := spacetime.CheckLinkSpaceExists(db, parentID, spaceID); err != nil {
+	if exists, err := spacetime.CheckLinkSpaceExists(conn, parentID, spaceID); err != nil {
 		logging.LogError(r, &auth, err)
 		return nil, http.StatusInternalServerError
 	} else if exists {
@@ -108,7 +166,7 @@ func AjaxCreateLinkSpace(db *sql.DB, auth ajax.Auth,
 		return nil, http.StatusConflict
 	}
 
-	space, err := spacetime.CreateSpaceLink(db, auth, parentID, spaceID)
+	space, err := spacetime.CreateSpaceLink(conn, auth, parentID, spaceID)
 	if err != nil {
 		logging.LogError(r, &auth, err)
 		return nil, http.StatusInternalServerError
@@ -118,7 +176,7 @@ func AjaxCreateLinkSpace(db *sql.DB, auth ajax.Auth,
 
 }
 
-func AjaxCreateCheckin(db *sql.DB, auth ajax.Auth,
+func AjaxCreateCheckin(conn *sql.DB, auth ajax.Auth,
 	w http.ResponseWriter, r *http.Request,
 ) (interface{}, int) {
 
@@ -129,7 +187,7 @@ func AjaxCreateCheckin(db *sql.DB, auth ajax.Auth,
 	}
 
 	// check throttle
-	if blocked, err := spacetime.CheckCreateCheckinThrottleBlock(db, auth, parentID); err != nil {
+	if blocked, err := spacetime.CheckCreateCheckinThrottleBlock(conn, auth, parentID); err != nil {
 		logging.LogError(r, &auth, err)
 		return nil, http.StatusInternalServerError
 	} else if blocked {
@@ -137,14 +195,14 @@ func AjaxCreateCheckin(db *sql.DB, auth ajax.Auth,
 	}
 
 	// check if parent exists
-	if exists, err := spacetime.CheckSpaceExists(db, parentID); err != nil {
+	if exists, err := spacetime.CheckSpaceExists(conn, parentID); err != nil {
 		logging.LogError(r, &auth, err)
 		return nil, http.StatusInternalServerError
 	} else if !exists {
 		return nil, http.StatusNotFound
 	}
 
-	err = spacetime.CreateCheckin(db, auth, parentID)
+	err = spacetime.CreateCheckin(conn, auth, parentID)
 	if err != nil {
 		logging.LogError(r, &auth, err)
 		return nil, http.StatusInternalServerError
@@ -154,7 +212,7 @@ func AjaxCreateCheckin(db *sql.DB, auth ajax.Auth,
 
 }
 
-func AjaxCreateTagSpace(db *sql.DB, auth ajax.Auth,
+func AjaxCreateTagSpace(conn *sql.DB, auth ajax.Auth,
 	w http.ResponseWriter, r *http.Request,
 ) (interface{}, int) {
 
@@ -169,7 +227,7 @@ func AjaxCreateTagSpace(db *sql.DB, auth ajax.Auth,
 		return nil, http.StatusBadRequest
 	}
 
-	blocked, err := spacetime.CheckCreateSpaceThrottleBlock(db, auth)
+	blocked, err := spacetime.CheckCreateSpaceThrottleBlock(conn, auth)
 	if err != nil {
 		logging.LogError(r, &auth, err)
 		return nil, http.StatusInternalServerError
@@ -178,8 +236,14 @@ func AjaxCreateTagSpace(db *sql.DB, auth ajax.Auth,
 		return nil, http.StatusTooManyRequests
 	}
 
+	pin := types.AtoBool(r.FormValue("pin"))
+	if pin && parentID == 0 {
+		// cannot pin if no parent
+		return nil, http.StatusBadRequest
+	}
+
 	// check if parent exists
-	if exists, err := spacetime.CheckSpaceExists(db, parentID); err != nil {
+	if exists, err := spacetime.CheckSpaceExists(conn, parentID); err != nil {
 		logging.LogError(r, &auth, err)
 		return nil, http.StatusInternalServerError
 	} else if !exists {
@@ -187,7 +251,7 @@ func AjaxCreateTagSpace(db *sql.DB, auth ajax.Auth,
 	}
 
 	// check if tag exists
-	if exists, err := spacetime.CheckTagExists(db, parentID, tag); err != nil {
+	if exists, err := spacetime.CheckTagExists(conn, parentID, tag); err != nil {
 		logging.LogError(r, &auth, err)
 		return nil, http.StatusInternalServerError
 	} else if exists {
@@ -195,7 +259,37 @@ func AjaxCreateTagSpace(db *sql.DB, auth ajax.Auth,
 		return nil, http.StatusConflict
 	}
 
-	space, err := spacetime.CreateTag(db, auth, parentID, tag)
+	// check owner permissions
+	if pin {
+		if allowed, err := spacetime.AllowsPinToParent(conn, auth, auth.UserID, parentID); err != nil {
+			logging.LogError(r, &auth, err)
+			return nil, http.StatusInternalServerError
+		} else if !allowed {
+			return nil, http.StatusForbidden
+		}
+	}
+
+	var space *spacetime.Space
+
+	err = db.InTransaction(conn, func(tx *sql.Tx) error {
+
+		var err error
+
+		space, err = spacetime.CreateTag(tx, auth, parentID, tag)
+		if err != nil {
+			return fmt.Errorf("create tag space: %w", err)
+		}
+
+		if pin {
+			if err := spacetime.PinSpace(tx, auth, space); err != nil {
+				return fmt.Errorf("pin space: %w", err)
+			}
+		}
+
+		return nil
+
+	})
+
 	if err != nil {
 		logging.LogError(r, &auth, err)
 		return nil, http.StatusInternalServerError
@@ -205,7 +299,7 @@ func AjaxCreateTagSpace(db *sql.DB, auth ajax.Auth,
 
 }
 
-func AjaxCreateTextSpace(db *sql.DB, auth ajax.Auth,
+func AjaxCreateTextSpace(conn *sql.DB, auth ajax.Auth,
 	w http.ResponseWriter, r *http.Request,
 ) (interface{}, int) {
 
@@ -233,7 +327,20 @@ func AjaxCreateTextSpace(db *sql.DB, auth ajax.Auth,
 	// Normalize line endings
 	text = strings.ReplaceAll(text, "\r\n", "\n")
 
-	blocked, err := spacetime.CheckCreateSpaceThrottleBlock(db, auth)
+	// whether to pin to parent
+	pin := types.AtoBool(r.FormValue("pin"))
+	if pin && parentID == 0 {
+		// cannot pin if no parent
+		return nil, http.StatusBadRequest
+	}
+
+	formTags, err := spacetime.UnmarshalFormTags(r)
+	if err != nil {
+		logging.LogError(r, &auth, err)
+		return nil, http.StatusBadRequest
+	}
+
+	blocked, err := spacetime.CheckCreateSpaceThrottleBlock(conn, auth)
 	if err != nil {
 		logging.LogError(r, &auth, err)
 		return nil, http.StatusInternalServerError
@@ -243,11 +350,29 @@ func AjaxCreateTextSpace(db *sql.DB, auth ajax.Auth,
 	}
 
 	// Check if parent exists
-	if exists, err := spacetime.CheckSpaceExists(db, parentID); err != nil {
+	if exists, err := spacetime.CheckSpaceExists(conn, parentID); err != nil {
 		logging.LogError(r, &auth, err)
 		return nil, http.StatusInternalServerError
 	} else if !exists {
 		return nil, http.StatusNotFound
+	}
+
+	// check pinning permissions
+	if pin {
+		if allowed, err := spacetime.AllowsPinToParent(conn, auth, auth.UserID, parentID); err != nil {
+			logging.LogError(r, &auth, err)
+			return nil, http.StatusInternalServerError
+		} else if !allowed {
+			return nil, http.StatusForbidden
+		}
+	}
+	if len(formTags.PinnedTags) > 0 {
+		if allowed, err := spacetime.AllowsPinningUnderCreateSpace(conn, auth, auth.UserID, parentID, spacetime.SpaceTypeText); err != nil {
+			logging.LogError(r, &auth, err)
+			return nil, http.StatusInternalServerError
+		} else if !allowed {
+			return nil, http.StatusForbidden
+		}
 	}
 
 	recording := r.FormValue("recording")
@@ -272,7 +397,33 @@ func AjaxCreateTextSpace(db *sql.DB, auth ajax.Auth,
 		}
 	}
 
-	space, err := spacetime.CreateText(db, auth, parentID, text, titlePtr, recordingData, startedAtTime)
+	var space *spacetime.Space
+
+	err = db.InTransaction(conn, func(tx *sql.Tx) error {
+
+		var err error
+
+		space, err = spacetime.CreateText(tx, auth, parentID, text, titlePtr, recordingData, startedAtTime)
+		if err != nil {
+			return fmt.Errorf("create text space: %w", err)
+		}
+
+		if pin {
+			if err = spacetime.PinSpace(tx, auth, space); err != nil {
+				return fmt.Errorf("pin space: %w", err)
+			}
+		}
+
+		tags, err := spacetime.BatchCreateTags(tx, auth, space.ID, formTags)
+		if err != nil {
+			return fmt.Errorf("batch create tags: %w", err)
+		}
+		space.TopTags = &tags
+
+		return nil
+
+	})
+
 	if err != nil {
 		logging.LogError(r, &auth, err)
 		return nil, http.StatusInternalServerError
@@ -282,11 +433,11 @@ func AjaxCreateTextSpace(db *sql.DB, auth ajax.Auth,
 
 }
 
-func AjaxCreateStreamOfConsciousnessSpace(db *sql.DB, auth ajax.Auth,
+func AjaxCreateStreamOfConsciousnessSpace(conn *sql.DB, auth ajax.Auth,
 	w http.ResponseWriter, r *http.Request,
 ) (interface{}, int) {
 
-	blocked, err := spacetime.CheckCreateSpaceThrottleBlock(db, auth)
+	blocked, err := spacetime.CheckCreateSpaceThrottleBlock(conn, auth)
 	if err != nil {
 		logging.LogError(r, &auth, err)
 		return nil, http.StatusInternalServerError
@@ -299,7 +450,7 @@ func AjaxCreateStreamOfConsciousnessSpace(db *sql.DB, auth ajax.Auth,
 
 }
 
-func AjaxCloseStreamOfConsciousnessSpace(db *sql.DB, auth ajax.Auth,
+func AjaxCloseStreamOfConsciousnessSpace(conn *sql.DB, auth ajax.Auth,
 	w http.ResponseWriter, r *http.Request,
 ) (interface{}, int) {
 

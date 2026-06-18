@@ -140,10 +140,10 @@ CREATE TABLE user_space ( -- a user's personal space (always at root)
 	UNIQUE (user_id)
 );
 
-CREATE TABLE user_space_config ( -- config for a user's personal space and subspaces
+CREATE TABLE user_space_config ( -- config for subspaces within a user space
 	space_id INTEGER PRIMARY KEY REFERENCES space (id) ON DELETE CASCADE,
-	allow_public_subspaces BOOLEAN NOT NULL DEFAULT FALSE,
-	selected_subspaces INTEGER[] NOT NULL DEFAULT '{}'
+	user_id INTEGER NOT NULL REFERENCES user_account (id),
+	order_number INTEGER NOT NULL
 );
 
 CREATE TABLE branch_space (

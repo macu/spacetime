@@ -3,44 +3,43 @@
 
 	<return-to-top/>
 
-	<loading-message v-if="loading"/>
+	<space-loader :space-id="spaceId" include-parent-path include-tags>
 
-	<space-output v-else-if="space" :space="space" show-path>
+		<template #default="{userAllowPin, userAllowPinSubspacesOnCreate}">
 
-		<div @click.stop class="subspaces flex-column-lg">
+			<div @click.stop class="subspaces flex-column-lg">
 
-			<div class="flex-row-md">
-				<create-dropdown
-					:parent-id="space.id"
-					:disabled="$store.getters.createDisabled"
-					/>
-				<subspaces-filter
-					v-if="subspaces"
-					@update:filter="filter = $event"
-					/>
-			</div>
+				<div class="flex-row-md">
+					<create-dropdown
+						:parent-id="spaceId"
+						:disabled="$store.getters.createDisabled"
+						/>
+					<subspaces-filter
+						v-if="subspaces"
+						@update:filter="f => filter = f"
+						/>
+				</div>
 
-			<space-list
-				v-if="subspaces"
-				:spaces="subspaces"
-				:loading="loadingSubspaces"
-				@load-more="loadMore()"
+				<space-output
+					v-for="s in subspaces"
+					:space="s"
+					:user-allow-pin="userAllowPin"
+					:user-allow-pin-subspaces-on-create="userAllowPinSubspacesOnCreate"
+					@toggle-pinned="$emit('toggle-pinned', s)"
 				/>
 
-		</div>
+			</div>
 
-	</space-output>
+		</template>
 
-	<el-alert v-else type="error" show-icon :closable="false">
-		This space could not be loaded.
-	</el-alert>
+	</space-loader>
 
 </div>
 </template>
 
 <script>
+import SpaceLoader from '@/widgets/space-loader.vue';
 import SpaceOutput from '@/widgets/space-output.vue';
-import SpaceList from '@/widgets/spaces-list.vue';
 import CreateDropdown from '@/widgets/create-dropdown.vue';
 import SubspacesFilter from '@/widgets/subspaces-filter.vue';
 
@@ -54,8 +53,8 @@ import {
 
 export default {
 	components: {
+		SpaceLoader,
 		SpaceOutput,
-		SpaceList,
 		CreateDropdown,
 		SubspacesFilter,
 	},
@@ -63,78 +62,45 @@ export default {
 		return {
 			loading: true,
 			space: null,
-			subspaces: null,
+			subspaces: [],
 			filter: null,
 			loadingSubspaces: false,
+			skipLoadSubspaces: true,
 		};
 	},
 	computed: {
 		spaceId() {
 			return this.$route.params.spaceId;
 		},
+		filterJSON() {
+			return this.filter ? JSON.stringify(this.filter) : null;
+		},
 	},
 	watch: {
-		spaceId: {
-			immediate: true,
+		filter: {
+			deep: true,
 			handler() {
-				this.$nextTick(() => {
-					this.loadSpace(this.spaceId);
-				});
+				this.loadSubspaces();
 			},
 		},
 	},
 	methods: {
-		loadSpace(spaceId) {
-			this.loading = true;
-			this.space = null;
-			this.subspaces = null;
-			ajaxGet('/ajax/space', {
-				spaceId,
-				includeTags: true,
-				includeSubspaces: true,
-				includeParentPath: true,
-				filter: JSON.stringify({
-					...this.filter,
-					excludeTypes: SPACE_TYPES.CHECK_IN,
-				}),
-			}).then(response => {
-				this.space = response;
-				this.subspaces = response.topSubspaces
-					? response.topSubspaces.slice() : null;
-			}).finally((error) => {
-				this.loading = false;
-			});
-		},
-		loadMore() {
-			if (!this.space) {
-				return;
-			}
+		loadSubspaces(more = false) {
 			this.loadingSubspaces = true;
+
+			if (!more) {
+				this.subspaces = [];
+			}
+
 			ajaxGet('/ajax/subspaces', {
-				parentId: this.space.id,
+				parentId: this.spaceId,
 				offset: this.subspaces.length,
 				limit: this.$store.getters.maxPageLimit,
-				filter: JSON.stringify({
-					...this.filter,
-					excludeTypes: SPACE_TYPES.CHECK_IN,
-				}),
+				filter: this.filterJSON,
 			}).then(response => {
 				this.subspaces = this.subspaces.concat(response);
-			}).finally(() => {
-				this.loadingSubspaces = false;
 			});
 		},
 	},
 };
 </script>
-
-<style lang="scss">
-.space-page {
-	.subspaces {
-		// padding: 20px;
-		// background-color: darkturquoise;
-		// border-radius: 12px;
-		// cursor: default;
-	}
-}
-</style>

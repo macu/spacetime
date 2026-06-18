@@ -1,6 +1,11 @@
 <template>
 <span class="space-type flex-row nowrap">
 	<material-icon :icon="icon"/>
+	<div v-if="showPin && isPinned" class="pinned-indicator">
+		<el-tooltip content="This space is pinned by the author" placement="top">
+			<material-icon icon="keep" class="pinned"/>
+		</el-tooltip>
+	</div>
 	<span v-text="typeOutput"/>
 </span>
 </template>
@@ -16,6 +21,10 @@ export default {
 		space: {
 			type: Object,
 			required: true,
+		},
+		showPin: {
+			type: Boolean,
+			default: false,
 		},
 	},
 	computed: {
@@ -39,6 +48,9 @@ export default {
 		},
 		icon() {
 			return SPACE_TYPE_ICONS[this.space.spaceType];
+		},
+		isPinned() {
+			return this.space.isPinned;
 		},
 	},
 };

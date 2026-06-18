@@ -161,3 +161,15 @@ func Int64InSlice(i int64, list []int64) bool {
 	}
 	return false
 }
+
+func JSONtoStringArray(s string) ([]string, error) {
+	var out []string
+	if len(s) == 0 {
+		return out, nil
+	}
+	err := json.Unmarshal([]byte(s), &out)
+	if err != nil {
+		return []string{}, fmt.Errorf("parsing string array: %w", err)
+	}
+	return out, nil
+}

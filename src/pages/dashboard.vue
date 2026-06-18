@@ -5,14 +5,26 @@
 
 	<create-dropdown :disabled="$store.getters.createDisabled" sticky/>
 
-	<spaces-list :spaces="spaces" :loading="loading" @load-more="loadMore()"/>
+	<div class="flex-column-lg">
+
+		<space-output
+			v-for="s in spaces"
+			:space="s"
+		/>
+
+		<div class="center">
+			<loading-message v-if="loading"/>
+			<el-button v-else @click="loadMore()" type="primary">Load More</el-button>
+		</div>
+
+	</div>
 
 </div>
 </template>
 
 <script>
 import CreateDropdown from '@/widgets/create-dropdown.vue';
-import SpacesList from '@/widgets/spaces-list.vue';
+import SpaceOutput from '@/widgets/space-output.vue';
 
 import {
 	ajaxGet,
@@ -21,7 +33,7 @@ import {
 export default {
 	components: {
 		CreateDropdown,
-		SpacesList,
+		SpaceOutput,
 	},
 	data() {
 		return {

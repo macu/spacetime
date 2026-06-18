@@ -11,6 +11,12 @@
 			/>
 	</form-field>
 
+	<form-field v-if="userAllowPin">
+		<el-checkbox v-model="pin" :disabled="posting">
+			Pin this tag to the top of the parent space
+		</el-checkbox>
+	</form-field>
+
 	<form-actions>
 		<el-button @click="submit()" type="primary" :disabled="createDisabled">
 			Create
@@ -28,10 +34,15 @@ export default {
 			type: Boolean,
 			default: false,
 		},
+		userAllowPin: {
+			type: Boolean,
+			default: false,
+		},
 	},
 	data() {
 		return {
 			tag: '',
+			pin: false,
 		};
 	},
 	computed: {
@@ -46,6 +57,7 @@ export default {
 			}
 			this.$emit('submit', {
 				tag: this.tag.trim(),
+				pin: this.pin,
 			});
 		},
 	},

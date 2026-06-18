@@ -1,6 +1,10 @@
 package spacetime
 
-import "time"
+import (
+	"encoding/json"
+	"fmt"
+	"time"
+)
 
 type Space struct {
 	ID        uint      `json:"id"`
@@ -8,6 +12,8 @@ type Space struct {
 	SpaceType string    `json:"spaceType"`
 	CreatedAt time.Time `json:"createdAt"`
 	CreatedBy uint      `json:"createdBy"`
+
+	IsPinned bool `json:"isPinned"`
 
 	// TotalSubspaces uint `json:"totalSubspaces"`
 	CheckinCount uint `json:"checkinCount"`
@@ -41,7 +47,34 @@ type Space struct {
 
 // simple search filter for now
 type SpaceFilter struct {
-	Mode   string     `json:"mode"`             // "top-subspaces", "most-recent"
+	Mode   string     `json:"mode"`             // "top-subspaces", "most-recent", "pinned"
 	Date   *time.Time `json:"date,omitempty"`   // null for 'now'
 	Window *string    `json:"window,omitempty"` // "day", "week", "month", "year"; null for all-time
+}
+
+const SpaceFilterModeTopSubspaces = "top-subspaces"
+const SpaceFilterModeMostRecent = "most-recent"
+const SpaceFilterModePinned = "pinned"
+
+func ParseSpaceFilter(jsonString string) (*SpaceFilter, error) {
+	if jsonString == "" {
+		// default filter
+		return &SpaceFilter{Mode: SpaceFilterModeTopSubspaces}, nil
+	}
+
+	var filter SpaceFilter
+	err := json.Unmarshal([]byte(jsonString), &filter)
+	if err != nil {
+		return nil, err
+	}
+
+	// Verify mode
+	switch filter.Mode {
+	case SpaceFilterModeTopSubspaces, SpaceFilterModeMostRecent, SpaceFilterModePinned:
+		// valid modes
+	default:
+		return nil, fmt.Errorf("invalid filter mode: %s", filter.Mode)
+	}
+
+	return &filter, nil
 }

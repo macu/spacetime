@@ -1,5 +1,5 @@
 <template>
-<form-layout title="Create text">
+<form-layout title="Create text" class="create-text-form">
 
 	<form-field title="Title">
 		<el-input
@@ -53,6 +53,21 @@
 		:initial-playing="true"
 		/>
 
+	<!-- only allow pinning within author scope -->
+	<form-field v-if="userAllowPin">
+		<el-checkbox v-model="pin" :disabled="posting">
+			Pin this space to the top of the parent space
+		</el-checkbox>
+	</form-field>
+
+	<!-- always allow author to pin under their own text space -->
+	<tags-field
+		v-model:tags="tags"
+		v-model:pinnedTags="pinnedTags"
+		:allow-pinning="allowPinSubspaces"
+		:disabled="posting"
+	/>
+
 	<form-actions>
 		<el-button @click="submit()" type="primary" :disabled="createDisabled">
 			Create
@@ -63,10 +78,16 @@
 </template>
 
 <script>
+import TagsField from './tags-field.vue';
 import TextReplay from '@/widgets/text-replay.vue';
+
+import {
+	SPACE_TYPES,
+} from '@/const.js';
 
 export default {
 	components: {
+		TagsField,
 		TextReplay,
 	},
 	props: {
@@ -78,12 +99,23 @@ export default {
 			type: Boolean,
 			default: false,
 		},
+		userAllowPin: {
+			type: Boolean,
+			default: false,
+		},
+		userAllowPinSubspacesOnCreate: {
+			type: Function,
+			required: false,
+		},
 	},
 	data() {
 		return {
 			title: '',
 			text: '',
 			saveRecording: this.initialSaveRecording,
+			pin: false,
+			tags: [],
+			pinnedTags: [],
 
 			startedAt: null,
 			recording: [],
@@ -113,6 +145,10 @@ export default {
 		},
 		disableRecordingOption() {
 			return this.posting || (!this.saveRecording && this.recordingMaxed);
+		},
+		allowPinSubspaces() {
+			return this.userAllowPinSubspacesOnCreate &&
+				this.userAllowPinSubspacesOnCreate(SPACE_TYPES.TEXT);
 		},
 	},
 	watch: {
@@ -291,6 +327,7 @@ export default {
 		preview() {
 			this.previewing = true;
 		},
+
 		submit() {
 			if (this.createDisabled) {
 				return;
@@ -300,6 +337,9 @@ export default {
 				text: this.text.trim(),
 				recording: this.saveRecording ? JSON.stringify(this.recording) : null,
 				startedAt: this.startedAt,
+				pin: this.allowUserSpaceActions && this.pin,
+				tags: JSON.stringify(this.tags),
+				pinnedTags: JSON.stringify(this.pinnedTags), // pinned tags always allowd on text spaces
 			});
 		},
 	},

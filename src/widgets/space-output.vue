@@ -10,7 +10,7 @@
 
 			<material-icon icon="arrow_right_alt"/>
 
-			<space-type :space="p"/>
+			<space-type :space="p" show-pin/>
 
 			<span v-if="p.spaceType === SPACE_TYPES.BRANCH"
 				v-text="p.label"
@@ -33,7 +33,12 @@
 	<div class="container flex-column-md">
 
 		<div class="space-info-bar flex-row-md" @click.stop>
-			<space-type :space="space" @click="gotoSpace()"/>
+			<el-button v-if="userAllowPin" @click="togglePinned()">
+				<material-icon v-if="isPinned" icon="keep"/>
+				<material-icon v-else icon="keep_off"/>
+				{{ isPinned ? 'Unpin' : 'Pin' }}
+			</el-button>
+			<space-type :space="space" :show-pin="!userAllowPin" @click="gotoSpace()"/>
 			<bookmark-button :space="space"/>
 			<checkin-button :space="space"/>
 			<div v-if="space.label" class="space-label">
@@ -73,6 +78,7 @@
 			v-else-if="space.spaceType === SPACE_TYPES.TAG"
 			:space="space"
 			:show-checkin="false"
+			show-pin
 			/>
 
 		<space-text
@@ -81,7 +87,10 @@
 			/>
 
 		<div v-if="$slots.default" class="portal" @click.stop>
-			<slot/>
+			<slot
+				:user-allow-pin="userAllowPin"
+				:user-allow-pin-subspaces-on-create="userAllowPinSubspacesOnCreate"
+			/>
 		</div>
 
 	</div>
@@ -104,6 +113,9 @@ import {
 
 export default {
 	name: 'space-output', // recursive
+	emits: [
+		'toggle-pinned',
+	],
 	components: {
 		CheckinButton,
 		BookmarkButton,
@@ -121,6 +133,14 @@ export default {
 		showPath: {
 			type: Boolean,
 			default: false,
+		},
+		userAllowPin: {
+			type: Boolean,
+			default: false,
+		},
+		userAllowPinSubspacesOnCreate: {
+			type: Function,
+			required: false,
 		},
 	},
 	data() {
@@ -153,6 +173,9 @@ export default {
 			let all = this.newTags.concat(this.topTags);
 			return all.filter((t, i) => all.findIndex(t2 => t2.id === t.id) === i);
 		},
+		isPinned() {
+			return this.space.isPinned;
+		},
 	},
 	methods: {
 		userTagAdded(tagSpace) {
@@ -165,6 +188,9 @@ export default {
 					spaceId: s ? s.id : this.space.id,
 				},
 			});
+		},
+		togglePinned() {
+			this.$emit('toggle-pinned', this.space);
 		},
 	},
 };

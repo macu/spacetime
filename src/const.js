@@ -17,3 +17,8 @@ export const SPACE_TYPE_ICONS = {
 	[SPACE_TYPES.STREAM_OC]: 'stream',
 	[SPACE_TYPES.JSON_AR]: 'code',
 };
+
+export const USER_CONTEXT_TYPES = [
+	SPACE_TYPES.USER,
+	SPACE_TYPES.TEXT,
+];

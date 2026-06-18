@@ -120,43 +120,48 @@ div.center {
 /*!******************************************************************************************************************************************************************!*\
   !*** css ./node_modules/css-loader/dist/cjs.js??clonedRuleSet-2.use[1]!./node_modules/sass-loader/dist/cjs.js??clonedRuleSet-2.use[2]!./src/styles/layouts.scss ***!
   \******************************************************************************************************************************************************************/
-.flex-row, .flex-row-md, .flex-row-lg {
+.flex-row, .flex-row-sm, .flex-row-md, .flex-row-lg {
   display: flex;
   flex-direction: row;
   flex-wrap: wrap;
   align-items: center;
 }
-.flex-row.nowrap, .flex-row-md.nowrap, .flex-row-lg.nowrap {
+.flex-row.nowrap, .flex-row-sm.nowrap, .flex-row-md.nowrap, .flex-row-lg.nowrap {
   flex-wrap: nowrap;
 }
-.flex-row.flex-inline, .flex-row-md.flex-inline, .flex-row-lg.flex-inline {
+.flex-row.flex-inline, .flex-row-sm.flex-inline, .flex-row-md.flex-inline, .flex-row-lg.flex-inline {
   display: inline-flex;
 }
-.flex-row > .flex-1, .flex-row-md > .flex-1, .flex-row-lg > .flex-1 {
+.flex-row > .flex-1, .flex-row-sm > .flex-1, .flex-row-md > .flex-1, .flex-row-lg > .flex-1 {
   flex: 1;
 }
-.flex-row > .flex-100, .flex-row-md > .flex-100, .flex-row-lg > .flex-100 {
+.flex-row > .flex-100, .flex-row-sm > .flex-100, .flex-row-md > .flex-100, .flex-row-lg > .flex-100 {
   flex-basis: 100%;
 }
-.flex-row > *, .flex-row > .el-button + .el-button, .flex-row-md > *, .flex-row-md > .el-button + .el-button, .flex-row-lg > *, .flex-row-lg > .el-button + .el-button {
+.flex-row > *, .flex-row > .el-button + .el-button, .flex-row-sm > *, .flex-row-sm > .el-button + .el-button, .flex-row-md > *, .flex-row-md > .el-button + .el-button, .flex-row-lg > *, .flex-row-lg > .el-button + .el-button {
   margin: 0;
 }
-.flex-row > .align-end, .flex-row-md > .align-end, .flex-row-lg > .align-end {
+.flex-row > .align-end, .flex-row-sm > .align-end, .flex-row-md > .align-end, .flex-row-lg > .align-end {
   align-self: flex-end;
 }
 
 .flex-row {
-  row-gap: 5px;
+  row-gap: 10px;
   column-gap: 10px;
 }
 
+.flex-row-sm {
+  row-gap: 5px;
+  column-gap: 5px;
+}
+
 .flex-row-md {
-  row-gap: 10px;
+  row-gap: 20px;
   column-gap: 20px;
 }
 
 .flex-row-lg {
-  row-gap: 20px;
+  row-gap: 40px;
   column-gap: 40px;
 }
 
@@ -433,10 +438,14 @@ div.center {
 .is-mobile .space-output > .container > .portal {
   padding: 20px;
 }
-/*!*********************************************************************************************************************************************************************************************************************************************************************************************************************************!*\
-  !*** css ./node_modules/css-loader/dist/cjs.js??clonedRuleSet-2.use[1]!./node_modules/vue-loader/dist/stylePostLoader.js!./node_modules/sass-loader/dist/cjs.js??clonedRuleSet-2.use[2]!./node_modules/vue-loader/dist/index.js??ruleSet[1].rules[5].use[0]!./src/pages/space.vue?vue&type=style&index=0&id=68c3739c&lang=scss ***!
-  \*********************************************************************************************************************************************************************************************************************************************************************************************************************************/
-
+/*!***************************************************************************************************************************************************************************************************************************************************************************************************************************************************!*\
+  !*** css ./node_modules/css-loader/dist/cjs.js??clonedRuleSet-2.use[1]!./node_modules/vue-loader/dist/stylePostLoader.js!./node_modules/sass-loader/dist/cjs.js??clonedRuleSet-2.use[2]!./node_modules/vue-loader/dist/index.js??ruleSet[1].rules[5].use[0]!./src/pages/create-space/tags-field.vue?vue&type=style&index=0&id=72fb8acc&lang=scss ***!
+  \***************************************************************************************************************************************************************************************************************************************************************************************************************************************************/
+.create-space-tags-field .tags > .tag {
+  background-color: #eee;
+  border-radius: 4px;
+  padding: 4px 8px;
+}
 /*!*******************************************************************************************************************************************************************************************************************************************************************************************************************************************!*\
   !*** css ./node_modules/css-loader/dist/cjs.js??clonedRuleSet-2.use[1]!./node_modules/vue-loader/dist/stylePostLoader.js!./node_modules/sass-loader/dist/cjs.js??clonedRuleSet-2.use[2]!./node_modules/vue-loader/dist/index.js??ruleSet[1].rules[5].use[0]!./src/widgets/material-icon.vue?vue&type=style&index=0&id=55e49714&lang=scss ***!
   \*******************************************************************************************************************************************************************************************************************************************************************************************************************************************/

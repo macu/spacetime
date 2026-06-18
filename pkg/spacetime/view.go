@@ -36,11 +36,13 @@ func LoadSpace(conn *sql.DB, auth *ajax.Auth, id uint) (*Space, error) {
 		space.created_at, space.created_by,
 		unique_text.text_value AS label,
 		user_account.handle, user_account.display_name,
+		CASE WHEN user_space_config.space_id IS NULL THEN FALSE ELSE TRUE END AS user_pinned,
 		`+bookmarkFieldSql+`
 		FROM space
 		LEFT JOIN branch_space ON space.id = branch_space.space_id
 		LEFT JOIN unique_text ON unique_text.id = branch_space.label_text_id
 		LEFT JOIN user_account ON user_account.id = space.created_by
+		LEFT JOIN user_space_config ON user_space_config.space_id = space.id
 		WHERE space.id = `+db.Arg(&args, id)+`
 		LIMIT 1`,
 		args...,
@@ -48,6 +50,7 @@ func LoadSpace(conn *sql.DB, auth *ajax.Auth, id uint) (*Space, error) {
 		&space.CreatedAt, &space.CreatedBy,
 		&space.Label,
 		&space.AuthorHandle, &space.AuthorDisplayName,
+		&space.IsPinned,
 		&space.UserBookmark,
 	)
 
@@ -70,6 +73,8 @@ func LoadParentPath(conn *sql.DB, auth *ajax.Auth, id uint) ([]*Space, error) {
 
 	// recursively load space details following parent_id of space with given id
 	// until reaching the root space
+
+	// return array has root space first
 
 	// TODO Use recusive query
 
@@ -107,8 +112,9 @@ func LoadParentPath(conn *sql.DB, auth *ajax.Auth, id uint) ([]*Space, error) {
 
 func LoadTopSubspaces(conn *sql.DB, auth *ajax.Auth,
 	parentID *uint, // optional
+	includeTypes []string, // optional filter by space type
 	offset uint, limit uint, // pagination
-	date *time.Time, interval *time.Duration, // review
+	filter *SpaceFilter, // optional filter by date
 ) ([]*Space, error) {
 
 	var spaces = []*Space{}
@@ -131,19 +137,87 @@ func LoadTopSubspaces(conn *sql.DB, auth *ajax.Auth,
 		parentClauseSql = `space.parent_id IS NULL`
 	}
 
+	var typesClauseSql string
+	if len(includeTypes) > 0 {
+		typesClauseSql = `AND space.space_type IN (`
+		for i, spaceType := range includeTypes {
+			if i > 0 {
+				typesClauseSql += `, `
+			}
+			typesClauseSql += db.Arg(&args, spaceType)
+		}
+		typesClauseSql += `)`
+	}
+
+	var filterModeClauseSql string
+	var filterModeOrderClauseSql string
+	if filter != nil {
+		switch filter.Mode {
+
+		case SpaceFilterModeTopSubspaces:
+			// no additional clause needed
+			filterModeOrderClauseSql = `, checkin_count DESC, space.created_at DESC`
+
+		case SpaceFilterModeMostRecent:
+			if filter.Date != nil {
+				// up to given date
+				filterModeClauseSql = `AND space.created_at <= ` + db.Arg(&args, *filter.Date)
+			} else {
+				// up to current time
+				filterModeClauseSql = `AND space.created_at <= NOW()`
+			}
+			if filter.Window != nil {
+				// within given window
+				var windowDuration string
+				switch *filter.Window {
+				case "day":
+					windowDuration = "1 DAY"
+				case "week":
+					windowDuration = "1 WEEK"
+				case "month":
+					windowDuration = "1 MONTH"
+				case "year":
+					windowDuration = "1 YEAR"
+				default:
+					return nil, fmt.Errorf("invalid filter window: %s", *filter.Window)
+				}
+				filterModeClauseSql += ` AND space.created_at >= NOW() - INTERVAL ` + windowDuration
+			}
+			filterModeOrderClauseSql = `, space.created_at DESC`
+
+		case SpaceFilterModePinned:
+			filterModeClauseSql = `AND EXISTS (SELECT 1 FROM user_space_config
+				WHERE user_space_config.user_id = ` + db.Arg(&args, auth.UserID) + `
+				AND user_space_config.space_id = space.id)`
+
+		default:
+			return nil, fmt.Errorf("invalid filter mode: %s", filter.Mode)
+		}
+	} else {
+		filterModeOrderClauseSql = `ORDER BY space.created_at DESC`
+	}
+
 	rows, err := conn.Query(`SELECT space.id,
 		space.space_type, space.created_at, space.created_by,
 		unique_text.text_value AS label,
 		user_account.handle, user_account.display_name,
 		`+bookmarkFieldSql+`,
+		EXISTS(SELECT 1 FROM user_space_config
+			WHERE user_space_config.space_id = space.id
+		) AS is_pinned,
 		(SELECT COUNT(*) FROM checkin
 			WHERE checkin.space_id = space.id) AS checkin_count
 		FROM space
 		LEFT JOIN subspace ON subspace.space_id = space.id
 		LEFT JOIN unique_text ON unique_text.id = subspace.label_text_id
 		LEFT JOIN user_account ON user_account.id = space.created_by
-		WHERE `+parentClauseSql+`
-		ORDER BY checkin_count DESC, space.created_at DESC
+		LEFT JOIN user_space_config ON user_space_config.space_id = space.id
+		WHERE `+parentClauseSql+` `+typesClauseSql+` `+filterModeClauseSql+`
+		ORDER BY -- always order by pinned first
+			CASE WHEN user_space_config.space_id IS NULL
+				THEN FALSE ELSE TRUE END DESC,
+			CASE WHEN user_space_config.order_number IS NULL
+				THEN 0 ELSE user_space_config.order_number END ASC`+filterModeOrderClauseSql+`
 		LIMIT `+db.Arg(&args, limit)+`
 		OFFSET `+db.Arg(&args, offset),
 		args...,
@@ -164,6 +238,7 @@ func LoadTopSubspaces(conn *sql.DB, auth *ajax.Auth,
 			&space.Label,
 			&space.AuthorHandle, &space.AuthorDisplayName,
 			&space.UserBookmark,
+			&space.IsPinned,
 			&space.CheckinCount,
 		)
 		if err != nil {
@@ -318,13 +393,13 @@ func LoadSpaceContent(conn *sql.DB, auth *ajax.Auth,
 		}
 	}
 
-	if hasSpacesOfType(spaces, SpaceTypeStream) {
-		err := loadStreamSpaceDetails(conn,
-			extractSpacesByType(spaces, SpaceTypeStream))
-		if err != nil {
-			return err
-		}
-	}
+	// if hasSpacesOfType(spaces, SpaceTypeStream) {
+	// 	err := loadStreamSpaceDetails(conn,
+	// 		extractSpacesByType(spaces, SpaceTypeStream))
+	// 	if err != nil {
+	// 		return err
+	// 	}
+	// }
 
 	return nil
 

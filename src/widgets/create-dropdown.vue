@@ -52,7 +52,7 @@ import {
 export default {
 	props: {
 		parentId: {
-			type: Number,
+			type: [String, Number],
 			required: false,
 		},
 		disabled: {

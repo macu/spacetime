@@ -2,7 +2,6 @@ package ajax
 
 import (
 	"database/sql"
-	"encoding/json"
 	"net/http"
 
 	"spacetime/pkg/spacetime"
@@ -24,13 +23,9 @@ func AjaxLoadSpace(db *sql.DB, auth *ajax.Auth,
 	includeSubspaces := types.AtoBool(r.FormValue("includeSubspaces"))
 	includeParentPath := types.AtoBool(r.FormValue("includeParentPath"))
 
-	filterJSON := r.FormValue("filter")
-	filter := spacetime.SpaceFilter{}
-	if filterJSON != "" {
-		err = json.Unmarshal([]byte(filterJSON), &filter)
-		if err != nil {
-			return nil, http.StatusBadRequest
-		}
+	filter, err := spacetime.ParseSpaceFilter(r.FormValue("filter"))
+	if err != nil {
+		return nil, http.StatusBadRequest
 	}
 
 	space, err := spacetime.LoadSpace(db, auth, id)
@@ -46,13 +41,6 @@ func AjaxLoadSpace(db *sql.DB, auth *ajax.Auth,
 		return nil, http.StatusInternalServerError
 	}
 
-	// err = spacetime.LoadSubspaceCount(db,
-	// 	[]*spacetime.Space{space}, &filter)
-	// if err != nil {
-	// 	logging.LogError(r, auth, err)
-	// 	return nil, http.StatusInternalServerError
-	// }
-
 	if includeTags {
 		err = spacetime.LoadTopTags(db,
 			[]*spacetime.Space{space}, 0, spacetime.DefaultTagsLimit)
@@ -64,7 +52,7 @@ func AjaxLoadSpace(db *sql.DB, auth *ajax.Auth,
 
 	if includeSubspaces {
 		content, err := spacetime.LoadTopSubspaces(db, auth,
-			&id, 0, spacetime.MaxSubspacesPageLimit, nil, nil)
+			&id, []string{}, 0, spacetime.MaxSubspacesPageLimit, filter)
 		if err != nil {
 			logging.LogError(r, auth, err)
 			return nil, http.StatusInternalServerError
@@ -150,7 +138,17 @@ func AjaxLoadTopSubspaces(db *sql.DB, auth *ajax.Auth,
 
 	includeTags := types.AtoBool(r.FormValue("includeTags"))
 
-	spaces, err := spacetime.LoadTopSubspaces(db, auth, parentId, offset, limit, nil, nil)
+	includeTypes, err := types.AtoStringArray(r.FormValue("includeTypes"))
+	if err != nil {
+		return nil, http.StatusBadRequest
+	}
+
+	filter, err := spacetime.ParseSpaceFilter(r.FormValue("filter"))
+	if err != nil {
+		return nil, http.StatusBadRequest
+	}
+
+	spaces, err := spacetime.LoadTopSubspaces(db, auth, parentId, includeTypes, offset, limit, filter)
 	if err != nil {
 		logging.LogError(r, auth, err)
 		return nil, http.StatusInternalServerError

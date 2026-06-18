@@ -1,10 +1,14 @@
 # TODO
 
+"Make it exist first. You can make it good later."
+
 - [ ] allow users to configure their personal user spaces
-- [*) rename "subspace" to "branch"
-- [*] remove title type (branches have labels and text have titles)
-- [*] move check-ins to separate table
-- [*] add replayable text recording, validation/submission, and playback
+  - [ ] allow user to pin and order pinned items within their personal space
+  - [ ] allow users to pin and order pinned items within a public text space they created
+  - [ ] freedom to rename, delete, and move items within personal space (but not public)
+  - [ ] conflict detection when moving branches within personal space (can't merge)
+
+- [ ] more accurate recording of deletion-insertions using previous selection
 - [ ] add stream of consciousness (container for replayable texts)
 - [ ] record replayable text time started when submitting to stream
 - [ ] add search modes (top all time, top in time range, latest) and load more
@@ -17,3 +21,8 @@
 - [ ] add admin delete function and account banning
 - [ ] get running on App Engine
 - [ ] add content imports into user spaces
+
+- [*] rename "subspace" to "branch"
+- [*] remove title type (branches have labels and text have titles)
+- [*] move check-ins to separate table
+- [*] add replayable text recording, validation/submission, and playback

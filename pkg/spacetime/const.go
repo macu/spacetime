@@ -9,11 +9,12 @@ const NakedTextMaxDeltas = TextMaxLength * 4
 
 const SpaceTypeUser = "user"
 const SpaceTypeBranch = "branch"
-const SpaceTypeLink = "link"
-const SpaceTypeTag = "tag"
 const SpaceTypeText = "text"
-const SpaceTypeStream = "stream-of-consciousness"
-const SpaceTypeJson = "json-attribute"
+const SpaceTypeTag = "tag"
+const SpaceTypeLink = "link"
+
+// const SpaceTypeStream = "stream-of-consciousness"
+// const SpaceTypeJson = "json-attribute"
 
 func IsValidSpaceType(spaceType string) bool {
 	switch spaceType {
@@ -34,6 +35,17 @@ func IsValidRootSpaceType(spaceType string) bool {
 	switch spaceType {
 
 	case SpaceTypeBranch:
+		return true
+
+	default:
+		return false
+	}
+}
+
+func IsAuthorContextSpace(spaceType string) bool {
+	switch spaceType {
+
+	case SpaceTypeUser, SpaceTypeText:
 		return true
 
 	default:
