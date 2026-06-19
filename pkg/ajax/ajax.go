@@ -42,7 +42,6 @@ var ajaxHandlersAuthRequired = map[string]map[string]ajax.AjaxRouteAuthRequired{
 		"/ajax/space/create/stream": AjaxCreateStreamOfConsciousnessSpace,
 		"/ajax/space/stream/close":  AjaxCloseStreamOfConsciousnessSpace,
 		"/ajax/space/pin":           AjaxPinSpace,
-		"/ajax/space/unpin":         AjaxUnpinSpace,
 		"/ajax/space/move-pin":      AjaxMovePinnedSpace,
 
 		"/ajax/logout": auth.AjaxLogout,

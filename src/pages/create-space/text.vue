@@ -3,13 +3,12 @@
 
 	<space-loader v-if="parentId" :space-id="parentId" include-parent-path>
 
-		<template #default="{userAllowPin, userAllowPinSubspacesOnCreate}">
+		<template #default="{permissions}">
 
 			<form-fields
 				:posting="posting"
 				:initial-save-recording="initialSaveRecording"
-				:user-allow-pin="userAllowPin"
-				:user-allow-pin-subspaces-on-create="userAllowPinSubspacesOnCreate"
+				:permissions="permissions"
 				@submit="submit"
 				/>
 

@@ -3,17 +3,16 @@
 	<loading-message v-if="loading"/>
 
 	<space-output
-		v-if="space"
+		v-else-if="space"
 		:space="space"
 		:show-path="includeParentPath"
-		:user-allow-pin="userAllowPin"
-		:user-allow-pin-subspaces-on-create="userAllowPinSubspacesOnCreate"
+		:permissions="permissions"
+		@set-pinned="pinned => space.isPinned = pinned"
 		>
 
 		<slot
 			:space="space"
-			:user-allow-pin="userAllowPin"
-			:user-allow-pin-subspaces-on-create="userAllowPinSubspacesOnCreate"
+			:permissions="permissions"
 		/>
 
 	</space-output>
@@ -39,6 +38,9 @@ import {
 } from '@/const.js';
 
 export default {
+	emits: [
+		'space-loaded',
+	],
 	components: {
 		SpaceOutput,
 	},
@@ -63,8 +65,10 @@ export default {
 		};
 	},
 	computed: {
-		userAllowPin() {
-			if (!this.space.parentPath.length) {
+		userAllowPinToParent() {
+			// Allow pinning loaded space to parent
+
+			if (!this.space || !this.space.parentPath) {
 				return false;
 			}
 
@@ -83,27 +87,40 @@ export default {
 
 			return false;
 		},
-		// userAllowPinSubspaces() {
-		// 	if (this.userAllowPin) {
-		// 		return true;
-		// 	}
+		userAllowPinSubs() {
+			// Allow pinning subspaces within loaded space
 
-		// 	// Allow pinning subspaces under root user space
-		// 	let path = [...(this.space.parentPath || []), this.space];
-		// 	let root = path[0];
-		// 	if (root && root.spaceType === SPACE_TYPES.USER) {
-		// 		return true;
-		// 	}
+			if (!this.space) {
+				return false;
+			}
 
-		// 	return false;
-		// },
-		userAllowPinSubspacesOnCreate() {
-			// Return a function that checks if pins are allowed under the given create space type
+			// If user space at root, allow pinning by user
+			let path = [...(this.space.parentPath || []), this.space];
+			let root = path[0];
+			if (root.spaceType === SPACE_TYPES.USER) {
+				return root.createdBy === this.$store.getters.currentUserId;
+			}
+
+			// In public spaces, only allow pinning within text space by current user
+			let textSpace = path.reverse().find(p => p.spaceType === SPACE_TYPES.TEXT);
+			if (textSpace) {
+				return textSpace.createdBy === this.$store.getters.currentUserId;
+			}
+
+			return false;
+		},
+		userAllowPinSubsOnCreate() {
+			// Allow pinning subspaces to subspace being created under loaded space
+
 			return (createSpaceType) => {
+				if (!this.space) {
+					return false;
+				}
+
 				// If user space at root, allow pinning by user
 				let path = [...(this.space.parentPath || []), this.space];
 				let root = path[0];
-				if (root && root.spaceType === SPACE_TYPES.USER) {
+				if (root.spaceType === SPACE_TYPES.USER) {
 					return root.createdBy === this.$store.getters.currentUserId;
 				}
 
@@ -119,6 +136,13 @@ export default {
 				}
 
 				return false;
+			};
+		},
+		permissions() {
+			return {
+				userAllowPinToParent: this.userAllowPinToParent,
+				userAllowPinSubs: this.userAllowPinSubs,
+				userAllowPinSubsOnCreate: this.userAllowPinSubsOnCreate,
 			};
 		},
 	},
@@ -138,6 +162,7 @@ export default {
 				includeTags: this.includeTags,
 			}).then(response => {
 				this.space = response;
+				this.$emit('space-loaded', this.space);
 			}).finally(() => {
 				this.loading = false;
 			});

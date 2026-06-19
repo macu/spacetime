@@ -22,9 +22,15 @@ func SetIsAppEngine(val bool) {
 }
 
 func GetCacheControlVersionStamp() string {
-	if IsLocal() {
-		return ""
-	}
+	// if IsLocal() {
+	// 	// Random string each time requested
+	// 	var letters = []rune("abcdefghijklmnopqrstuvwxyzABCDEFGHIJKLMNOPQRSTUVWXYZ0123456789")
+	// 	b := make([]rune, 16)
+	// 	for i := range b {
+	// 		b[i] = letters[rand.Intn(len(letters))]
+	// 	}
+	// 	return string(b)
+	// }
 	return cacheControlVersionStamp
 }
 

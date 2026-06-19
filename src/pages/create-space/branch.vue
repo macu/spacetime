@@ -3,13 +3,12 @@
 
 	<space-loader v-if="parentId" :space-id="parentId" include-parent-path>
 
-		<template #default="{userAllowPin, userAllowPinSubspacesOnCreate}">
+		<template #default="{permissions}">
 
 			<form-fields
 				:posting="posting"
 				:root="root"
-				:user-allow-pin="userAllowPin"
-				:user-allow-pin-subspaces-on-create="userAllowPinSubspacesOnCreate"
+				:permissions="permissions"
 				@submit="submit"
 			/>
 
@@ -24,7 +23,7 @@
 
 <script>
 import SpaceLoader from '@/widgets/space-loader.vue';
-import FormFields from './empty-form.vue';
+import FormFields from './branch-form.vue';
 
 import {
 	ajaxPost,
@@ -56,7 +55,7 @@ export default {
 				parentId: this.parentId,
 				...payload,
 			}, {
-				409: 'The given label already exists at this level.',
+				409: 'A branch with the given label already exists in this space.',
 			}).then(response => {
 				this.$router.replace({
 					name: 'space',

@@ -12,7 +12,7 @@ import SignupVerifyPage from '@/pages/user-account/signup-verify.vue';
 
 import UserPage from './pages/user.vue';
 import SpacePage from './pages/space.vue';
-import CreateBranchSpacePage from './pages/create-space/empty.vue';
+import CreateBranchSpacePage from './pages/create-space/branch.vue';
 import CreateTagSpacePage from './pages/create-space/tag.vue';
 import CreateTextSpacePage from './pages/create-space/text.vue';
 

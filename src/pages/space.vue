@@ -5,7 +5,7 @@
 
 	<space-loader :space-id="spaceId" include-parent-path include-tags>
 
-		<template #default="{userAllowPin, userAllowPinSubspacesOnCreate}">
+		<template #default="{permissions}">
 
 			<div @click.stop class="subspaces flex-column-lg">
 
@@ -23,9 +23,8 @@
 				<space-output
 					v-for="s in subspaces"
 					:space="s"
-					:user-allow-pin="userAllowPin"
-					:user-allow-pin-subspaces-on-create="userAllowPinSubspacesOnCreate"
-					@toggle-pinned="$emit('toggle-pinned', s)"
+					:permissions="permissions"
+					@set-pinned="pinned => s.isPinned = pinned"
 				/>
 
 			</div>

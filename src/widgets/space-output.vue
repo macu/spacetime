@@ -33,12 +33,15 @@
 	<div class="container flex-column-md">
 
 		<div class="space-info-bar flex-row-md" @click.stop>
-			<el-button v-if="userAllowPin" @click="togglePinned()">
+			<el-button
+				v-if="userAllowPinToParent"
+				:type="isPinned ? 'success' : 'primary'"
+				@click="togglePinned()">
 				<material-icon v-if="isPinned" icon="keep"/>
 				<material-icon v-else icon="keep_off"/>
 				{{ isPinned ? 'Unpin' : 'Pin' }}
 			</el-button>
-			<space-type :space="space" :show-pin="!userAllowPin" @click="gotoSpace()"/>
+			<space-type :space="space" :show-pin="!userAllowPinToParent" @click="gotoSpace()"/>
 			<bookmark-button :space="space"/>
 			<checkin-button :space="space"/>
 			<div v-if="space.label" class="space-label">
@@ -68,14 +71,8 @@
 			<el-button size="small">Load more</el-button>
 		</div>
 
-		<space-output
-			v-if="space.spaceType === SPACE_TYPES.CHECK_IN && !!space.checkinSpace"
-			:space="space.checkinSpace"
-			show-path
-			/>
-
 		<space-tag
-			v-else-if="space.spaceType === SPACE_TYPES.TAG"
+			v-if="space.spaceType === SPACE_TYPES.TAG"
 			:space="space"
 			:show-checkin="false"
 			show-pin
@@ -87,10 +84,7 @@
 			/>
 
 		<div v-if="$slots.default" class="portal" @click.stop>
-			<slot
-				:user-allow-pin="userAllowPin"
-				:user-allow-pin-subspaces-on-create="userAllowPinSubspacesOnCreate"
-			/>
+			<slot :permissions="permissions"/>
 		</div>
 
 	</div>
@@ -108,13 +102,21 @@ import SpaceText from './space-text.vue';
 import AddTag from './add-tag-button.vue';
 
 import {
+	ajaxPost,
+} from '@/utils/ajax.js';
+
+import {
 	SPACE_TYPES,
 } from '@/const.js';
+
+import {
+	alertSuccess,
+} from '@/utils/notify.js';
 
 export default {
 	name: 'space-output', // recursive
 	emits: [
-		'toggle-pinned',
+		'set-pinned',
 	],
 	components: {
 		CheckinButton,
@@ -134,12 +136,8 @@ export default {
 			type: Boolean,
 			default: false,
 		},
-		userAllowPin: {
-			type: Boolean,
-			default: false,
-		},
-		userAllowPinSubspacesOnCreate: {
-			type: Function,
+		permissions: {
+			type: Object,
 			required: false,
 		},
 	},
@@ -156,6 +154,9 @@ export default {
 		},
 		hasParentPath() {
 			return !!this.space.parentPath && this.space.parentPath.length > 0;
+		},
+		userAllowPinToParent() {
+			return this.permissions && this.permissions.userAllowPinToParent;
 		},
 		topTags() {
 			return this.space.topTags || [];
@@ -190,7 +191,14 @@ export default {
 			});
 		},
 		togglePinned() {
-			this.$emit('toggle-pinned', this.space);
+			let pinned = !this.space.isPinned;
+			ajaxPost('/ajax/space/pin', {
+				spaceId: this.space.id,
+				pinned,
+			}).then(response => {
+				this.$emit('set-pinned', pinned);
+				alertSuccess(pinned ? 'Space pinned' : 'Space unpinned');
+			});
 		},
 	},
 };

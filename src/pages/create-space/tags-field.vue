@@ -16,8 +16,8 @@
 		<div v-for="(tag, index) in pinnedTags" class="tag flex-row">
 			<material-icon icon="label"/>
 			<strong class="flex-1" v-text="tag"/>
-			<el-button @click="unpin(index)">
-				<material-icon icon="push_pin"/>
+			<el-button @click="unpin(index)" type="success">
+				<material-icon icon="keep_off"/>
 				<span>Unpin</span>
 			</el-button>
 			<el-button @click="moveUp(index)" :disabled="disabled || index <= 0">
@@ -34,8 +34,8 @@
 		<div v-for="(tag, index) in tags" class="tag flex-row">
 			<material-icon icon="label"/>
 			<strong class="flex-1" v-text="tag"/>
-			<el-button v-if="allowPinning" @click="pin(index)">
-				<material-icon icon="push_pin"/>
+			<el-button v-if="allowPinning" @click="pin(index)" type="primary">
+				<material-icon icon="keep"/>
 				<span>Pin</span>
 			</el-button>
 			<el-button @click="removeTag(index)" type="warning" :disabled="disabled">
