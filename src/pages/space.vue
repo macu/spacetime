@@ -82,6 +82,9 @@ export default {
 				this.loadSubspaces();
 			},
 		},
+		spaceId() {
+			this.loadSubspaces();
+		},
 	},
 	methods: {
 		loadSubspaces(more = false) {
