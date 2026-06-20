@@ -1,6 +1,6 @@
 <template>
 
-	<el-dropdown @command="mode => showing = mode"
+	<el-dropdown @command="mode => filter.mode = mode"
 		trigger="click" placement="bottom-start">
 		<el-button>
 			<material-icon icon="filter_list"/>
@@ -8,15 +8,15 @@
 			<material-icon icon="arrow_drop_down"/>
 		</el-button>
 		<template #dropdown>
-			<el-dropdown-item v-if="showing != MODES.TOP" :command="MODES.TOP">
+			<el-dropdown-item v-if="filter.mode != MODES.TOP" :command="MODES.TOP">
 				<material-icon icon="arrow_upward"/>
 				<span>Top all time</span>
 			</el-dropdown-item>
-			<el-dropdown-item v-if="showing != MODES.RECENT" :command="MODES.RECENT">
+			<el-dropdown-item v-if="filter.mode != MODES.RECENT" :command="MODES.RECENT">
 				<material-icon icon="history"/>
 				<span>Most recent</span>
 			</el-dropdown-item>
-			<el-dropdown-item v-if="showing != MODES.PINNED" :command="MODES.PINNED">
+			<el-dropdown-item v-if="filter.mode != MODES.PINNED" :command="MODES.PINNED">
 				<material-icon icon="push_pin"/>
 				<span>Pinned</span>
 			</el-dropdown-item>
@@ -32,16 +32,27 @@ const MODES = {
 	PINNED: 'pinned',
 };
 
+export function getFilter() {
+	return {
+		mode: MODES.TOP,
+		date: null,
+		window: null,
+	};
+}
+
 export default {
+	emits: [
+		'update:filter',
+	],
 	props: {
 		modelValue: {
 			type: Object,
-			default: null,
+			default: () => getFilter(),
 		},
 	},
 	data() {
 		return {
-			showing: this.modelValue?.mode || MODES.TOP,
+			filter: this.modelValue || getFilter(),
 		};
 	},
 	computed: {
@@ -49,25 +60,22 @@ export default {
 			return MODES;
 		},
 		showingLabel() {
-			if (this.showing === MODES.TOP) {
-				return 'Showing top all-time';
-			} else if (this.showing === MODES.RECENT) {
-				return 'Showing most recent';
-			} else if (this.showing === MODES.PINNED) {
-				return 'Showing pinned';
+			switch (this.filter.mode) {
+				case MODES.TOP:
+					return 'Showing top all-time';
+				case MODES.RECENT:
+					return 'Showing most recent';
+				case MODES.PINNED:
+					return 'Showing pinned';
 			}
 			return 'Filter';
 		},
 	},
 	watch: {
-		showing: {
-			immediate: true,
+		filter: {
+			deep: true,
 			handler() {
-				this.$emit('update:filter', {
-					mode: this.showing,
-					date: null,
-					window: null,
-				});
+				this.$emit('update:filter', this.filter);
 			},
 		},
 	},

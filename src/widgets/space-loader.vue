@@ -47,7 +47,7 @@ export default {
 	props: {
 		spaceId: {
 			type: [String, Number],
-			required: true,
+			required: false,
 		},
 		includeParentPath: {
 			type: Boolean,
@@ -80,7 +80,9 @@ export default {
 			}
 
 			// Otherwise, only allow pinning under text space by current user
-			let textSpace = path.reverse().find(p => p.spaceType === SPACE_TYPES.TEXT);
+			let textSpace = [...(this.space.parentPath || [])].reverse().find(
+				p => p.spaceType === SPACE_TYPES.TEXT
+			);
 			if (textSpace) {
 				return textSpace.createdBy === this.$store.getters.currentUserId;
 			}
@@ -102,7 +104,7 @@ export default {
 			}
 
 			// In public spaces, only allow pinning within text space by current user
-			let textSpace = path.reverse().find(p => p.spaceType === SPACE_TYPES.TEXT);
+			let textSpace = [...path].reverse().find(p => p.spaceType === SPACE_TYPES.TEXT);
 			if (textSpace) {
 				return textSpace.createdBy === this.$store.getters.currentUserId;
 			}
@@ -130,7 +132,7 @@ export default {
 				}
 
 				// Otherwise, only allow pinning within text space by current user
-				let textSpace = path.reverse().find(p => p.spaceType === SPACE_TYPES.TEXT);
+				let textSpace = [...path].reverse().find(p => p.spaceType === SPACE_TYPES.TEXT);
 				if (textSpace) {
 					return textSpace.createdBy === this.$store.getters.currentUserId;
 				}
@@ -147,15 +149,16 @@ export default {
 		},
 	},
 	watch: {
-		spaceId() {
-			this.loadSpace();
+		spaceId: {
+			immediate: true,
+			handler() {
+				this.loadSpace();
+			},
 		},
-	},
-	mounted() {
-		this.loadSpace();
 	},
 	methods: {
 		loadSpace() {
+			this.loading = true;
 			ajaxGet('/ajax/space', {
 				spaceId: this.spaceId,
 				includeParentPath: this.includeParentPath,

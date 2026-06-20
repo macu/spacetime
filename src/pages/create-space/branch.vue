@@ -16,7 +16,13 @@
 
 	</space-loader>
 
-	<form-fields v-else :posting="posting" :root="root" @submit="submit"/>
+	<form-fields
+		v-else
+		:posting="posting"
+		:permissions="rootPermissions"
+		:root="root"
+		@submit="submit"
+	/>
 
 </div>
 </template>
@@ -46,6 +52,13 @@ export default {
 		},
 		root() {
 			return this.parentId === null;
+		},
+		rootPermissions() {
+			return {
+				userAllowPinToParent: false,
+				userAllowPinSubs: false,
+				userAllowPinSubsOnCreate: (createType) => false,
+			};
 		},
 	},
 	methods: {

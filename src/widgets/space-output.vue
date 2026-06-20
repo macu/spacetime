@@ -140,6 +140,10 @@ export default {
 			type: Object,
 			required: false,
 		},
+		subSpace: {
+			type: Boolean,
+			default: false,
+		},
 	},
 	data() {
 		return {
@@ -156,7 +160,10 @@ export default {
 			return !!this.space.parentPath && this.space.parentPath.length > 0;
 		},
 		userAllowPinToParent() {
-			return this.permissions && this.permissions.userAllowPinToParent;
+			return this.permissions && (this.subSpace
+				? this.permissions.userAllowPinSubs
+				: this.permissions.userAllowPinToParent
+			);
 		},
 		topTags() {
 			return this.space.topTags || [];

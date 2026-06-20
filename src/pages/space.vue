@@ -7,7 +7,9 @@
 
 		<template #default="{permissions}">
 
-			<div @click.stop class="subspaces flex-column-lg">
+			<loading-message v-if="loadingSubspaces" message="Loading subspaces..."/>
+
+			<div v-else @click.stop class="subspaces flex-column-lg">
 
 				<div class="flex-row-md">
 					<create-dropdown
@@ -15,7 +17,6 @@
 						:disabled="$store.getters.createDisabled"
 						/>
 					<subspaces-filter
-						v-if="subspaces"
 						@update:filter="f => filter = f"
 						/>
 				</div>
@@ -24,6 +25,7 @@
 					v-for="s in subspaces"
 					:space="s"
 					:permissions="permissions"
+					sub-space
 					@set-pinned="pinned => s.isPinned = pinned"
 				/>
 
@@ -40,7 +42,7 @@
 import SpaceLoader from '@/widgets/space-loader.vue';
 import SpaceOutput from '@/widgets/space-output.vue';
 import CreateDropdown from '@/widgets/create-dropdown.vue';
-import SubspacesFilter from '@/widgets/subspaces-filter.vue';
+import SubspacesFilter, {getFilter} from '@/widgets/subspaces-filter.vue';
 
 import {
 	ajaxGet,
@@ -59,12 +61,9 @@ export default {
 	},
 	data() {
 		return {
-			loading: true,
-			space: null,
+			filter: getFilter(),
+			loadingSubspaces: true,
 			subspaces: [],
-			filter: null,
-			loadingSubspaces: false,
-			skipLoadSubspaces: true,
 		};
 	},
 	computed: {
@@ -82,8 +81,11 @@ export default {
 				this.loadSubspaces();
 			},
 		},
-		spaceId() {
-			this.loadSubspaces();
+		spaceId: {
+			immediate: true,
+			handler() {
+				this.loadSubspaces();
+			},
 		},
 	},
 	methods: {
@@ -101,6 +103,8 @@ export default {
 				filter: this.filterJSON,
 			}).then(response => {
 				this.subspaces = this.subspaces.concat(response);
+			}).finally(() => {
+				this.loadingSubspaces = false;
 			});
 		},
 	},
