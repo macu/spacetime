@@ -67,11 +67,11 @@ export default {
 		showingLabel() {
 			switch (this.filter.mode) {
 				case FILTER_MODES.TOP:
-					return 'Showing top all-time';
+					return 'Top all-time';
 				case FILTER_MODES.RECENT:
-					return 'Showing most recent';
+					return 'Most recent';
 				case FILTER_MODES.PINNED:
-					return 'Showing pinned';
+					return 'Pinned';
 			}
 			return 'Filter';
 		},

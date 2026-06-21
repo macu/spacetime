@@ -147,7 +147,7 @@ func ReorderPin(conn *sql.DB, auth *ajax.Auth, pinnedSpace *Space, orderNumber u
 	return db.InTransaction(conn, func(tx *sql.Tx) error {
 
 		// Get existing order number for pinned space
-		var existingOrderNumber *int
+		var existingOrderNumber *uint
 		err := tx.QueryRow(`SELECT order_number FROM user_space_config
 			WHERE space_id = $1 AND user_id = $2`,
 			pinnedSpace.ID, auth.UserID,
@@ -158,13 +158,9 @@ func ReorderPin(conn *sql.DB, auth *ajax.Auth, pinnedSpace *Space, orderNumber u
 			return fmt.Errorf("pinned space config not found")
 		}
 
-		// Delete old order number for pinned space
-		_, err = tx.Exec(`DELETE FROM user_space_config
-		WHERE space_id = $1 AND user_id = $2`,
-			pinnedSpace.ID, auth.UserID,
-		)
-		if err != nil {
-			return fmt.Errorf("delete old pinned space config: %w", err)
+		if *existingOrderNumber == orderNumber {
+			// No change needed
+			return nil
 		}
 
 		// Shift order numbers down following gap
@@ -195,14 +191,31 @@ func ReorderPin(conn *sql.DB, auth *ajax.Auth, pinnedSpace *Space, orderNumber u
 			return fmt.Errorf("shift up pinned branch order numbers: %w", err)
 		}
 
-		// Insert config for moved pinned space with new order number
-		_, err = tx.Exec(`INSERT INTO user_space_config
-			(space_id, user_id, order_number)
-			VALUES ($1, $2, $3)`,
+		// Update config for moved pinned space with new order number
+		_, err = tx.Exec(`UPDATE user_space_config
+			SET order_number = $3
+			WHERE space_id = $1 AND user_id = $2`,
 			pinnedSpace.ID, auth.UserID, orderNumber,
 		)
 		if err != nil {
-			return fmt.Errorf("insert moved pinned space config: %w", err)
+			return fmt.Errorf("update moved pinned space config: %w", err)
+		}
+
+		// Reorder all sequentially
+		_, err = tx.Exec(`WITH ordered_pins AS (
+			SELECT space.id, ROW_NUMBER() OVER (ORDER BY user_space_config.order_number) - 1 AS new_order_number
+			FROM space
+			INNER JOIN user_space_config ON user_space_config.space_id = space.id
+			WHERE space.parent_id = $1 AND user_space_config.user_id = $2
+		)
+		UPDATE user_space_config
+		SET order_number = ordered_pins.new_order_number
+		FROM ordered_pins
+		WHERE user_space_config.space_id = ordered_pins.id AND user_space_config.user_id = $2`,
+			pinnedSpace.ParentID, auth.UserID,
+		)
+		if err != nil {
+			return fmt.Errorf("reorder pinned branch order numbers: %w", err)
 		}
 
 		return nil
