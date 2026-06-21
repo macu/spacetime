@@ -146,8 +146,20 @@ func ReorderPin(conn *sql.DB, auth *ajax.Auth, pinnedSpace *Space, orderNumber u
 
 	return db.InTransaction(conn, func(tx *sql.Tx) error {
 
+		// Get existing order number for pinned space
+		var existingOrderNumber *int
+		err := tx.QueryRow(`SELECT order_number FROM user_space_config
+			WHERE space_id = $1 AND user_id = $2`,
+			pinnedSpace.ID, auth.UserID,
+		).Scan(&existingOrderNumber)
+		if err != nil {
+			return fmt.Errorf("get existing pinned space order number: %w", err)
+		} else if existingOrderNumber == nil {
+			return fmt.Errorf("pinned space config not found")
+		}
+
 		// Delete old order number for pinned space
-		_, err := tx.Exec(`DELETE FROM user_space_config
+		_, err = tx.Exec(`DELETE FROM user_space_config
 		WHERE space_id = $1 AND user_id = $2`,
 			pinnedSpace.ID, auth.UserID,
 		)
@@ -155,24 +167,21 @@ func ReorderPin(conn *sql.DB, auth *ajax.Auth, pinnedSpace *Space, orderNumber u
 			return fmt.Errorf("delete old pinned space config: %w", err)
 		}
 
-		// Reorder remaining configs by sequential order
-		_, err = tx.Exec(`WITH ordered_pins AS (
-				SELECT space.id, ROW_NUMBER() OVER (ORDER BY user_space_config.order_number) - 1 AS new_order_number
-				FROM space
+		// Shift order numbers down following gap
+		_, err = tx.Exec(`UPDATE user_space_config
+			SET order_number = order_number - 1
+			WHERE user_id = $1 AND space_id IN (
+				SELECT space.id FROM space
 				INNER JOIN user_space_config ON user_space_config.space_id = space.id
-				WHERE space.parent_id = $1 AND user_space_config.user_id = $2
-			)
-			UPDATE user_space_config
-			SET order_number = ordered_pins.new_order_number
-			FROM ordered_pins
-			WHERE user_space_config.space_id = ordered_pins.id AND user_space_config.user_id = $2`,
-			pinnedSpace.ParentID, auth.UserID,
+				WHERE space.parent_id = $2 AND user_space_config.order_number > $3
+			)`,
+			auth.UserID, pinnedSpace.ParentID, *existingOrderNumber,
 		)
 		if err != nil {
-			return fmt.Errorf("reorder remaining pinned branch order numbers: %w", err)
+			return fmt.Errorf("shift down pinned branch order numbers: %w", err)
 		}
 
-		// Increment order numbers to make space for moved pinned space
+		// Shift order numbers up to make space for moved pinned space
 		_, err = tx.Exec(`UPDATE user_space_config
 			SET order_number = order_number + 1
 			WHERE user_id = $1 AND space_id IN (
@@ -183,7 +192,7 @@ func ReorderPin(conn *sql.DB, auth *ajax.Auth, pinnedSpace *Space, orderNumber u
 			auth.UserID, pinnedSpace.ParentID, orderNumber,
 		)
 		if err != nil {
-			return fmt.Errorf("push up pinned branch order numbers: %w", err)
+			return fmt.Errorf("shift up pinned branch order numbers: %w", err)
 		}
 
 		// Insert config for moved pinned space with new order number
