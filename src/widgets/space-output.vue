@@ -32,27 +32,33 @@
 
 	<div class="container flex-column-md">
 
-		<div class="space-info-bar flex-row-md" @click.stop>
-			<el-button
-				v-if="userAllowPinToParent"
-				:type="isPinned ? 'success' : 'primary'"
-				@click="togglePinned()">
-				<material-icon v-if="isPinned" icon="keep"/>
-				<material-icon v-else icon="keep_off"/>
-				{{ isPinned ? 'Unpin' : 'Pin' }}
-			</el-button>
-			<space-type :space="space" :show-pin="!userAllowPinToParent" @click="gotoSpace()"/>
-			<bookmark-button :space="space"/>
-			<checkin-button :space="space"/>
-			<div v-if="space.label" class="space-label">
-				<strong v-text="space.label"/>
-			</div>
-			<space-creator :space="space"/>
-			<div class="align-end flex-row-md">
-				<el-button v-if="!showTags" @click="expandTags = true" class="align-end" size="small">
-					Show tags
+		<div class="space-info-bar flex-row-md nowrap" @click.stop>
+			<div class="flex-row-md">
+				<el-button
+					v-if="userAllowPinToParent"
+					:type="isPinned ? 'success' : 'primary'"
+					@click="togglePinned()">
+					<material-icon v-if="isPinned" icon="keep"/>
+					<material-icon v-else icon="keep_off"/>
+					{{ isPinned ? 'Unpin' : 'Pin' }}
 				</el-button>
+				<space-type :space="space" :show-pin="!userAllowPinToParent" @click="gotoSpace()"/>
+				<bookmark-button :space="space"/>
+				<checkin-button :space="space"/>
+				<div v-if="space.label" class="space-label">
+					<strong v-text="space.label"/>
+				</div>
+				<space-creator :space="space"/>
+				<div class="align-end flex-row-md">
+					<el-button v-if="!showTags" @click="expandTags = true" class="align-end" size="small">
+						Show tags
+					</el-button>
+				</div>
 			</div>
+			<template v-if="showReorder">
+				<div class="flex-1"/>
+				<material-icon class="drag-handle" icon="drag_indicator"/>
+			</template>
 		</div>
 
 		<div v-if="showTags" class="space-tags-bar flex-row-md" @click.stop>
@@ -144,6 +150,10 @@ export default {
 			type: Boolean,
 			default: false,
 		},
+		showReorder: {
+			type: Boolean,
+			default: false,
+		},
 	},
 	data() {
 		return {
@@ -198,13 +208,22 @@ export default {
 			});
 		},
 		togglePinned() {
+			// Always confirm - unpinning causes a pinned space to lose its position
 			let pinned = !this.space.isPinned;
-			ajaxPost('/ajax/space/pin', {
-				spaceId: this.space.id,
-				pinned,
-			}).then(response => {
-				this.$emit('set-pinned', pinned);
-				alertSuccess(pinned ? 'Space pinned' : 'Space unpinned');
+			this.$confirm('Are you sure you want to unpin this space?', 'Confirm unpin', {
+				confirmButtonText: 'Yes',
+				cancelButtonText: 'No',
+				type: 'warning',
+			}).then(() => {
+				ajaxPost('/ajax/space/pin', {
+					spaceId: this.space.id,
+					pinned,
+				}).then(response => {
+					this.$emit('set-pinned', pinned);
+					alertSuccess(pinned ? 'Space pinned' : 'Space unpinned');
+				});
+			}).catch(() => {
+				// Cancelled
 			});
 		},
 	},
@@ -248,9 +267,13 @@ export default {
 			cursor: pointer;
 		}
 
-		>.space-titles-bar, >.space-tags-bar {
+		>.space-info-bar, >.space-tags-bar {
 			font-size: smaller;
 			cursor: default;
+
+			.drag-handle {
+				cursor: ns-resize;
+			}
 		}
 
 		>.space-title, >.space-tag {

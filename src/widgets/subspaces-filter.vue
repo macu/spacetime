@@ -8,15 +8,15 @@
 			<material-icon icon="arrow_drop_down"/>
 		</el-button>
 		<template #dropdown>
-			<el-dropdown-item v-if="filter.mode != MODES.TOP" :command="MODES.TOP">
+			<el-dropdown-item v-if="filter.mode != FILTER_MODES.TOP" :command="FILTER_MODES.TOP">
 				<material-icon icon="arrow_upward"/>
 				<span>Top all time</span>
 			</el-dropdown-item>
-			<el-dropdown-item v-if="filter.mode != MODES.RECENT" :command="MODES.RECENT">
+			<el-dropdown-item v-if="filter.mode != FILTER_MODES.RECENT" :command="FILTER_MODES.RECENT">
 				<material-icon icon="history"/>
 				<span>Most recent</span>
 			</el-dropdown-item>
-			<el-dropdown-item v-if="filter.mode != MODES.PINNED" :command="MODES.PINNED">
+			<el-dropdown-item v-if="allowPinned && filter.mode != FILTER_MODES.PINNED" :command="FILTER_MODES.PINNED">
 				<material-icon icon="push_pin"/>
 				<span>Pinned</span>
 			</el-dropdown-item>
@@ -26,7 +26,7 @@
 </template>
 
 <script>
-const MODES = {
+export const FILTER_MODES = {
 	TOP: 'top-subspaces',
 	RECENT: 'most-recent',
 	PINNED: 'pinned',
@@ -34,7 +34,7 @@ const MODES = {
 
 export function getFilter() {
 	return {
-		mode: MODES.TOP,
+		mode: FILTER_MODES.TOP,
 		date: null,
 		window: null,
 	};
@@ -42,12 +42,17 @@ export function getFilter() {
 
 export default {
 	emits: [
-		'update:filter',
+		'update:modelValue',
 	],
 	props: {
 		modelValue: {
 			type: Object,
 			default: () => getFilter(),
+		},
+		allowPinned: {
+			// TODO pass in
+			type: Boolean,
+			default: true,
 		},
 	},
 	data() {
@@ -56,16 +61,16 @@ export default {
 		};
 	},
 	computed: {
-		MODES() {
-			return MODES;
+		FILTER_MODES() {
+			return FILTER_MODES;
 		},
 		showingLabel() {
 			switch (this.filter.mode) {
-				case MODES.TOP:
+				case FILTER_MODES.TOP:
 					return 'Showing top all-time';
-				case MODES.RECENT:
+				case FILTER_MODES.RECENT:
 					return 'Showing most recent';
-				case MODES.PINNED:
+				case FILTER_MODES.PINNED:
 					return 'Showing pinned';
 			}
 			return 'Filter';
@@ -75,7 +80,7 @@ export default {
 		filter: {
 			deep: true,
 			handler() {
-				this.$emit('update:filter', this.filter);
+				this.$emit('update:modelValue', this.filter);
 			},
 		},
 	},

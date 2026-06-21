@@ -174,7 +174,8 @@ CREATE TABLE text_space (
 	title_id INTEGER REFERENCES unique_text (id), -- optional title for text space
 	text_id INTEGER NOT NULL REFERENCES unique_text (id),
 	recording TEXT, -- optional recording of text changes as JSON
-	started_at TIMESTAMPTZ -- null if no recording
+	started_at TIMESTAMPTZ, -- null if no recording
+	backdated_at TIMESTAMPTZ, -- null if no backdating
 );
 
 -- record history of changes

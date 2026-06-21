@@ -150,51 +150,51 @@ func LoadTopSubspaces(conn *sql.DB, auth *ajax.Auth,
 	}
 
 	var filterModeClauseSql string
-	var filterModeOrderClauseSql string
+	var orderByClauseSql string
 	if filter != nil {
+
 		switch filter.Mode {
 
 		case SpaceFilterModeTopSubspaces:
-			// no additional clause needed
-			filterModeOrderClauseSql = `, checkin_count DESC, space.created_at DESC`
+			orderByClauseSql = `checkin_count DESC, space.created_at DESC`
 
 		case SpaceFilterModeMostRecent:
-			if filter.Date != nil {
-				// up to given date
-				filterModeClauseSql = `AND space.created_at <= ` + db.Arg(&args, *filter.Date)
-			} else {
-				// up to current time
-				filterModeClauseSql = `AND space.created_at <= NOW()`
-			}
-			if filter.Window != nil {
-				// within given window
-				var windowDuration string
-				switch *filter.Window {
-				case "day":
-					windowDuration = "1 DAY"
-				case "week":
-					windowDuration = "1 WEEK"
-				case "month":
-					windowDuration = "1 MONTH"
-				case "year":
-					windowDuration = "1 YEAR"
-				default:
-					return nil, fmt.Errorf("invalid filter window: %s", *filter.Window)
-				}
-				filterModeClauseSql += ` AND space.created_at >= NOW() - INTERVAL ` + windowDuration
-			}
-			filterModeOrderClauseSql = `, space.created_at DESC`
+			orderByClauseSql = `space.created_at DESC`
 
 		case SpaceFilterModePinned:
 			filterModeClauseSql = `AND EXISTS (SELECT 1 FROM user_space_config
 				WHERE user_space_config.user_id = ` + db.Arg(&args, auth.UserID) + `
 				AND user_space_config.space_id = space.id)`
+			orderByClauseSql = `user_space_config.order_number ASC`
 
 		default:
 			return nil, fmt.Errorf("invalid filter mode: %s", filter.Mode)
 		}
+
+		if filter.Date != nil {
+			// up to given date
+			filterModeClauseSql = `AND space.created_at <= ` + db.Arg(&args, *filter.Date)
+		}
+		if filter.Window != nil {
+			// within given window
+			var windowDuration string
+			switch *filter.Window {
+			case "day":
+				windowDuration = "1 DAY"
+			case "week":
+				windowDuration = "1 WEEK"
+			case "month":
+				windowDuration = "1 MONTH"
+			case "year":
+				windowDuration = "1 YEAR"
+			default:
+				return nil, fmt.Errorf("invalid filter window: %s", *filter.Window)
+			}
+			filterModeClauseSql += ` AND space.created_at >= NOW() - INTERVAL '` + windowDuration + `'`
+		}
+
 	} else {
-		filterModeOrderClauseSql = `ORDER BY space.created_at DESC`
+		orderByClauseSql = `space.created_at DESC`
 	}
 
 	rows, err := conn.Query(`SELECT space.id,
@@ -213,11 +213,7 @@ func LoadTopSubspaces(conn *sql.DB, auth *ajax.Auth,
 		LEFT JOIN user_account ON user_account.id = space.created_by
 		LEFT JOIN user_space_config ON user_space_config.space_id = space.id
 		WHERE `+parentClauseSql+` `+typesClauseSql+` `+filterModeClauseSql+`
-		ORDER BY -- always order by pinned first
-			CASE WHEN user_space_config.space_id IS NULL
-				THEN FALSE ELSE TRUE END DESC,
-			CASE WHEN user_space_config.order_number IS NULL
-				THEN 0 ELSE user_space_config.order_number END ASC`+filterModeOrderClauseSql+`
+		ORDER BY `+orderByClauseSql+`
 		LIMIT `+db.Arg(&args, limit)+`
 		OFFSET `+db.Arg(&args, offset),
 		args...,

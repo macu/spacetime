@@ -1,4 +1,4 @@
-export function getStorage(key, defaultValue) {
+export function getStorage(key, defaultValue = null) {
 	if (window.sessionStorage) {
 		try {
 			let val = window.sessionStorage.getItem(key);
@@ -12,6 +12,7 @@ export function getStorage(key, defaultValue) {
 		}
 		return defaultValue;
 	}
+	return defaultValue;
 }
 
 export function setStorage(key, value) {

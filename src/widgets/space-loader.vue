@@ -165,7 +165,7 @@ export default {
 				includeTags: this.includeTags,
 			}).then(response => {
 				this.space = response;
-				this.$emit('space-loaded', this.space);
+				this.$emit('space-loaded', {space: response, permissions: this.permissions});
 			}).finally(() => {
 				this.loading = false;
 			});

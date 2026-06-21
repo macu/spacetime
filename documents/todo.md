@@ -8,8 +8,9 @@
   - [ ] freedom to rename, delete, and move items within personal space (but not public)
   - [ ] conflict detection when moving branches within personal space (can't merge)
 
-- [ ] more accurate recording of deletion-insertions using previous selection
-- [ ] add stream of consciousness (container for replayable texts)
+- [ ] allow backdating text spaces
+- [ ] allow editing and extending text recordings
+- [ ] add stream of consciousness (container for replayable texts; press enter to submit to stream)
 - [ ] record replayable text time started when submitting to stream
 - [ ] add search modes (top all time, top in time range, latest) and load more
 - [ ] add bookmarking, bookmarks list
@@ -17,10 +18,11 @@
 - [ ] show all tags view
 - [ ] add user settings page (update password, delete account)
 - [ ] add email login and email functionality
-- [ ] add recaptcha
+- [ ] add recaptcha for every user action
 - [ ] add admin delete function and account banning
 - [ ] get running on App Engine
 - [ ] add content imports into user spaces
+- [ ] undo a checkin within a timespan
 
 - [*] rename "subspace" to "branch"
 - [*] remove title type (branches have labels and text have titles)
