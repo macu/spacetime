@@ -14,7 +14,7 @@
 			/>
 	</form-field>
 
-	<form-field v-if="permissions.userAllowPinToParent">
+	<form-field v-if="context.userAllowPinToParent">
 		<el-checkbox v-model="pin" :disabled="posting">
 			Pin this space to the top of the parent space
 		</el-checkbox>
@@ -57,7 +57,7 @@ export default {
 			type: Boolean,
 			default: false,
 		},
-		permissions: {
+		context: {
 			type: Object,
 			required: true,
 		},
@@ -75,7 +75,7 @@ export default {
 			return this.posting || !this.label.trim();
 		},
 		allowPinSubspaces() {
-			return this.permissions.userAllowPinSubsOnCreate(SPACE_TYPES.BRANCH);
+			return this.context.userAllowPinSubsOnCreate(SPACE_TYPES.BRANCH);
 		},
 	},
 	methods: {
@@ -85,7 +85,7 @@ export default {
 			}
 			this.$emit('submit', {
 				label: this.label.trim(),
-				pin: this.permissions.userAllowPinToParent && this.pin,
+				pin: this.context.userAllowPinToParent && this.pin,
 				tags: JSON.stringify(this.tags),
 				pinnedTags: JSON.stringify(this.allowPinSubspaces ? this.pinnedTags : []),
 			});

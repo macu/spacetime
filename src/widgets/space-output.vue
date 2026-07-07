@@ -90,7 +90,7 @@
 			/>
 
 		<div v-if="$slots.default" class="portal" @click.stop>
-			<slot :permissions="permissions"/>
+			<slot :context="context"/>
 		</div>
 
 	</div>
@@ -142,7 +142,7 @@ export default {
 			type: Boolean,
 			default: false,
 		},
-		permissions: {
+		context: {
 			type: Object,
 			required: false,
 		},
@@ -170,9 +170,9 @@ export default {
 			return !!this.space.parentPath && this.space.parentPath.length > 0;
 		},
 		userAllowPinToParent() {
-			return this.permissions && (this.subSpace
-				? this.permissions.userAllowPinSubs
-				: this.permissions.userAllowPinToParent
+			return this.context && (this.subSpace
+				? this.context.userAllowPinSubs
+				: this.context.userAllowPinToParent
 			);
 		},
 		topTags() {

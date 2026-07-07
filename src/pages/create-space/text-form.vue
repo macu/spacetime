@@ -54,7 +54,7 @@
 		/>
 
 	<!-- only allow pinning within author scope -->
-	<form-field v-if="permissions.userAllowPinToParent">
+	<form-field v-if="context.userAllowPinToParent">
 		<el-checkbox v-model="pin" :disabled="posting">
 			Pin this space to the top of the parent space
 		</el-checkbox>
@@ -99,7 +99,7 @@ export default {
 			type: Boolean,
 			default: false,
 		},
-		permissions: {
+		context: {
 			type: Object,
 			required: true,
 		},
@@ -143,7 +143,7 @@ export default {
 			return this.posting || (!this.saveRecording && this.recordingMaxed);
 		},
 		allowPinSubspaces() {
-			return this.permissions.userAllowPinSubsOnCreate(SPACE_TYPES.TEXT);
+			return this.context.userAllowPinSubsOnCreate(SPACE_TYPES.TEXT);
 		},
 	},
 	watch: {
@@ -332,7 +332,7 @@ export default {
 				text: this.text.trim(),
 				recording: this.saveRecording ? JSON.stringify(this.recording) : null,
 				startedAt: this.startedAt,
-				pin: this.permissions.userAllowPinToParent && this.pin,
+				pin: this.context.userAllowPinToParent && this.pin,
 				tags: JSON.stringify(this.tags),
 				pinnedTags: JSON.stringify(this.pinnedTags), // pinned tags always allowd on text spaces
 			});

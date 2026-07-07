@@ -3,11 +3,11 @@
 
 	<space-loader v-if="parentId" :space-id="parentId" include-parent-path>
 
-		<template #default="{permissions}">
+		<template #default="{context}">
 
 			<form-fields
 				:posting="posting"
-				:permissions="permissions"
+				:context="context"
 				@submit="submit"
 				/>
 

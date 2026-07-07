@@ -6,13 +6,13 @@
 		v-else-if="space"
 		:space="space"
 		:show-path="includeParentPath"
-		:permissions="permissions"
+		:context="context"
 		@set-pinned="pinned => space.isPinned = pinned"
 		>
 
 		<slot
 			:space="space"
-			:permissions="permissions"
+			:context="context"
 		/>
 
 	</space-output>
@@ -140,11 +140,36 @@ export default {
 				return false;
 			};
 		},
-		permissions() {
+		supportsPinning() {
+			// return whether in user space or under a text space
+
+			if (!this.space) {
+				return false;
+			}
+
+			// If user space at root, space supports pinning
+			let path = [...(this.space.parentPath || []), this.space];
+			let root = path[0];
+			if (root && root.spaceType === SPACE_TYPES.USER) {
+				return true;
+			}
+
+			// Otherwise, space under a text space supports pinning
+			let textSpace = [...(this.space.parentPath || [])].reverse().find(
+				p => p.spaceType === SPACE_TYPES.TEXT
+			);
+			if (textSpace) {
+				return true;
+			}
+
+			return false;
+		},
+		context() {
 			return {
 				userAllowPinToParent: this.userAllowPinToParent,
 				userAllowPinSubs: this.userAllowPinSubs,
 				userAllowPinSubsOnCreate: this.userAllowPinSubsOnCreate,
+				supportsPinning: this.supportsPinning,
 			};
 		},
 	},
@@ -165,7 +190,7 @@ export default {
 				includeTags: this.includeTags,
 			}).then(response => {
 				this.space = response;
-				this.$emit('space-loaded', {space: response, permissions: this.permissions});
+				this.$emit('space-loaded', {space: response, context: this.context});
 			}).finally(() => {
 				this.loading = false;
 			});

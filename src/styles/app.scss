@@ -88,7 +88,14 @@ div.center {
 			margin: 0;
 		}
 	}
+	&.is-light.el-alert--warning {
+		border: thin solid var(--el-color-warning);
+		.el-alert__description {
+			color: black;
+		}
+	}
 }
+
 .el-drawer {
 	.el-drawer__header {
 		background-color: gray;

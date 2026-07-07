@@ -8,7 +8,7 @@
 		include-parent-path include-tags
 		@space-loaded="data => handleSpaceLoaded(data)">
 
-		<template #default="{permissions}">
+		<template #default="{context}">
 
 			<loading-message v-if="loadingSubspaces" message="Loading subspaces..."/>
 
@@ -29,13 +29,17 @@
 					<space-output
 						v-for="s in subspaces"
 						:space="s"
-						:permissions="permissions"
+						:context="context"
 						sub-space
 						:show-reorder="showReorderSubs"
 						:data-space-id="s.id"
 						@set-pinned="pinned => setPinned(s, pinned)"
 					/>
 				</div>
+
+				<el-alert v-if="showPinnedNotSupported" type="warning" :closable="false">
+					<p>Pinned subspaces are not supported in this space.</p>
+				</el-alert>
 
 			</div>
 
@@ -89,7 +93,7 @@ export default {
 			filter: getFilter(),
 			loadingSubspaces: true,
 			subspaces: [],
-			permissions: null,
+			context: null,
 			dragging: false,
 		};
 	},
@@ -101,12 +105,18 @@ export default {
 			return this.filter ? JSON.stringify(this.filter) : null;
 		},
 		showingPinned() {
-			return this.filter && this.filter.mode === FILTER_MODES.PINNED;
+			return this.filter &&
+				this.filter.mode === FILTER_MODES.PINNED;
+		},
+		showPinnedNotSupported() {
+			return this.showingPinned &&
+				this.context &&
+				!this.context.supportsPinning;
 		},
 		showReorderSubs() {
 			return this.showingPinned &&
-				this.permissions &&
-				this.permissions.userAllowPinSubs &&
+				this.context &&
+				this.context.userAllowPinSubs &&
 				!this.loadingSubspaces;
 		},
 	},
@@ -157,8 +167,8 @@ export default {
 		}
 	},
 	methods: {
-		handleSpaceLoaded({space, permissions}) {
-			this.permissions = permissions;
+		handleSpaceLoaded({space, context}) {
+			this.context = context;
 		},
 
 		loadSubspaces(more = false) {

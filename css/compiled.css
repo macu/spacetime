@@ -91,6 +91,12 @@ div.center {
 .el-alert > .el-alert__content > .el-alert__description:first-child {
   margin: 0;
 }
+.el-alert.is-light.el-alert--warning {
+  border: thin solid var(--el-color-warning);
+}
+.el-alert.is-light.el-alert--warning .el-alert__description {
+  color: black;
+}
 
 .el-drawer .el-drawer__header {
   background-color: gray;

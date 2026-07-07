@@ -3,12 +3,12 @@
 
 	<space-loader v-if="parentId" :space-id="parentId" include-parent-path>
 
-		<template #default="{permissions}">
+		<template #default="{context}">
 
 			<form-fields
 				:posting="posting"
 				:root="root"
-				:permissions="permissions"
+				:context="context"
 				@submit="submit"
 			/>
 
@@ -19,7 +19,7 @@
 	<form-fields
 		v-else
 		:posting="posting"
-		:permissions="rootPermissions"
+		:context="rootContext"
 		:root="root"
 		@submit="submit"
 	/>
@@ -53,7 +53,7 @@ export default {
 		root() {
 			return this.parentId === null;
 		},
-		rootPermissions() {
+		rootContext() {
 			return {
 				userAllowPinToParent: false,
 				userAllowPinSubs: false,
