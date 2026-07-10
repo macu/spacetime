@@ -39,17 +39,28 @@ type Space struct {
 
 	UserBookmark *bool `json:"userBookmark,omitempty"`
 
-	TopTags      *[]*Space `json:"topTags,omitempty"`
-	TopSubspaces *[]*Space `json:"topSubspaces,omitempty"`
+	Tags      *[]*Space `json:"tags,omitempty"`
+	Subspaces *[]*Space `json:"subspaces,omitempty"`
 
 	ParentPath *[]*Space `json:"parentPath,omitempty"`
 }
 
 // simple search filter for now
 type SpaceFilter struct {
-	Mode   string     `json:"mode"`             // "top-subspaces", "most-recent", "pinned"
-	Date   *time.Time `json:"date,omitempty"`   // null for 'now'
-	Window *string    `json:"window,omitempty"` // "day", "week", "month", "year"; null for all-time
+	Mode        string     `json:"mode"`             // "top-subspaces", "most-recent", "pinned"
+	Date        *time.Time `json:"date,omitempty"`   // null for 'now'
+	Window      *string    `json:"window,omitempty"` // "day", "week", "month", "year"; null for all-time
+	PinnedFirst bool       `json:"pinnedFirst"`
+}
+
+func (f *SpaceFilter) Clone() *SpaceFilter {
+	if f == nil {
+		return nil
+	}
+	bytes, _ := json.Marshal(f)
+	var clone SpaceFilter
+	json.Unmarshal(bytes, &clone)
+	return &clone
 }
 
 const SpaceFilterModeTopSubspaces = "top-subspaces"
@@ -77,4 +88,9 @@ func ParseSpaceFilter(jsonString string) (*SpaceFilter, error) {
 	}
 
 	return &filter, nil
+}
+
+type TypesFilter struct {
+	Types   []string
+	Exclude bool
 }

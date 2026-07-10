@@ -103,7 +103,7 @@ func AjaxCreateBranch(conn *sql.DB, auth ajax.Auth,
 		if err != nil {
 			return fmt.Errorf("batch create tags: %w", err)
 		}
-		space.TopTags = &tags
+		space.Tags = &tags
 
 		if pin {
 			if err := spacetime.PinSpace(tx, auth, space); err != nil {
@@ -418,7 +418,7 @@ func AjaxCreateTextSpace(conn *sql.DB, auth ajax.Auth,
 		if err != nil {
 			return fmt.Errorf("batch create tags: %w", err)
 		}
-		space.TopTags = &tags
+		space.Tags = &tags
 
 		return nil
 

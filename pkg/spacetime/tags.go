@@ -174,8 +174,8 @@ func CreateTag(tx *sql.Tx, auth ajax.Auth, parentID uint, tag string) (*Space, e
 
 }
 
-func LoadTopTags(conn *sql.DB, spaces []*Space,
-	offset uint, limit uint,
+func LoadTags(conn *sql.DB, spaces []*Space,
+	offset uint, limit uint, filter *SpaceFilter,
 ) error {
 	// Load top tags for multiple spaces
 
@@ -189,71 +189,17 @@ func LoadTopTags(conn *sql.DB, spaces []*Space,
 
 	for _, space := range spaces {
 
-		tags, err := LoadMoreTags(conn, space.ID, offset, limit)
+		tags, err := LoadSubspaces(conn, nil,
+			&space.ID, offset, limit,
+			filter, &TypesFilter{Types: []string{SpaceTypeTag}})
 		if err != nil {
-			return err
+			return fmt.Errorf("loading top tags: %w", err)
 		}
 
-		space.TopTags = tags
+		space.Tags = &tags
 
 	}
 
 	return nil
-
-}
-
-func LoadMoreTags(conn *sql.DB, parentId uint,
-	offset uint, limit uint,
-) (*[]*Space, error) {
-
-	rows, err := conn.Query(`SELECT space.id, unique_text.text_value,
-		(SELECT COUNT(*) FROM checkin
-			WHERE checkin.space_id = space.id) AS checkin_count,
-		CASE WHEN user_space_config.space_id IS NULL THEN FALSE ELSE TRUE END AS pinned
-		FROM space
-		INNER JOIN tag_space ON tag_space.space_id = space.id
-		INNER JOIN unique_text ON unique_text.id = tag_space.text_id
-		LEFT JOIN user_space_config ON user_space_config.space_id = space.id
-		WHERE space.space_type = $1
-		AND space.parent_id = $2
-		GROUP BY space.id, unique_text.text_value,
-			user_space_config.space_id, user_space_config.order_number
-		ORDER BY
-			CASE WHEN user_space_config.space_id IS NULL THEN FALSE ELSE TRUE END DESC,
-			CASE WHEN user_space_config.order_number IS NULL THEN 0 ELSE user_space_config.order_number END ASC,
-			checkin_count DESC
-		OFFSET $3
-		LIMIT $4`,
-		SpaceTypeTag, parentId, offset, limit,
-	)
-
-	if err != nil {
-		return nil, fmt.Errorf("loading top tags: %w", err)
-	}
-
-	defer rows.Close()
-
-	var tags = []*Space{}
-
-	for rows.Next() {
-		var spaceID uint
-		var text string
-		var checkinCount uint
-		var pinned bool
-		err = rows.Scan(&spaceID, &text, &checkinCount, &pinned)
-		if err != nil {
-			return nil, fmt.Errorf("scanning top tags: %w", err)
-		}
-		var tag = &Space{
-			ID:           spaceID,
-			SpaceType:    SpaceTypeTag,
-			Text:         &text,
-			CheckinCount: checkinCount,
-			IsPinned:     pinned,
-		}
-		tags = append(tags, tag)
-	}
-
-	return &tags, nil
 
 }

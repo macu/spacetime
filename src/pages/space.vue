@@ -5,8 +5,32 @@
 
 	<space-loader
 		:space-id="spaceId"
-		include-parent-path include-tags
-		@space-loaded="data => handleSpaceLoaded(data)">
+		:filter="filter"
+		include-parent-path
+		include-tags
+		@space-loaded="handleSpaceLoaded">
+
+		<template v-if="!showingPinned" #tags-area="{context}">
+			<!-- tags output; tags are included in subspaces in pinned view -->
+			<div class="flex-row-md">
+				<add-tag-button
+					:parent-id="spaceId"
+					@added="tag => tags.push(tag)"
+				/>
+				<space-tag
+					v-for="t in uniqueTags"
+					:key="t.id"
+					:space="t"
+					:show-pinning="context && context.userAllowPinSubs"
+					@set-pinned="pinned => setTagPinned(t, pinned)"
+				/>
+				<loading-message v-if="loadingTags" message="Loading tags..."/>
+				<el-button v-else-if="showLoadMoreTags"
+					@click="loadTags(true)" type="primary">
+					Load more
+				</el-button>
+			</div>
+		</template>
 
 		<template #default="{context}">
 
@@ -14,7 +38,7 @@
 
 			<div v-else @click.stop class="flex-column-lg">
 
-				<div class="flex-row-md">
+				<horizontal-controls>
 					<create-dropdown
 						:parent-id="spaceId"
 						:disabled="$store.getters.createDisabled"
@@ -23,18 +47,31 @@
 						v-model="filter"
 						allow-pinned
 						/>
-				</div>
+				</horizontal-controls>
 
 				<div ref="subspaces" class="subspaces flex-column-lg">
 					<space-output
-						v-for="s in subspaces"
+						v-for="s in uniqueSubspaces"
+						:key="s.id"
 						:space="s"
 						:context="context"
 						sub-space
 						:show-reorder="showReorderSubs"
 						:data-space-id="s.id"
-						@set-pinned="pinned => setPinned(s, pinned)"
-					/>
+						@set-pinned="pinned => setPinned(s, pinned)">
+						<template #tags-area>
+							<div class="flex-row-md">
+								<space-tag
+									v-for="t in s.tags"
+									:space="t"
+									/>
+							</div>
+						</template>
+					</space-output>
+					<el-button v-if="showLoadMoreSubspaces"
+						@click="loadSubspaces(true)" type="primary">
+						Load more
+					</el-button>
 				</div>
 
 				<el-alert v-if="showPinnedNotSupported" type="warning" :closable="false">
@@ -53,8 +90,13 @@
 <script>
 import SpaceLoader from '@/widgets/space-loader.vue';
 import SpaceOutput from '@/widgets/space-output.vue';
+import SpaceTag from '@/widgets/space-tag.vue';
 import CreateDropdown from '@/widgets/create-dropdown.vue';
-import SubspacesFilter, {getFilter, FILTER_MODES} from '@/widgets/subspaces-filter.vue';
+import AddTagButton from '@/widgets/add-tag-button.vue';
+import SubspacesFilter, {
+	getFilter,
+	FILTER_MODES,
+} from '@/widgets/subspaces-filter.vue';
 
 import {
 	ajaxGet,
@@ -78,8 +120,10 @@ export default {
 	components: {
 		SpaceLoader,
 		SpaceOutput,
+		SpaceTag,
 		CreateDropdown,
 		SubspacesFilter,
+		AddTagButton,
 	},
 	setup() {
 		return {
@@ -91,10 +135,17 @@ export default {
 	data() {
 		return {
 			filter: getFilter(),
-			loadingSubspaces: true,
-			subspaces: [],
+
 			context: null,
+			tags: [],
+			subspaces: [],
+
 			dragging: false,
+
+			loadingTags: false,
+			showLoadMoreTags: false,
+			loadingSubspaces: false,
+			showLoadMoreSubspaces: false,
 		};
 	},
 	computed: {
@@ -119,18 +170,32 @@ export default {
 				this.context.userAllowPinSubs &&
 				!this.loadingSubspaces;
 		},
+		uniqueTags() {
+			const seen = new Set();
+			return this.tags.filter(t => {
+				if (seen.has(t.id)) {
+					return false;
+				}
+				seen.add(t.id);
+				return true;
+			});
+		},
+		uniqueSubspaces() {
+			const seen = new Set();
+			return this.subspaces.filter(s => {
+				if (seen.has(s.id)) {
+					return false;
+				}
+				seen.add(s.id);
+				return true;
+			});
+		},
 	},
 	watch: {
 		filter: {
 			deep: true,
 			handler() {
-				this.loadSubspaces();
-			},
-		},
-		spaceId: {
-			immediate: true,
-			handler() {
-				this.loadSubspaces();
+				this.reloadSubs();
 			},
 		},
 		showReorderSubs: {
@@ -167,20 +232,62 @@ export default {
 		}
 	},
 	methods: {
+
+		// called from space-loader
 		handleSpaceLoaded({space, context}) {
 			this.context = context;
+			this.tags = space.tags;
+			this.subspaces = space.subspaces;
 		},
 
+		// filters changed
+		reloadSubs() {
+			this.loadingTags = true;
+			this.loadingSubspaces = true;
+			ajaxGet('/ajax/space/reload', {
+				spaceId: this.spaceId,
+				filter: this.filterJSON,
+			}).then(response => {
+				this.tags = response.tags || [];
+				this.subspaces = response.subspaces || [];
+			}).finally(() => {
+				this.loadingTags = false;
+				this.loadingSubspaces = false;
+			});
+		},
+
+		// loading more tags
+		loadTags(more = false) {
+			this.loadingTags = true;
+			if (!more) {
+				this.tags = [];
+			}
+			ajaxGet('/ajax/space/tags', {
+				parentId: this.spaceId,
+				offset: more ? this.tags.length : 0,
+				limit: 10,
+				filter: this.filterJSON,
+			}).then(response => {
+				if (more) {
+					this.tags = this.tags.concat(response);
+				} else {
+					this.tags = response;
+				}
+				this.showLoadMoreTags = response.length === 10;
+			}).finally(() => {
+				this.loadingTags = false;
+			});
+		},
+
+		// loading more subspaces
 		loadSubspaces(more = false) {
 			this.loadingSubspaces = true;
-
 			if (!more) {
 				this.subspaces = [];
 			}
-
 			ajaxGet('/ajax/subspaces', {
 				parentId: this.spaceId,
-				offset: this.subspaces.length,
+				offset: more ? this.subspaces.length : 0,
 				limit: this.$store.getters.maxPageLimit,
 				filter: this.filterJSON,
 			}).then(response => {
@@ -197,6 +304,20 @@ export default {
 				// If unpinning while showing pinned, remove from list
 				this.subspaces = this.subspaces.filter(sub => sub.id !== s.id);
 			}
+		},
+
+		setTagPinned(t, pinned) {
+			t.isPinned = pinned;
+
+			ajaxPost('/ajax/space/pin', {
+				spaceId: t.id,
+				pinned,
+			}).then(() => {
+				this.$message.success('Tag ' + (pinned ? 'pinned' : 'unpinned'));
+			}).catch(err => {
+				t.isPinned = !pinned; // revert
+				this.$message.error('Failed to ' + (pinned ? 'pin' : 'unpin') + ' tag');
+			});
 		},
 
 		loadDragula() {
@@ -244,6 +365,7 @@ export default {
 				this.$message.error('Failed to load drag and drop functionality');
 			});
 		},
+
 	},
 };
 </script>

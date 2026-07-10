@@ -49,11 +49,6 @@
 					<strong v-text="space.label"/>
 				</div>
 				<space-creator :space="space"/>
-				<div class="align-end flex-row-md">
-					<el-button v-if="!showTags" @click="expandTags = true" class="align-end" size="small">
-						Show tags
-					</el-button>
-				</div>
 			</div>
 			<template v-if="showReorder">
 				<div class="flex-1"/>
@@ -61,21 +56,7 @@
 			</template>
 		</div>
 
-		<div v-if="showTags" class="space-tags-bar flex-row-md" @click.stop>
-			<strong class="label">Tag(s)</strong>
-			<add-tag
-				:parent-id="space.id"
-				@added="tagSpace => userTagAdded(tagSpace)"
-				@update:adding="addingTag = $event"
-				:class="{'flex-100': addingTag}"
-				/>
-			<space-tag
-				v-for="tag in tagsToShow"
-				:space="tag"
-				@click-tag="gotoSpace(tag)"
-				/>
-			<el-button size="small">Load more</el-button>
-		</div>
+		<slot name="tags-area" :context="context"/>
 
 		<space-tag
 			v-if="space.spaceType === SPACE_TYPES.TAG"
@@ -155,13 +136,6 @@ export default {
 			default: false,
 		},
 	},
-	data() {
-		return {
-			addingTag: false,
-			newTags: [],
-			expandTags: false,
-		};
-	},
 	computed: {
 		SPACE_TYPES() {
 			return SPACE_TYPES;
@@ -175,30 +149,11 @@ export default {
 				: this.context.userAllowPinToParent
 			);
 		},
-		topTags() {
-			return this.space.topTags || [];
-		},
-		hasTopTags() {
-			return this.topTags.length > 0;
-		},
-		showTags() {
-			if (this.expandTags) {
-				return true;
-			}
-			return false;
-		},
-		tagsToShow() {
-			let all = this.newTags.concat(this.topTags);
-			return all.filter((t, i) => all.findIndex(t2 => t2.id === t.id) === i);
-		},
 		isPinned() {
 			return this.space.isPinned;
 		},
 	},
 	methods: {
-		userTagAdded(tagSpace) {
-			this.newTags.unshift(tagSpace); // add to start
-		},
 		gotoSpace(s = null) {
 			this.$router.push({
 				name: 'space',

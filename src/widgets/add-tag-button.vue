@@ -1,11 +1,11 @@
 <template>
-<div class="add-space-tag-widget">
-	<div v-if="adding" class="flex-row nowrap">
+<div ref="container" class="add-space-tag-widget">
+	<div v-if="adding" class="add-tag-form flex-row-sm nowrap">
 		<el-input
 			v-model="tag"
 			:maxlength="$store.getters.tagMaxLength"
 			show-word-limit
-			size="large">
+			size="small">
 			<template #prepend>
 				Add tag
 			</template>
@@ -13,17 +13,18 @@
 		<el-button
 			@click="addTag()"
 			:disabled="addTagDisabled"
-			size="large" type="primary">
+			size="small" type="primary">
 			<material-icon icon="check"/>
 		</el-button>
 		<el-button
 			@click="adding = false"
-			size="large" type="warning">
+			size="small" type="warning">
 			<material-icon icon="close"/>
 		</el-button>
 	</div>
 	<el-button v-else @click="adding = true" type="primary" size="small" :disabled="disabled" plain>
 		<material-icon icon="add"/>
+		<span>Add tag</span>
 	</el-button>
 </div>
 </template>
@@ -41,7 +42,7 @@ export default {
 	props: {
 		parentId: {
 			// Tag added under parent space
-			type: Number,
+			type: [Number, String],
 			required: true,
 		},
 	},
@@ -70,7 +71,7 @@ export default {
 	methods: {
 		focusInput() {
 			// focus first input element
-			const input = this.$el.querySelector('input');
+			const input = this.$refs.container.querySelector('input');
 			if (input) {
 				input.focus();
 			}
@@ -82,6 +83,8 @@ export default {
 			ajaxPost('/ajax/space/create/tag', {
 				parentId: this.parentId,
 				tag: this.tag,
+			}, {
+				409: 'Tag already added.', // conflict: already exists
 			}).then(response => {
 				this.$emit('added', response);
 				this.adding = false;
@@ -91,3 +94,13 @@ export default {
 	},
 };
 </script>
+
+<style lang="scss">
+.add-space-tag-widget {
+	.add-tag-form {
+		border: thin solid lightgray;
+		border-radius: 4px;
+		padding: 5px;
+	}
+}
+</style>

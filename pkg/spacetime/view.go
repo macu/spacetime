@@ -110,11 +110,11 @@ func LoadParentPath(conn *sql.DB, auth *ajax.Auth, id uint) ([]*Space, error) {
 
 }
 
-func LoadTopSubspaces(conn *sql.DB, auth *ajax.Auth,
+func LoadSubspaces(conn *sql.DB, auth *ajax.Auth,
 	parentID *uint, // optional
-	includeTypes []string, // optional filter by space type
 	offset uint, limit uint, // pagination
 	filter *SpaceFilter, // optional filter by date
+	typesFilter *TypesFilter, // optional filter by space type
 ) ([]*Space, error) {
 
 	var spaces = []*Space{}
@@ -138,15 +138,21 @@ func LoadTopSubspaces(conn *sql.DB, auth *ajax.Auth,
 	}
 
 	var typesClauseSql string
-	if len(includeTypes) > 0 {
-		typesClauseSql = `AND space.space_type IN (`
-		for i, spaceType := range includeTypes {
-			if i > 0 {
-				typesClauseSql += `, `
+	if typesFilter != nil {
+		if len(typesFilter.Types) > 0 {
+			if typesFilter.Exclude {
+				typesClauseSql = `AND space.space_type NOT IN (`
+			} else {
+				typesClauseSql = `AND space.space_type IN (`
 			}
-			typesClauseSql += db.Arg(&args, spaceType)
+			for i, spaceType := range typesFilter.Types {
+				if i > 0 {
+					typesClauseSql += `, `
+				}
+				typesClauseSql += db.Arg(&args, spaceType)
+			}
+			typesClauseSql += `)`
 		}
-		typesClauseSql += `)`
 	}
 
 	var filterModeClauseSql string
@@ -169,6 +175,11 @@ func LoadTopSubspaces(conn *sql.DB, auth *ajax.Auth,
 
 		default:
 			return nil, fmt.Errorf("invalid filter mode: %s", filter.Mode)
+		}
+
+		if filter.PinnedFirst && filter.Mode != SpaceFilterModePinned {
+			orderByClauseSql = `CASE WHEN user_space_config.space_id IS NULL THEN 1 ELSE 0 END, ` +
+				`user_space_config.order_number ASC, ` + orderByClauseSql
 		}
 
 		if filter.Date != nil {
@@ -208,8 +219,8 @@ func LoadTopSubspaces(conn *sql.DB, auth *ajax.Auth,
 		(SELECT COUNT(*) FROM checkin
 			WHERE checkin.space_id = space.id) AS checkin_count
 		FROM space
-		LEFT JOIN subspace ON subspace.space_id = space.id
-		LEFT JOIN unique_text ON unique_text.id = subspace.label_text_id
+		LEFT JOIN branch_space ON branch_space.space_id = space.id
+		LEFT JOIN unique_text ON unique_text.id = branch_space.label_text_id
 		LEFT JOIN user_account ON user_account.id = space.created_by
 		LEFT JOIN user_space_config ON user_space_config.space_id = space.id
 		WHERE `+parentClauseSql+` `+typesClauseSql+` `+filterModeClauseSql+`

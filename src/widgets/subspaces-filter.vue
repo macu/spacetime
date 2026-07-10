@@ -23,6 +23,10 @@
 		</template>
 	</el-dropdown>
 
+	<el-checkbox v-if="showPinnedFirstOption" v-model="filter.pinnedFirst">
+		Pinned first
+	</el-checkbox>
+
 </template>
 
 <script>
@@ -32,11 +36,12 @@ export const FILTER_MODES = {
 	PINNED: 'pinned',
 };
 
-export function getFilter() {
+export function getFilter(allowPinned = true) {
 	return {
 		mode: FILTER_MODES.TOP,
 		date: null,
 		window: null,
+		pinnedFirst: allowPinned,
 	};
 }
 
@@ -74,6 +79,9 @@ export default {
 					return 'Pinned';
 			}
 			return 'Filter';
+		},
+		showPinnedFirstOption() {
+			return this.allowPinned && this.filter.mode != FILTER_MODES.PINNED;
 		},
 	},
 	watch: {

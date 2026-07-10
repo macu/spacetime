@@ -3,7 +3,13 @@
 
 	<return-to-top/>
 
-	<create-dropdown :disabled="$store.getters.createDisabled" sticky/>
+	<horizontal-controls>
+		<create-dropdown :disabled="$store.getters.createDisabled" sticky/>
+		<subspaces-filter
+			v-model="filter"
+			:allow-pinned="false"
+		/>
+	</horizontal-controls>
 
 	<div class="flex-column-lg">
 
@@ -25,6 +31,9 @@
 <script>
 import CreateDropdown from '@/widgets/create-dropdown.vue';
 import SpaceOutput from '@/widgets/space-output.vue';
+import SubspacesFilter, {
+	getFilter,
+} from '@/widgets/subspaces-filter.vue';
 
 import {
 	ajaxGet,
@@ -34,12 +43,22 @@ export default {
 	components: {
 		CreateDropdown,
 		SpaceOutput,
+		SubspacesFilter,
 	},
 	data() {
 		return {
 			loading: true,
 			spaces: [],
+			filter: getFilter(false),
 		};
+	},
+	watch: {
+		filter: {
+			handler() {
+				this.loadDashboard();
+			},
+			deep: true,
+		},
 	},
 	mounted() {
 		this.loadDashboard();
@@ -47,11 +66,13 @@ export default {
 	methods: {
 		loadDashboard() {
 			this.loading = true;
+			this.spaces = [];
 			ajaxGet('/ajax/subspaces', {
 				parentId: null, // root
 				offset: 0,
 				limit: this.$store.getters.maxPageLimit,
 				includeTags: true,
+				filter: this.filter ? JSON.stringify(this.filter) : null,
 			}).then(response => {
 				this.spaces = response;
 			}).finally((error) => {
@@ -65,6 +86,7 @@ export default {
 				offset: this.spaces.length,
 				limit: this.$store.getters.maxPageLimit,
 				includeTags: true,
+				filter: this.filter ? JSON.stringify(this.filter) : null,
 			}).then(response => {
 				this.spaces = this.spaces.concat(response);
 			}).finally((error) => {

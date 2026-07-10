@@ -10,6 +10,10 @@
 		@set-pinned="pinned => space.isPinned = pinned"
 		>
 
+		<template #tags-area="{context}">
+			<slot name="tags-area" :context="context"/>
+		</template>
+
 		<slot
 			:space="space"
 			:context="context"
@@ -47,6 +51,10 @@ export default {
 	props: {
 		spaceId: {
 			type: [String, Number],
+			required: false,
+		},
+		filter: {
+			type: Object,
 			required: false,
 		},
 		includeParentPath: {
@@ -188,6 +196,7 @@ export default {
 				spaceId: this.spaceId,
 				includeParentPath: this.includeParentPath,
 				includeTags: this.includeTags,
+				filter: this.filter ? JSON.stringify(this.filter) : null,
 			}).then(response => {
 				this.space = response;
 				this.$emit('space-loaded', {space: response, context: this.context});

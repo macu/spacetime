@@ -10,6 +10,7 @@ import (
 	"spacetime/pkg/utils/types"
 )
 
+// load space and optionally path/subspaces/tags
 func AjaxLoadSpace(db *sql.DB, auth *ajax.Auth,
 	w http.ResponseWriter, r *http.Request,
 ) (interface{}, int) {
@@ -19,9 +20,9 @@ func AjaxLoadSpace(db *sql.DB, auth *ajax.Auth,
 		return nil, http.StatusBadRequest
 	}
 
-	includeTags := types.AtoBool(r.FormValue("includeTags"))
-	includeSubspaces := types.AtoBool(r.FormValue("includeSubspaces"))
 	includeParentPath := types.AtoBool(r.FormValue("includeParentPath"))
+
+	includeTags := types.AtoBool(r.FormValue("includeTags"))
 
 	filter, err := spacetime.ParseSpaceFilter(r.FormValue("filter"))
 	if err != nil {
@@ -41,34 +42,35 @@ func AjaxLoadSpace(db *sql.DB, auth *ajax.Auth,
 		return nil, http.StatusInternalServerError
 	}
 
+	var subspacesTypesFilter *spacetime.TypesFilter
+	if filter.Mode != spacetime.SpaceFilterModePinned {
+		// include tags when viewing pinned mode
+		// otherwise exclude tags
+		subspacesTypesFilter = &spacetime.TypesFilter{
+			Exclude: true,
+			Types:   []string{spacetime.SpaceTypeTag},
+		}
+	}
+
+	subspaces, err := spacetime.LoadSubspaces(db, auth,
+		&id, 0, spacetime.MaxSubspacesPageLimit, filter, subspacesTypesFilter)
+	if err != nil {
+		logging.LogError(r, auth, err)
+		return nil, http.StatusInternalServerError
+	}
+
 	if includeTags {
-		err = spacetime.LoadTopTags(db,
-			[]*spacetime.Space{space}, 0, spacetime.DefaultTagsLimit)
+		// include tags on parent and subspaces
+		err = spacetime.LoadTags(db,
+			append([]*spacetime.Space{space}, subspaces...),
+			0, spacetime.DefaultTagsLimit, filter)
 		if err != nil {
 			logging.LogError(r, auth, err)
 			return nil, http.StatusInternalServerError
 		}
 	}
 
-	if includeSubspaces {
-		content, err := spacetime.LoadTopSubspaces(db, auth,
-			&id, []string{}, 0, spacetime.MaxSubspacesPageLimit, filter)
-		if err != nil {
-			logging.LogError(r, auth, err)
-			return nil, http.StatusInternalServerError
-		}
-
-		if includeTags {
-			err = spacetime.LoadTopTags(db,
-				content, 0, spacetime.DefaultTagsLimit)
-			if err != nil {
-				logging.LogError(r, auth, err)
-				return nil, http.StatusInternalServerError
-			}
-		}
-
-		space.TopSubspaces = &content
-	}
+	space.Subspaces = &subspaces
 
 	if includeParentPath {
 		if space.ParentID == nil {
@@ -85,6 +87,177 @@ func AjaxLoadSpace(db *sql.DB, auth *ajax.Auth,
 	}
 
 	return space, http.StatusOK
+
+}
+
+// Load tags and subspaces when filters change
+func AjaxReloadSpace(db *sql.DB, auth *ajax.Auth,
+	w http.ResponseWriter, r *http.Request,
+) (interface{}, int) {
+
+	id, err := types.AtoUint(r.FormValue("spaceId"))
+	if err != nil {
+		return nil, http.StatusBadRequest
+	}
+
+	filter, err := spacetime.ParseSpaceFilter(r.FormValue("filter"))
+	if err != nil {
+		return nil, http.StatusBadRequest
+	}
+
+	includeTags := types.AtoBool(r.FormValue("includeTags"))
+
+	exists, err := spacetime.CheckSpaceExists(db, id)
+	if err != nil {
+		logging.LogError(r, auth, err)
+		return nil, http.StatusInternalServerError
+	}
+	if !exists {
+		return nil, http.StatusNotFound
+	}
+
+	var subspacesTypesFilter *spacetime.TypesFilter
+	if filter.Mode != spacetime.SpaceFilterModePinned {
+		// include tags when viewing pinned mode
+		// otherwise exclude tags
+		subspacesTypesFilter = &spacetime.TypesFilter{
+			Exclude: true,
+			Types:   []string{spacetime.SpaceTypeTag},
+		}
+	}
+
+	subspaces, err := spacetime.LoadSubspaces(db, auth,
+		&id, 0, spacetime.MaxSubspacesPageLimit, filter, subspacesTypesFilter)
+	if err != nil {
+		logging.LogError(r, auth, err)
+		return nil, http.StatusInternalServerError
+	}
+
+	tagTypesFilter := &spacetime.TypesFilter{
+		Types: []string{spacetime.SpaceTypeTag},
+	}
+
+	tags, err := spacetime.LoadSubspaces(db, auth,
+		&id, 0, spacetime.MaxSubspacesPageLimit, filter, tagTypesFilter)
+	if err != nil {
+		logging.LogError(r, auth, err)
+		return nil, http.StatusInternalServerError
+	}
+
+	if includeTags {
+		// load tags on subspaces
+		err = spacetime.LoadTags(db, subspaces, 0,
+			spacetime.DefaultTagsLimit, filter)
+		if err != nil {
+			logging.LogError(r, auth, err)
+			return nil, http.StatusInternalServerError
+		}
+	}
+
+	return struct {
+		Subspaces []*spacetime.Space `json:"subspaces"`
+		Tags      []*spacetime.Space `json:"tags"`
+	}{
+		Subspaces: subspaces,
+		Tags:      tags,
+	}, http.StatusOK
+
+}
+
+// load non-tag subspaces
+func AjaxLoadSubspaces(db *sql.DB, auth *ajax.Auth,
+	w http.ResponseWriter, r *http.Request,
+) (interface{}, int) {
+
+	parentId, err := types.AtoUintNilIfEmpty(r.FormValue("parentId"))
+	if err != nil {
+		return nil, http.StatusBadRequest
+	}
+
+	offset, err := types.AtoUint(r.FormValue("offset"))
+	if err != nil {
+		return nil, http.StatusBadRequest
+	}
+
+	limit, err := types.AtoUint(r.FormValue("limit"))
+	if err != nil {
+		return nil, http.StatusBadRequest
+	}
+
+	includeTags := types.AtoBool(r.FormValue("includeTags"))
+
+	filter, err := spacetime.ParseSpaceFilter(r.FormValue("filter"))
+	if err != nil {
+		return nil, http.StatusBadRequest
+	}
+
+	var subspacesTypesFilter *spacetime.TypesFilter
+	if filter.Mode != spacetime.SpaceFilterModePinned {
+		// include tags when viewing pinned mode
+		// otherwise exclude tags
+		subspacesTypesFilter = &spacetime.TypesFilter{
+			Exclude: true,
+			Types:   []string{spacetime.SpaceTypeTag},
+		}
+	}
+
+	subspaces, err := spacetime.LoadSubspaces(db, auth,
+		parentId, offset, limit, filter, subspacesTypesFilter)
+	if err != nil {
+		logging.LogError(r, auth, err)
+		return nil, http.StatusInternalServerError
+	}
+
+	if includeTags {
+		err = spacetime.LoadTags(db, subspaces, 0, spacetime.DefaultTagsLimit, filter)
+		if err != nil {
+			logging.LogError(r, auth, err)
+			return nil, http.StatusInternalServerError
+		}
+	}
+
+	return subspaces, http.StatusOK
+
+}
+
+// load tags
+func AjaxLoadTags(db *sql.DB, auth *ajax.Auth,
+	w http.ResponseWriter, r *http.Request,
+) (interface{}, int) {
+
+	parentId, err := types.AtoUintNilIfEmpty(r.FormValue("parentId"))
+	if err != nil {
+		return nil, http.StatusBadRequest
+	}
+
+	offset, err := types.AtoUint(r.FormValue("offset"))
+	if err != nil {
+		return nil, http.StatusBadRequest
+	}
+
+	limit, err := types.AtoUint(r.FormValue("limit"))
+	if err != nil {
+		return nil, http.StatusBadRequest
+	}
+
+	filter, err := spacetime.ParseSpaceFilter(r.FormValue("filter"))
+	if err != nil {
+		return nil, http.StatusBadRequest
+	}
+
+	// include only tags
+	subspacesTypesFilter := &spacetime.TypesFilter{
+		Types: []string{spacetime.SpaceTypeTag},
+	}
+
+	subspaces, err := spacetime.LoadSubspaces(db, auth,
+		parentId, offset, limit, filter, subspacesTypesFilter)
+	if err != nil {
+		logging.LogError(r, auth, err)
+		return nil, http.StatusInternalServerError
+	}
+
+	return subspaces, http.StatusOK
 
 }
 
@@ -114,84 +287,4 @@ func AjaxLoadTextSpaceRecording(db *sql.DB, auth *ajax.Auth,
 	}
 
 	return space.ReplayData, http.StatusOK
-}
-
-// Load subspaces ordered by most checkins all time.
-func AjaxLoadTopSubspaces(db *sql.DB, auth *ajax.Auth,
-	w http.ResponseWriter, r *http.Request,
-) (interface{}, int) {
-
-	parentId, err := types.AtoUintNilIfEmpty(r.FormValue("parentId"))
-	if err != nil {
-		return nil, http.StatusBadRequest
-	}
-
-	offset, err := types.AtoUint(r.FormValue("offset"))
-	if err != nil {
-		return nil, http.StatusBadRequest
-	}
-
-	limit, err := types.AtoUint(r.FormValue("limit"))
-	if err != nil {
-		return nil, http.StatusBadRequest
-	}
-
-	includeTags := types.AtoBool(r.FormValue("includeTags"))
-
-	includeTypes, err := types.AtoStringArray(r.FormValue("includeTypes"))
-	if err != nil {
-		return nil, http.StatusBadRequest
-	}
-
-	filter, err := spacetime.ParseSpaceFilter(r.FormValue("filter"))
-	if err != nil {
-		return nil, http.StatusBadRequest
-	}
-
-	spaces, err := spacetime.LoadTopSubspaces(db, auth, parentId, includeTypes, offset, limit, filter)
-	if err != nil {
-		logging.LogError(r, auth, err)
-		return nil, http.StatusInternalServerError
-	}
-
-	if includeTags {
-		err = spacetime.LoadTopTags(db, spaces, 0, spacetime.DefaultTagsLimit)
-		if err != nil {
-			logging.LogError(r, auth, err)
-			return nil, http.StatusInternalServerError
-		}
-	}
-
-	return spaces, http.StatusOK
-
-}
-
-// Load tags ordered by most subspaces.
-func AjaxLoadTopTags(db *sql.DB, auth *ajax.Auth,
-	w http.ResponseWriter, r *http.Request,
-) (interface{}, int) {
-
-	parentId, err := types.AtoUint(r.FormValue("parentId"))
-	if err != nil {
-		return nil, http.StatusBadRequest
-	}
-
-	offset, err := types.AtoUint(r.FormValue("offset"))
-	if err != nil {
-		return nil, http.StatusBadRequest
-	}
-
-	limit, err := types.AtoUint(r.FormValue("limit"))
-	if err != nil {
-		return nil, http.StatusBadRequest
-	}
-
-	tags, err := spacetime.LoadMoreTags(db, parentId, offset, limit)
-	if err != nil {
-		logging.LogError(r, auth, err)
-		return nil, http.StatusInternalServerError
-	}
-
-	return tags, http.StatusOK
-
 }
