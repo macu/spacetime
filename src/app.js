@@ -27,6 +27,9 @@ app.use(ElementPlus, {
 	locale: window.ElementPlusLocaleEn,
 });
 
+// Inject window.appConstants into the app as $const
+app.config.globalProperties.$const = window.appConstants;
+
 app.component('material-icon', MaterialIcon);
 app.component('loading-message', LoadingMessage);
 app.component('horizontal-controls', HorizontalControls);

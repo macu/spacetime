@@ -4,7 +4,7 @@
 	<form-field title="Name for new tag" required>
 		<el-input
 			v-model="tag"
-			:maxlength="$store.getters.tagMaxLength"
+			:maxlength="$const.tagMaxLength"
 			show-word-limit
 			size="large"
 			:disabled="posting"

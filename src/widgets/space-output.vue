@@ -1,5 +1,5 @@
 <template>
-<div class="space-output" @click.stop="gotoSpace()">
+<div class="space-output">
 
 	<div v-if="showPath && hasParentPath" @click.stop class="parent-path">
 		<div
@@ -10,7 +10,11 @@
 
 			<material-icon icon="arrow_right_alt"/>
 
-			<space-type :space="p" show-pin/>
+			<el-tooltip v-if="p.isPinned" content="Pinned by author" placement="top">
+				<material-icon icon="keep"/>
+			</el-tooltip>
+
+			<space-type :space="p"/>
 
 			<span v-if="p.spaceType === SPACE_TYPES.BRANCH"
 				v-text="p.label"
@@ -32,19 +36,12 @@
 
 	<div class="container flex-column-md">
 
-		<div class="space-info-bar flex-row-md nowrap" @click.stop>
+		<div class="space-header flex-row-md nowrap" @click.stop="gotoSpace()">
 			<div class="flex-row-md">
-				<el-button
-					v-if="userAllowPinToParent"
-					:type="isPinned ? 'success' : 'primary'"
-					@click="togglePinned()">
-					<material-icon v-if="isPinned" icon="keep"/>
-					<material-icon v-else icon="keep_off"/>
-					{{ isPinned ? 'Unpin' : 'Pin' }}
-				</el-button>
-				<space-type :space="space" :show-pin="!userAllowPinToParent" @click="gotoSpace()"/>
-				<bookmark-button :space="space"/>
-				<checkin-button :space="space"/>
+				<el-tooltip v-if="space.isPinned" content="Pinned by author" placement="top">
+					<material-icon icon="keep"/>
+				</el-tooltip>
+				<space-type :space="space" @click="gotoSpace()"/>
 				<div v-if="space.label" class="space-label">
 					<strong v-text="space.label"/>
 				</div>
@@ -56,7 +53,7 @@
 			</template>
 		</div>
 
-		<slot name="tags-area" :context="context"/>
+		<slot name="actions-area" :space="space" :context="context"/>
 
 		<space-tag
 			v-if="space.spaceType === SPACE_TYPES.TAG"
@@ -80,13 +77,10 @@
 </template>
 
 <script>
-import CheckinButton from './checkin-button.vue';
-import BookmarkButton from './bookmark-button.vue';
 import SpaceType from './space-type.vue';
 import SpaceCreator from './space-creator.vue';
 import SpaceTag from './space-tag.vue';
 import SpaceText from './space-text.vue';
-import AddTag from './add-tag-button.vue';
 
 import {
 	ajaxPost,
@@ -106,13 +100,10 @@ export default {
 		'set-pinned',
 	],
 	components: {
-		CheckinButton,
-		BookmarkButton,
 		SpaceType,
 		SpaceCreator,
 		SpaceTag,
 		SpaceText,
-		AddTag,
 	},
 	props: {
 		space: {
@@ -143,15 +134,6 @@ export default {
 		hasParentPath() {
 			return !!this.space.parentPath && this.space.parentPath.length > 0;
 		},
-		userAllowPinToParent() {
-			return this.context && (this.subSpace
-				? this.context.userAllowPinSubs
-				: this.context.userAllowPinToParent
-			);
-		},
-		isPinned() {
-			return this.space.isPinned;
-		},
 	},
 	methods: {
 		gotoSpace(s = null) {
@@ -160,25 +142,6 @@ export default {
 				params: {
 					spaceId: s ? s.id : this.space.id,
 				},
-			});
-		},
-		togglePinned() {
-			// Always confirm - unpinning causes a pinned space to lose its position
-			let pinned = !this.space.isPinned;
-			this.$confirm('Are you sure you want to unpin this space?', 'Confirm unpin', {
-				confirmButtonText: 'Yes',
-				cancelButtonText: 'No',
-				type: 'warning',
-			}).then(() => {
-				ajaxPost('/ajax/space/pin', {
-					spaceId: this.space.id,
-					pinned,
-				}).then(response => {
-					this.$emit('set-pinned', pinned);
-					alertSuccess(pinned ? 'Space pinned' : 'Space unpinned');
-				});
-			}).catch(() => {
-				// Cancelled
 			});
 		},
 	},
@@ -222,16 +185,21 @@ export default {
 			cursor: pointer;
 		}
 
-		>.space-info-bar, >.space-tags-bar {
-			font-size: smaller;
+		>.space-header {
 			cursor: default;
 
 			.drag-handle {
 				cursor: ns-resize;
 			}
+
+			.space-label {
+				padding-left: 10px;
+				font-weight: bold;
+				font-size: 120%;
+			}
 		}
 
-		>.space-title, >.space-tag {
+		>.space-tag {
 			padding: 40px;
 			cursor: default;
 		}
@@ -263,7 +231,7 @@ export default {
 .is-mobile .space-output {
 	>.container {
 		padding: 20px 10px;
-		>.space-title, >.space-tag, >.space-text {
+		>.space-tag, >.space-text {
 			padding: 20px;
 		}
 		>.portal {

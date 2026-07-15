@@ -10,25 +10,42 @@
 		include-tags
 		@space-loaded="handleSpaceLoaded">
 
-		<template v-if="!showingPinned" #tags-area="{context}">
+		<template  #actions-area="{space, context}">
 			<!-- tags output; tags are included in subspaces in pinned view -->
 			<div class="flex-row-md">
-				<add-tag-button
-					:parent-id="spaceId"
-					@added="tag => tags.push(tag)"
-				/>
-				<space-tag
-					v-for="t in uniqueTags"
-					:key="t.id"
-					:space="t"
-					:show-pinning="context && context.userAllowPinSubs"
-					@set-pinned="pinned => setTagPinned(t, pinned)"
-				/>
-				<loading-message v-if="loadingTags" message="Loading tags..."/>
-				<el-button v-else-if="showLoadMoreTags"
-					@click="loadTags(true)" type="primary">
-					Load more
+
+				<el-button
+					v-if="context.userAllowPinToParent"
+					:type="space.isPinned ? 'success' : 'primary'"
+					@click="togglePinned()">
+					<material-icon v-if="space.isPinned" icon="keep"/>
+					<material-icon v-else icon="keep_off"/>
+					{{ space.isPinned ? 'Unpin' : 'Pin' }}
 				</el-button>
+
+				<checkin-button :space="space"/>
+
+				<bookmark-button :space="space"/>
+
+				<template v-if="!showingPinned">
+					<add-tag-button
+						:parent-id="spaceId"
+						@added="tag => tags.push(tag)"
+					/>
+					<space-tag
+						v-for="t in uniqueTags"
+						:key="t.id"
+						:space="t"
+						:show-pinning="context && context.userAllowPinSubs"
+						@toggle-pinned="toggleTagPinned(t)"
+					/>
+					<loading-message v-if="loadingTags" message="Loading tags..."/>
+					<el-button v-else-if="showLoadMoreTags"
+						@click="loadTags(true)" type="primary">
+						Load more tags
+					</el-button>
+				</template>
+
 			</div>
 		</template>
 
@@ -50,24 +67,15 @@
 				</horizontal-controls>
 
 				<div ref="subspaces" class="subspaces flex-column-lg">
-					<space-output
+					<subspace
 						v-for="s in uniqueSubspaces"
 						:key="s.id"
-						:space="s"
+						:subspace="s"
 						:context="context"
-						sub-space
 						:show-reorder="showReorderSubs"
-						:data-space-id="s.id"
-						@set-pinned="pinned => setPinned(s, pinned)">
-						<template #tags-area>
-							<div class="flex-row-md">
-								<space-tag
-									v-for="t in s.tags"
-									:space="t"
-									/>
-							</div>
-						</template>
-					</space-output>
+						:filter-json="filterJson"
+						@toggle-pinned="togglePinned(s)"
+					/>
 					<el-button v-if="showLoadMoreSubspaces"
 						@click="loadSubspaces(true)" type="primary">
 						Load more
@@ -92,7 +100,10 @@ import SpaceLoader from '@/widgets/space-loader.vue';
 import SpaceOutput from '@/widgets/space-output.vue';
 import SpaceTag from '@/widgets/space-tag.vue';
 import CreateDropdown from '@/widgets/create-dropdown.vue';
+import CheckinButton from '@/widgets/checkin-button.vue';
+import BookmarkButton from '@/widgets/bookmark-button.vue';
 import AddTagButton from '@/widgets/add-tag-button.vue';
+import Subspace from './subspace.vue';
 import SubspacesFilter, {
 	getFilter,
 	FILTER_MODES,
@@ -106,6 +117,10 @@ import {
 import {
 	SPACE_TYPES,
 } from '@/const.js';
+
+import {
+	alertSuccess,
+} from '@/utils/notify.js';
 
 import {
 	loadScript,
@@ -123,7 +138,10 @@ export default {
 		SpaceTag,
 		CreateDropdown,
 		SubspacesFilter,
+		CheckinButton,
+		BookmarkButton,
 		AddTagButton,
+		Subspace,
 	},
 	setup() {
 		return {
@@ -136,6 +154,7 @@ export default {
 		return {
 			filter: getFilter(),
 
+			space: null,
 			context: null,
 			tags: [],
 			subspaces: [],
@@ -152,7 +171,7 @@ export default {
 		spaceId() {
 			return this.$route.params.spaceId;
 		},
-		filterJSON() {
+		filterJson() {
 			return this.filter ? JSON.stringify(this.filter) : null;
 		},
 		showingPinned() {
@@ -235,9 +254,12 @@ export default {
 
 		// called from space-loader
 		handleSpaceLoaded({space, context}) {
+			this.space = space;
 			this.context = context;
 			this.tags = space.tags;
 			this.subspaces = space.subspaces;
+			this.showLoadMoreTags = space.tags.length === this.$const.defaultTagsLimit;
+			this.showLoadMoreSubspaces = space.subspaces.length === this.$const.maxPageLimit;
 		},
 
 		// filters changed
@@ -246,7 +268,7 @@ export default {
 			this.loadingSubspaces = true;
 			ajaxGet('/ajax/space/reload', {
 				spaceId: this.spaceId,
-				filter: this.filterJSON,
+				filter: this.filterJson,
 			}).then(response => {
 				this.tags = response.tags || [];
 				this.subspaces = response.subspaces || [];
@@ -265,15 +287,15 @@ export default {
 			ajaxGet('/ajax/space/tags', {
 				parentId: this.spaceId,
 				offset: more ? this.tags.length : 0,
-				limit: 10,
-				filter: this.filterJSON,
+				limit: this.$const.defaultTagsLimit,
+				filter: this.filterJson,
 			}).then(response => {
 				if (more) {
 					this.tags = this.tags.concat(response);
 				} else {
 					this.tags = response;
 				}
-				this.showLoadMoreTags = response.length === 10;
+				this.showLoadMoreTags = response.length === this.$const.defaultTagsLimit;
 			}).finally(() => {
 				this.loadingTags = false;
 			});
@@ -288,8 +310,8 @@ export default {
 			ajaxGet('/ajax/subspaces', {
 				parentId: this.spaceId,
 				offset: more ? this.subspaces.length : 0,
-				limit: this.$store.getters.maxPageLimit,
-				filter: this.filterJSON,
+				limit: this.$const.maxPageLimit,
+				filter: this.filterJson,
 			}).then(response => {
 				this.subspaces = this.subspaces.concat(response);
 			}).finally(() => {
@@ -297,27 +319,81 @@ export default {
 			});
 		},
 
-		setPinned(s, pinned) {
-			s.isPinned = pinned;
-
-			if (this.showingPinned && !pinned) {
-				// If unpinning while showing pinned, remove from list
-				this.subspaces = this.subspaces.filter(sub => sub.id !== s.id);
+		togglePinned(space = null) {
+			if (!space) {
+				space = this.space;
+			} else {
+				space = this.subspaces.find(s => s.id === space.id);
+			}
+			let pinned = !space.isPinned;
+			if (!pinned) {
+				// Always confirm - unpinning causes a pinned space to lose its position
+				this.$confirm('Are you sure you want to unpin this space?', 'Confirm unpin', {
+					confirmButtonText: 'Yes',
+					cancelButtonText: 'No',
+					type: 'warning',
+				}).then(() => {
+					space.isPinned = pinned;
+					ajaxPost('/ajax/space/pin', {
+						spaceId: space.id,
+						pinned,
+					}).then(response => {
+						alertSuccess('Space unpinned');
+					}).catch(err => {
+						space.isPinned = !pinned; // revert
+					});
+				}).catch(() => {
+					// Cancelled
+				});
+			} else {
+				space.isPinned = pinned;
+				ajaxPost('/ajax/space/pin', {
+					spaceId: space.id,
+					pinned,
+				}).then(response => {
+					alertSuccess('Space pinned');
+				}).catch(err => {
+					space.isPinned = !pinned; // revert
+				});
 			}
 		},
 
-		setTagPinned(t, pinned) {
-			t.isPinned = pinned;
+		toggleTagPinned(t) {
+			let pinned = !t.isPinned;
 
-			ajaxPost('/ajax/space/pin', {
-				spaceId: t.id,
-				pinned,
-			}).then(() => {
-				this.$message.success('Tag ' + (pinned ? 'pinned' : 'unpinned'));
-			}).catch(err => {
-				t.isPinned = !pinned; // revert
-				this.$message.error('Failed to ' + (pinned ? 'pin' : 'unpin') + ' tag');
-			});
+			if (!pinned) {
+				// Always confirm - unpinning causes a pinned space to lose its position
+				this.$confirm('Are you sure you want to unpin this tag?', 'Confirm unpin', {
+					confirmButtonText: 'Yes',
+					cancelButtonText: 'No',
+					type: 'warning',
+				}).then(() => {
+					t.isPinned = pinned;
+					ajaxPost('/ajax/space/pin', {
+						spaceId: t.id,
+						pinned,
+					}).then(() => {
+						this.$message.success('Tag unpinned');
+					}).catch(err => {
+						t.isPinned = !pinned; // revert
+						this.$message.error('Failed to unpin tag');
+					});
+				}).catch(() => {
+					// Cancelled
+				});
+				return;
+			} else {
+				t.isPinned = pinned;
+				ajaxPost('/ajax/space/pin', {
+					spaceId: t.id,
+					pinned,
+				}).then(() => {
+					this.$message.success('Tag pinned');
+				}).catch(err => {
+					t.isPinned = !pinned; // revert
+					this.$message.error('Failed to pin tag');
+				});
+			}
 		},
 
 		loadDragula() {

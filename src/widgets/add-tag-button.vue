@@ -3,7 +3,7 @@
 	<div v-if="adding" class="add-tag-form flex-row-sm nowrap">
 		<el-input
 			v-model="tag"
-			:maxlength="$store.getters.tagMaxLength"
+			:maxlength="$const.tagMaxLength"
 			show-word-limit
 			size="small">
 			<template #prepend>

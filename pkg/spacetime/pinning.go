@@ -104,7 +104,8 @@ func PinSpace(conn db.DBConn, auth ajax.Auth, space *Space) error {
 	// Insert new pinned branch with order number after max existing
 	_, err = conn.Exec(`INSERT INTO user_space_config
 			(space_id, user_id, order_number)
-			VALUES ($1, $2, COALESCE($3, -1) + 1)`,
+			VALUES ($1, $2, COALESCE($3, -1) + 1)
+			ON CONFLICT DO NOTHING`,
 		space.ID, auth.UserID, maxOrderNumber,
 	)
 	if err != nil {

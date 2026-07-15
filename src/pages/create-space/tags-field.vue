@@ -5,7 +5,7 @@
 		v-model="addTagLabel"
 		@keyup.enter="addTag"
 		:disabled="disabled"
-		:maxlength="$store.getters.tagMaxLength"
+		:maxlength="$const.tagMaxLength"
 		show-word-limit
 		placeholder="Enter tag and press enter"
 		size="large"

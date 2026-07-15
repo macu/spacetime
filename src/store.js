@@ -13,7 +13,7 @@ export const store = createStore({
 	state() {
 		return {
 			loading: false,
-			user: null, // null means indeterminate
+			user: null, // null means indeterminate, false means no login
 			windowWidth: window.innerWidth,
 		};
 	},
@@ -56,27 +56,6 @@ export const store = createStore({
 				return state.user.role;
 			}
 			return null;
-		},
-		labelMaxLength() {
-			return window.appConstants.labelMaxLength;
-		},
-		titleMaxLength() {
-			return window.appConstants.titleMaxLength;
-		},
-		tagMaxLength() {
-			return window.appConstants.tagMaxLength;
-		},
-		textMaxLength() {
-			return window.appConstants.textMaxLength;
-		},
-		maxPageLimit() {
-			return window.appConstants.maxPageLimit;
-		},
-		nakedTextMaxDeltasSoft() {
-			return window.appConstants.nakedTextMaxDeltasSoft;
-		},
-		nakedTextMaxDeltas() {
-			return window.appConstants.nakedTextMaxDeltas;
 		},
 	},
 	mutations: {

@@ -26,6 +26,7 @@ func indexHandler(db *sql.DB, user *ajax.Auth, w http.ResponseWriter, r *http.Re
 		NakedTextMaxDeltas     uint
 		NakedTextMaxDeltasSoft uint
 		MaxPageLimit           uint
+		DefaultTagsLimit       uint
 	}{
 		env.IsLocal(),
 		env.GetCacheControlVersionStamp(),
@@ -37,5 +38,6 @@ func indexHandler(db *sql.DB, user *ajax.Auth, w http.ResponseWriter, r *http.Re
 		spacetime.NakedTextMaxDeltas,
 		spacetime.NakedTextMaxDeltasSoft,
 		spacetime.MaxSubspacesPageLimit,
+		spacetime.DefaultTagsLimit,
 	})
 }

@@ -15,8 +15,20 @@
 
 		<space-output
 			v-for="s in spaces"
-			:space="s"
-		/>
+			:space="s">
+			<template #actions-area>
+				<div class="flex-row-md">
+					<checkin-button :space="s"/>
+					<bookmark-button :space="s"/>
+					<space-tag
+						v-for="t in s.tags"
+						:key="t.id"
+						:space="t"
+						:show-pinning="false"
+					/>
+				</div>
+			</template>
+		</space-output>
 
 		<div class="center">
 			<loading-message v-if="loading"/>
@@ -31,6 +43,9 @@
 <script>
 import CreateDropdown from '@/widgets/create-dropdown.vue';
 import SpaceOutput from '@/widgets/space-output.vue';
+import CheckinButton from '@/widgets/checkin-button.vue';
+import BookmarkButton from '@/widgets/bookmark-button.vue';
+import SpaceTag from '@/widgets/space-tag.vue';
 import SubspacesFilter, {
 	getFilter,
 } from '@/widgets/subspaces-filter.vue';
@@ -43,6 +58,9 @@ export default {
 	components: {
 		CreateDropdown,
 		SpaceOutput,
+		CheckinButton,
+		BookmarkButton,
+		SpaceTag,
 		SubspacesFilter,
 	},
 	data() {
@@ -70,7 +88,7 @@ export default {
 			ajaxGet('/ajax/subspaces', {
 				parentId: null, // root
 				offset: 0,
-				limit: this.$store.getters.maxPageLimit,
+				limit: this.$const.maxPageLimit,
 				includeTags: true,
 				filter: this.filter ? JSON.stringify(this.filter) : null,
 			}).then(response => {
@@ -84,7 +102,7 @@ export default {
 			ajaxGet('/ajax/subspaces', {
 				parentId: null, // root
 				offset: this.spaces.length,
-				limit: this.$store.getters.maxPageLimit,
+				limit: this.$const.maxPageLimit,
 				includeTags: true,
 				filter: this.filter ? JSON.stringify(this.filter) : null,
 			}).then(response => {

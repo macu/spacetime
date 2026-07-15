@@ -1,6 +1,8 @@
 <template>
 <div class="space-tag flex-row nowrap" :class="{'ellipsis': ellipsis}">
+
 	<material-icon :icon="icon"/>
+
 	<el-button
 		v-if="showPinning"
 		:type="pinned ? 'success' : 'primary'"
@@ -10,18 +12,24 @@
 		<material-icon v-else icon="keep_off"/>
 		{{ pinned ? 'Unpin' : 'Pin' }}
 	</el-button>
-	<material-icon v-else-if="pinned" icon="keep" class="pinned"/>
+
+	<el-tooltip v-else-if="pinned" content="Pinned by author" placement="top">
+		<material-icon icon="keep" class="pinned"/>
+	</el-tooltip>
+
 	<checkin-button
 		v-if="showCheckin"
 		:space="space"
 		@check-in="$emit('check-in')"
 		size="small"
 		/>
+
 	<span
 		@click="$emit('click-tag')"
 		class="text"
 		v-text="tagOutput"
 		/>
+
 </div>
 </template>
 
@@ -36,7 +44,7 @@ export default {
 	emits: [
 		'check-in',
 		'click-tag',
-		'set-pinned',
+		'toggle-pinned',
 	],
 	components: {
 		CheckinButton,
@@ -72,7 +80,7 @@ export default {
 	},
 	methods: {
 		togglePinned() {
-			this.$emit('set-pinned', !this.pinned);
+			this.$emit('toggle-pinned');
 		},
 	},
 };

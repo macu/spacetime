@@ -10,8 +10,8 @@
 		@set-pinned="pinned => space.isPinned = pinned"
 		>
 
-		<template #tags-area="{context}">
-			<slot name="tags-area" :context="context"/>
+		<template #actions-area="{space, context}">
+			<slot name="actions-area" :space="space" :context="context"/>
 		</template>
 
 		<slot
@@ -76,7 +76,7 @@ export default {
 		userAllowPinToParent() {
 			// Allow pinning loaded space to parent
 
-			if (!this.space || !this.space.parentPath) {
+			if (!this.space || !this.space.parentPath || this.space.parentPath.length === 0) {
 				return false;
 			}
 
@@ -203,6 +203,10 @@ export default {
 			}).finally(() => {
 				this.loading = false;
 			});
+		},
+
+		updateSpace(space) {
+			this.space = space;
 		},
 	},
 };

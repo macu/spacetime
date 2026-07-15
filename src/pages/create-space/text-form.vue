@@ -4,7 +4,7 @@
 	<form-field title="Title">
 		<el-input
 			v-model="title"
-			:maxlength="$store.getters.titleMaxLength"
+			:maxlength="$const.titleMaxLength"
 			show-word-limit
 			size="large"
 			:disabled="posting"
@@ -20,7 +20,7 @@
 	<form-field title="Text" required>
 		<el-progress
 			v-if="saveRecording"
-			:percentage="(recordDeltas / $store.getters.nakedTextMaxDeltasSoft) * 100"
+			:percentage="(recordDeltas / $const.nakedTextMaxDeltasSoft) * 100"
 			:format="pct => Math.floor(pct) + '%'"
 			:stroke-width="24"
 			show-text
@@ -29,7 +29,7 @@
 			<el-input
 				type="textarea"
 				v-model="text"
-				:maxlength="$store.getters.textMaxLength"
+				:maxlength="$const.textMaxLength"
 				show-word-limit
 				:autosize="{minRows: 3}"
 				:disabled="disableTextarea"
@@ -134,7 +134,7 @@ export default {
 		},
 		recordingMaxed() {
 			// disable textarea at soft limit
-			return this.recordDeltas >= this.$store.getters.nakedTextMaxDeltasSoft;
+			return this.recordDeltas >= this.$const.nakedTextMaxDeltasSoft;
 		},
 		disableTextarea() {
 			return this.posting || (this.saveRecording && this.recordingMaxed);
@@ -155,9 +155,9 @@ export default {
 				return;
 			}
 
-			if (newValue.length > this.$store.getters.textMaxLength) {
+			if (newValue.length > this.$const.textMaxLength) {
 				// Should be safe using maxlength on input
-				newValue = newValue.slice(0, this.$store.getters.textMaxLength);
+				newValue = newValue.slice(0, this.$const.textMaxLength);
 			}
 
 			// Ensure the first timestamp is 0

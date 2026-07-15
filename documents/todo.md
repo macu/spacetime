@@ -3,8 +3,8 @@
 "Make it exist first. You can make it good later."
 
 - [ ] allow users to configure their personal user spaces
-  - [ ] allow user to pin and order pinned items within their personal space
-  - [ ] allow users to pin and order pinned items within a public text space they created
+  - [*] allow user to pin and order pinned items within their personal space
+  - [*] allow users to pin and order pinned items within a public text space they created
   - [ ] freedom to rename, delete, and move items within personal space (but not public)
   - [ ] conflict detection when moving branches within personal space (can't merge)
 

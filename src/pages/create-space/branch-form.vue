@@ -7,7 +7,7 @@
 		</template>
 		<el-input
 			v-model="label"
-			:maxlength="$store.getters.labelMaxLength"
+			:maxlength="$const.labelMaxLength"
 			show-word-limit
 			size="large"
 			:disabled="posting"

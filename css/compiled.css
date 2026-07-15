@@ -265,6 +265,14 @@ div.center {
   background-color: white;
   padding: 10px;
 }
+/*!****************************************************************************************************************************************************************************************************************************************************************************************************************************************!*\
+  !*** css ./node_modules/css-loader/dist/cjs.js??clonedRuleSet-2.use[1]!./node_modules/vue-loader/dist/stylePostLoader.js!./node_modules/sass-loader/dist/cjs.js??clonedRuleSet-2.use[2]!./node_modules/vue-loader/dist/index.js??ruleSet[1].rules[5].use[0]!./src/widgets/space-type.vue?vue&type=style&index=0&id=2953d61a&lang=scss ***!
+  \****************************************************************************************************************************************************************************************************************************************************************************************************************************************/
+.space-type {
+  color: darkblue;
+  text-shadow: 2px 2px 3px white;
+  font-size: 120%;
+}
 /*!********************************************************************************************************************************************************************************************************************************************************************************************************************************************!*\
   !*** css ./node_modules/css-loader/dist/cjs.js??clonedRuleSet-2.use[1]!./node_modules/vue-loader/dist/stylePostLoader.js!./node_modules/sass-loader/dist/cjs.js??clonedRuleSet-2.use[2]!./node_modules/vue-loader/dist/index.js??ruleSet[1].rules[5].use[0]!./src/widgets/checkin-button.vue?vue&type=style&index=0&id=74fbee4b&lang=scss ***!
   \********************************************************************************************************************************************************************************************************************************************************************************************************************************************/
@@ -275,14 +283,6 @@ div.center {
 }
 .checkin-button > *, .checkin-button > * + * {
   margin: 0;
-}
-/*!****************************************************************************************************************************************************************************************************************************************************************************************************************************************!*\
-  !*** css ./node_modules/css-loader/dist/cjs.js??clonedRuleSet-2.use[1]!./node_modules/vue-loader/dist/stylePostLoader.js!./node_modules/sass-loader/dist/cjs.js??clonedRuleSet-2.use[2]!./node_modules/vue-loader/dist/index.js??ruleSet[1].rules[5].use[0]!./src/widgets/space-type.vue?vue&type=style&index=0&id=2953d61a&lang=scss ***!
-  \****************************************************************************************************************************************************************************************************************************************************************************************************************************************/
-.space-type {
-  color: darkblue;
-  text-shadow: 2px 2px 3px white;
-  font-size: larger;
 }
 /*!***************************************************************************************************************************************************************************************************************************************************************************************************************************************!*\
   !*** css ./node_modules/css-loader/dist/cjs.js??clonedRuleSet-2.use[1]!./node_modules/vue-loader/dist/stylePostLoader.js!./node_modules/sass-loader/dist/cjs.js??clonedRuleSet-2.use[2]!./node_modules/vue-loader/dist/index.js??ruleSet[1].rules[5].use[0]!./src/widgets/space-tag.vue?vue&type=style&index=0&id=43250aea&lang=scss ***!
@@ -375,14 +375,6 @@ div.center {
 .space-text > .el-button {
   align-self: flex-start;
 }
-/*!********************************************************************************************************************************************************************************************************************************************************************************************************************************************!*\
-  !*** css ./node_modules/css-loader/dist/cjs.js??clonedRuleSet-2.use[1]!./node_modules/vue-loader/dist/stylePostLoader.js!./node_modules/sass-loader/dist/cjs.js??clonedRuleSet-2.use[2]!./node_modules/vue-loader/dist/index.js??ruleSet[1].rules[5].use[0]!./src/widgets/add-tag-button.vue?vue&type=style&index=0&id=1a2ec76a&lang=scss ***!
-  \********************************************************************************************************************************************************************************************************************************************************************************************************************************************/
-.add-space-tag-widget .add-tag-form {
-  border: thin solid lightgray;
-  border-radius: 4px;
-  padding: 5px;
-}
 /*!******************************************************************************************************************************************************************************************************************************************************************************************************************************************!*\
   !*** css ./node_modules/css-loader/dist/cjs.js??clonedRuleSet-2.use[1]!./node_modules/vue-loader/dist/stylePostLoader.js!./node_modules/sass-loader/dist/cjs.js??clonedRuleSet-2.use[2]!./node_modules/vue-loader/dist/index.js??ruleSet[1].rules[5].use[0]!./src/widgets/space-output.vue?vue&type=style&index=0&id=6b8af261&lang=scss ***!
   \******************************************************************************************************************************************************************************************************************************************************************************************************************************************/
@@ -418,14 +410,18 @@ div.center {
 .space-output > .container .space-type {
   cursor: pointer;
 }
-.space-output > .container > .space-info-bar, .space-output > .container > .space-tags-bar {
-  font-size: smaller;
+.space-output > .container > .space-header {
   cursor: default;
 }
-.space-output > .container > .space-info-bar .drag-handle, .space-output > .container > .space-tags-bar .drag-handle {
+.space-output > .container > .space-header .drag-handle {
   cursor: ns-resize;
 }
-.space-output > .container > .space-title, .space-output > .container > .space-tag {
+.space-output > .container > .space-header .space-label {
+  padding-left: 10px;
+  font-weight: bold;
+  font-size: 120%;
+}
+.space-output > .container > .space-tag {
   padding: 40px;
   cursor: default;
 }
@@ -449,11 +445,19 @@ div.center {
 .is-mobile .space-output > .container {
   padding: 20px 10px;
 }
-.is-mobile .space-output > .container > .space-title, .is-mobile .space-output > .container > .space-tag, .is-mobile .space-output > .container > .space-text {
+.is-mobile .space-output > .container > .space-tag, .is-mobile .space-output > .container > .space-text {
   padding: 20px;
 }
 .is-mobile .space-output > .container > .portal {
   padding: 20px;
+}
+/*!********************************************************************************************************************************************************************************************************************************************************************************************************************************************!*\
+  !*** css ./node_modules/css-loader/dist/cjs.js??clonedRuleSet-2.use[1]!./node_modules/vue-loader/dist/stylePostLoader.js!./node_modules/sass-loader/dist/cjs.js??clonedRuleSet-2.use[2]!./node_modules/vue-loader/dist/index.js??ruleSet[1].rules[5].use[0]!./src/widgets/add-tag-button.vue?vue&type=style&index=0&id=1a2ec76a&lang=scss ***!
+  \********************************************************************************************************************************************************************************************************************************************************************************************************************************************/
+.add-space-tag-widget .add-tag-form {
+  border: thin solid lightgray;
+  border-radius: 4px;
+  padding: 5px;
 }
 /*!***************************************************************************************************************************************************************************************************************************************************************************************************************************************************!*\
   !*** css ./node_modules/css-loader/dist/cjs.js??clonedRuleSet-2.use[1]!./node_modules/vue-loader/dist/stylePostLoader.js!./node_modules/sass-loader/dist/cjs.js??clonedRuleSet-2.use[2]!./node_modules/vue-loader/dist/index.js??ruleSet[1].rules[5].use[0]!./src/pages/create-space/tags-field.vue?vue&type=style&index=0&id=72fb8acc&lang=scss ***!
