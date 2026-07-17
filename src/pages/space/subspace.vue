@@ -29,7 +29,8 @@
 			/>
 
 			<space-tag
-				v-for="t in tags"
+				v-for="t in uniqueTags"
+				:key="t.id"
 				:space="t"
 			/>
 
@@ -97,6 +98,16 @@ export default {
 	computed: {
 		allowPinning() {
 			return this.context && this.context.userAllowPinSubs;
+		},
+		uniqueTags() {
+			const ids = new Set();
+			return this.tags.filter(tag => {
+				if (ids.has(tag.id)) {
+					return false;
+				}
+				ids.add(tag.id);
+				return true;
+			});
 		},
 	},
 	methods: {

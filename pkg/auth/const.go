@@ -16,4 +16,5 @@ const signupTokenExpiry = time.Hour
 const userHandleMaxLength = 25
 const userDisplayNameMaxLength = 50
 
-const userHandlePattern = `^[a-zA-Z0-9_]+$`
+// require alphabetic first character, then alphanumeric or underscore
+const UserHandlePattern = `^[a-zA-Z][a-zA-Z0-9_]*$`

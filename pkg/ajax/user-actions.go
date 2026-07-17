@@ -3,12 +3,15 @@ package ajax
 import (
 	"database/sql"
 	"net/http"
+	"regexp"
 
-	"spacetime/pkg/spacetime"
-	"spacetime/pkg/user"
+	authFunctions "spacetime/pkg/auth"
 	"spacetime/pkg/utils/ajax"
 	"spacetime/pkg/utils/logging"
 	"spacetime/pkg/utils/types"
+
+	"spacetime/pkg/spacetime"
+	"spacetime/pkg/user"
 )
 
 func AjaxBookmark(db *sql.DB, auth ajax.Auth,
@@ -123,5 +126,53 @@ func AjaxMovePinnedSpace(db *sql.DB, auth ajax.Auth,
 	}
 
 	return nil, http.StatusOK
+
+}
+
+func AjaxUserSpaceId(db *sql.DB, auth *ajax.Auth,
+	w http.ResponseWriter, r *http.Request,
+) (interface{}, int) {
+
+	id := r.FormValue("id")
+
+	if id == "" {
+		return nil, http.StatusBadRequest
+	}
+
+	var userID uint
+	var err error
+
+	// if numeric, look up user by ID
+	isNumeric := regexp.MustCompile(`^\d+$`).MatchString(id)
+	if isNumeric {
+		userID, err = types.AtoUint(id)
+		if err != nil {
+			return nil, http.StatusBadRequest
+		}
+	} else {
+		// otherwise, look up user by handle
+		user, err := authFunctions.GetUserByHandle(db, id)
+		if err != nil {
+			logging.LogError(r, auth, err)
+			return nil, http.StatusInternalServerError
+		} else if user == nil {
+			return nil, http.StatusNotFound
+		}
+		userID = user.ID
+	}
+
+	spaceID, err := spacetime.GetUserSpaceID(db, userID)
+	if err != nil {
+		logging.LogError(r, auth, err)
+		return nil, http.StatusInternalServerError
+	} else if spaceID == 0 {
+		return nil, http.StatusNotFound
+	}
+
+	return struct {
+		SpaceID uint `json:"spaceId"`
+	}{
+		SpaceID: spaceID,
+	}, http.StatusOK
 
 }

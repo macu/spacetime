@@ -179,14 +179,13 @@ export default {
 		border: thin solid darkblue;
 		border-radius: $border-radius;
 		padding: 20px 40px;
-		cursor: pointer; // clickable spaces
 
 		.space-type {
 			cursor: pointer;
 		}
 
 		>.space-header {
-			cursor: default;
+			cursor: pointer; // clickable spaces
 
 			.drag-handle {
 				cursor: ns-resize;

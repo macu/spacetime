@@ -3,7 +3,7 @@ package spacetime
 const LabelMaxLength = 128
 const TextMaxLength = 2048
 const TitleMaxLength = 256
-const TagMaxLength = 128
+const TagMaxLength = 64
 const NakedTextMaxDeltasSoft = TextMaxLength * 3
 const NakedTextMaxDeltas = TextMaxLength * 4
 

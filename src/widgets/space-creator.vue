@@ -1,6 +1,6 @@
 <template>
 <span class="space-creator">
-	Created by <router-link :to="route" v-text="creatorName"/> <moment :time="space.createdAt"/>
+	Created by <span @click.stop><router-link :to="route" v-text="creatorName"/></span> <moment :time="space.createdAt"/>
 </span>
 </template>
 

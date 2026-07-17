@@ -13,3 +13,8 @@ type AuthOptionalHandler func(
 	w http.ResponseWriter,
 	r *http.Request,
 )
+
+type User struct {
+	ID     uint   `json:"id"`
+	Handle string `json:"handle"`
+}

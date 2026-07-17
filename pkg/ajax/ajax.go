@@ -21,6 +21,8 @@ var ajaxHandlersAuthOptional = map[string]map[string]ajax.AjaxRouteAuthOptional{
 		"/ajax/subspaces":    AjaxLoadSubspaces,
 		"/ajax/text-replay":  AjaxLoadTextSpaceRecording,
 
+		"/ajax/user-space-id": AjaxUserSpaceId,
+
 		"/ajax/load-login":  auth.AjaxLoadLogin,
 		"/ajax/load-signup": auth.AjaxLoadSignup,
 	},

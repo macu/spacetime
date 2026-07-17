@@ -8,7 +8,7 @@
 			size="small"
 			@keyup.enter="addTag()">
 			<template #prepend>
-				Add tag
+				<strong>Add tag</strong>
 			</template>
 		</el-input>
 		<el-button

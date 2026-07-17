@@ -73,8 +73,6 @@ import {
 	ajaxPost,
 } from '@/utils/ajax.js';
 
-const handlePattern = /^[a-zA-Z0-9_]+$/;
-
 export default {
 	data() {
 		return {
@@ -89,10 +87,13 @@ export default {
 		};
 	},
 	computed: {
+		handlePattern() {
+			return new RegExp(this.$const.handlePattern);
+		},
 		createDisabled() {
 			return this.loading || !this.signupRequest ||
 				this.submitting || !this.displayName.trim() ||
-				(!!this.handle.trim() && !handlePattern.test(this.handle.trim())) ||
+				(!!this.handle.trim() && !this.handlePattern.test(this.handle.trim())) ||
 				!this.password.trim() ||
 				this.password.length < this.$store.getters.passwordMinLength ||
 				this.password !== this.verifyPassword;

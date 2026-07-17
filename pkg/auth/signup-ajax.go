@@ -197,7 +197,7 @@ func AjaxSignupVerify(db *sql.DB, auth *ajax.Auth, w http.ResponseWriter, r *htt
 	var handleValue *string
 	if handle != "" {
 		// verify pattern
-		var pattern = regexp.MustCompile(userHandlePattern)
+		var pattern = regexp.MustCompile(UserHandlePattern)
 		if !pattern.MatchString(handle) {
 			return ajax.AjaxErrorPayload{
 				ErrorCode: "invalid-handle",
