@@ -23,6 +23,11 @@
 
 			<bookmark-button :space="subspace"/>
 
+			<add-tag-button
+				:parent-id="subspace.id"
+				@added="tag => tags.push(tag)"
+			/>
+
 			<space-tag
 				v-for="t in tags"
 				:space="t"
@@ -46,6 +51,7 @@ import SpaceOutput from '@/widgets/space-output.vue';
 import CheckinButton from '@/widgets/checkin-button.vue';
 import BookmarkButton from '@/widgets/bookmark-button.vue';
 import SpaceTag from '@/widgets/space-tag.vue';
+import AddTagButton from '@/widgets/add-tag-button.vue';
 
 import {
 	ajaxGet,
@@ -61,6 +67,7 @@ export default {
 		CheckinButton,
 		BookmarkButton,
 		SpaceTag,
+		AddTagButton,
 	},
 	props: {
 		subspace: {

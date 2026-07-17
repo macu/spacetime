@@ -5,7 +5,8 @@
 			v-model="tag"
 			:maxlength="$const.tagMaxLength"
 			show-word-limit
-			size="small">
+			size="small"
+			@keyup.enter="addTag()">
 			<template #prepend>
 				Add tag
 			</template>
@@ -33,6 +34,11 @@
 import {
 	ajaxPost,
 } from '@/utils/ajax.js';
+
+import {
+	alertSuccess,
+	showError,
+} from '@/utils/notify.js';
 
 export default {
 	emits: [
@@ -84,11 +90,14 @@ export default {
 				parentId: this.parentId,
 				tag: this.tag,
 			}, {
-				409: 'Tag already added.', // conflict: already exists
+				409() { // conflict
+					showError('Tag already added.');
+				},
 			}).then(response => {
 				this.$emit('added', response);
 				this.adding = false;
 				this.tag = '';
+				alertSuccess('Tag added');
 			});
 		},
 	},

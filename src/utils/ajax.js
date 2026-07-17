@@ -23,7 +23,7 @@ export function ajaxPost(url, params = {}, errorCodeMessages = {}) {
 		return response.data;
 	}).catch(error => {
 		alertError(error, errorCodeMessages);
-		throw error;
+		throw error; // prevent next then from being called
 	});
 }
 
@@ -32,7 +32,7 @@ export function ajaxGet(url, params = {}, errorCodeMessages = {}) {
 		return response.data;
 	}).catch(error => {
 		alertError(error, errorCodeMessages);
-		throw error;
+		throw error; // prevent next then from being called
 	});
 }
 
@@ -45,12 +45,16 @@ export function alertError(error, errorCodeMessages = {}) {
 
 			let customResponse = null;
 			if (
+				// some responses contain errorCode from app
 				error.response.data &&
 				error.response.data.errorCode &&
 				errorCodeMessages[error.response.data.errorCode]
 			) {
 				customResponse = errorCodeMessages[error.response.data.errorCode];
-			} else if (errorCodeMessages[error.response.status]) {
+			} else if (
+				// might have been passed a message/handler for status
+				errorCodeMessages[error.response.status]
+			) {
 				customResponse = errorCodeMessages[error.response.status];
 			}
 

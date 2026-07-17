@@ -15,3 +15,12 @@ export function showLoading(message) {
 		closable: false,
 	});
 }
+
+export function showError(message) {
+	ElMessage({
+		message,
+		type: 'error',
+		showClose: true,
+		duration: 10 * 1000,
+	});
+}

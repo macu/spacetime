@@ -11,8 +11,8 @@
 
 <script>
 import {
-	ElMessage,
-} from 'element-plus';
+	showError,
+} from '@/utils/notify.js';
 
 import bus from '@/utils/bus.js';
 
@@ -65,12 +65,8 @@ export default {
 			ajaxPost('/ajax/create/checkin', {
 				parentId: this.space.id,
 			}, {
-				429() {
-					ElMessage({
-						message: 'Rate limit exceeded. Max 1 check-in per space per minute.',
-						type: 'error',
-						showClose: true,
-					});
+				429() { // rate limit
+					showError('Rate limit exceeded. Max 1 check-in per space per minute.');
 				},
 			}).then(() => {
 				bus.emit('direct-check-in', {

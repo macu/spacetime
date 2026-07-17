@@ -23,6 +23,7 @@
 - [ ] get running on App Engine
 - [ ] add content imports into user spaces
 - [ ] undo a checkin within a timespan
+- [ ] to think about: master list of tags with translations liked and key values for special function
 
 - [*] rename "subspace" to "branch"
 - [*] remove title type (branches have labels and text have titles)
