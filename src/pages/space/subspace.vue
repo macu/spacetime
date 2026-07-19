@@ -91,7 +91,9 @@ export default {
 	data() {
 		return {
 			tags: this.subspace.tags || [],
-			showLoadMoreTags: this.subspace.tags.length === this.$const.defaultTagsLimit,
+			showLoadMoreTags: this.subspace.tags
+				? this.subspace.tags.length === this.$const.defaultTagsLimit
+				: false,
 			loadingTags: false,
 		};
 	},

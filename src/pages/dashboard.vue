@@ -4,7 +4,10 @@
 	<return-to-top/>
 
 	<horizontal-controls>
-		<create-dropdown :disabled="$store.getters.createDisabled" sticky/>
+		<create-dropdown
+			:disabled="$store.getters.createDisabled"
+			sticky
+		/>
 		<subspaces-filter
 			v-model="filter"
 			:allow-pinned="false"
@@ -32,7 +35,7 @@
 
 		<div class="center">
 			<loading-message v-if="loading"/>
-			<el-button v-else @click="loadMore()" type="primary">Load More</el-button>
+			<el-button v-else @click="loadMore()">Load More</el-button>
 		</div>
 
 	</div>
@@ -114,3 +117,15 @@ export default {
 	},
 };
 </script>
+
+<style lang="scss">
+@import '@/styles/vars.scss';
+
+.dashboard-page {
+	>.horizontal-controls {
+		padding: 10px;
+		background-color: $actions-background-color;
+		border-radius: $border-radius;
+	}
+}
+</style>

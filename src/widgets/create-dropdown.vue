@@ -37,7 +37,7 @@
 			@click="create('create-branch')"
 			type="primary" :disabled="disabled">
 			<material-icon icon="add"/>
-			<span>Create space</span>
+			<span>Create root space</span>
 		</el-button>
 	</div>
 </div>
@@ -110,8 +110,8 @@ export default {
 
 		>div {
 			align-self: flex-start;
-			background-color: white;
-			padding: 10px;
+			// background-color: white;
+			// padding: 10px;
 		}
 	}
 }

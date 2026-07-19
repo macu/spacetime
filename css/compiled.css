@@ -4,7 +4,7 @@
 html, body {
   padding: 0;
   margin: 0;
-  background-color: #d5f4ff;
+  background-color: #0db0ea;
 }
 
 * {
@@ -152,7 +152,7 @@ div.center {
 }
 
 .flex-row {
-  row-gap: 10px;
+  row-gap: 5px;
   column-gap: 10px;
 }
 
@@ -162,12 +162,12 @@ div.center {
 }
 
 .flex-row-md {
-  row-gap: 20px;
+  row-gap: 10px;
   column-gap: 20px;
 }
 
 .flex-row-lg {
-  row-gap: 40px;
+  row-gap: 20px;
   column-gap: 40px;
 }
 
@@ -228,8 +228,7 @@ div.center {
 .spacetime-app > header {
   margin: 0;
   padding: 20px;
-  background-color: #037dff;
-  border-bottom: 1px solid #ccc;
+  background-color: #1C3144;
   color: white;
 }
 .spacetime-app > header > h1 {
@@ -240,6 +239,7 @@ div.center {
 }
 .spacetime-app > .body {
   padding: 40px 40px 80px;
+  background: linear-gradient(to bottom, #093862, transparent 10px), transparent;
 }
 .spacetime-app.is-mobile > header {
   padding: 10px;
@@ -248,7 +248,7 @@ div.center {
   font-size: 1.5em;
 }
 .spacetime-app.is-mobile > .body {
-  padding: 20px 20px 60px;
+  padding: 20px 10px 60px;
 }
 /*!*********************************************************************************************************************************************************************************************************************************************************************************************************************************************!*\
   !*** css ./node_modules/css-loader/dist/cjs.js??clonedRuleSet-2.use[1]!./node_modules/vue-loader/dist/stylePostLoader.js!./node_modules/sass-loader/dist/cjs.js??clonedRuleSet-2.use[2]!./node_modules/vue-loader/dist/index.js??ruleSet[1].rules[5].use[0]!./src/widgets/create-dropdown.vue?vue&type=style&index=0&id=b335a0ce&lang=scss ***!
@@ -262,8 +262,6 @@ div.center {
 }
 .create-dropdown.sticky > div {
   align-self: flex-start;
-  background-color: white;
-  padding: 10px;
 }
 /*!****************************************************************************************************************************************************************************************************************************************************************************************************************************************!*\
   !*** css ./node_modules/css-loader/dist/cjs.js??clonedRuleSet-2.use[1]!./node_modules/vue-loader/dist/stylePostLoader.js!./node_modules/sass-loader/dist/cjs.js??clonedRuleSet-2.use[2]!./node_modules/vue-loader/dist/index.js??ruleSet[1].rules[5].use[0]!./src/widgets/space-type.vue?vue&type=style&index=0&id=2953d61a&lang=scss ***!
@@ -359,7 +357,7 @@ div.center {
   \****************************************************************************************************************************************************************************************************************************************************************************************************************************************/
 .space-text {
   background-color: white;
-  border: thin solid gray;
+  border: thin dotted gray;
   color: black;
   border-radius: 10px;
   box-shadow: inset 0 0 10px 0 rgba(0, 0, 0, 0.1);
@@ -404,7 +402,7 @@ div.center {
   background-color: white;
   border: thin solid darkblue;
   border-radius: 10px;
-  padding: 20px 40px;
+  padding: 20px 20px;
 }
 .space-output > .container .space-type {
   cursor: pointer;
@@ -425,7 +423,7 @@ div.center {
   cursor: default;
 }
 .space-output > .container > .space-text {
-  padding: 80px;
+  padding: 40px;
   cursor: default;
 }
 .space-output > .container > .portal {
@@ -448,7 +446,15 @@ div.center {
   padding: 20px;
 }
 .is-mobile .space-output > .container > .portal {
-  padding: 20px;
+  padding: 20px 10px;
+}
+/*!*************************************************************************************************************************************************************************************************************************************************************************************************************************************!*\
+  !*** css ./node_modules/css-loader/dist/cjs.js??clonedRuleSet-2.use[1]!./node_modules/vue-loader/dist/stylePostLoader.js!./node_modules/sass-loader/dist/cjs.js??clonedRuleSet-2.use[2]!./node_modules/vue-loader/dist/index.js??ruleSet[1].rules[5].use[0]!./src/pages/dashboard.vue?vue&type=style&index=0&id=7cc04280&lang=scss ***!
+  \*************************************************************************************************************************************************************************************************************************************************************************************************************************************/
+.dashboard-page > .horizontal-controls {
+  padding: 10px;
+  background-color: #006386;
+  border-radius: 10px;
 }
 /*!********************************************************************************************************************************************************************************************************************************************************************************************************************************************!*\
   !*** css ./node_modules/css-loader/dist/cjs.js??clonedRuleSet-2.use[1]!./node_modules/vue-loader/dist/stylePostLoader.js!./node_modules/sass-loader/dist/cjs.js??clonedRuleSet-2.use[2]!./node_modules/vue-loader/dist/index.js??ruleSet[1].rules[5].use[0]!./src/widgets/add-tag-button.vue?vue&type=style&index=0&id=1a2ec76a&lang=scss ***!
@@ -465,6 +471,19 @@ div.center {
   background-color: #eee;
   border-radius: 4px;
   padding: 4px 8px;
+}
+/*!***********************************************************************************************************************************************************************************************************************************************************************************************************************************************!*\
+  !*** css ./node_modules/css-loader/dist/cjs.js??clonedRuleSet-2.use[1]!./node_modules/vue-loader/dist/stylePostLoader.js!./node_modules/sass-loader/dist/cjs.js??clonedRuleSet-2.use[2]!./node_modules/vue-loader/dist/index.js??ruleSet[1].rules[5].use[0]!./src/pages/create-space/branch.vue?vue&type=style&index=0&id=5aa39728&lang=scss ***!
+  \***********************************************************************************************************************************************************************************************************************************************************************************************************************************************/
+.create-branch-space-page .root-portal {
+  background-color: #d5f4ff;
+  border: thin solid darkblue;
+  border-radius: 10px;
+  padding: 40px;
+  border-radius: 12px;
+}
+.is-mobile .create-branch-space-page .root-portal {
+  padding: 20px 10px;
 }
 /*!*******************************************************************************************************************************************************************************************************************************************************************************************************************************************!*\
   !*** css ./node_modules/css-loader/dist/cjs.js??clonedRuleSet-2.use[1]!./node_modules/vue-loader/dist/stylePostLoader.js!./node_modules/sass-loader/dist/cjs.js??clonedRuleSet-2.use[2]!./node_modules/vue-loader/dist/index.js??ruleSet[1].rules[5].use[0]!./src/widgets/material-icon.vue?vue&type=style&index=0&id=55e49714&lang=scss ***!
@@ -503,20 +522,13 @@ div.center {
 /*!****************************************************************************************************************************************************************************************************************************************************************************************************************************************!*\
   !*** css ./node_modules/css-loader/dist/cjs.js??clonedRuleSet-2.use[1]!./node_modules/vue-loader/dist/stylePostLoader.js!./node_modules/sass-loader/dist/cjs.js??clonedRuleSet-2.use[2]!./node_modules/vue-loader/dist/index.js??ruleSet[1].rules[5].use[0]!./src/widgets/form-field.vue?vue&type=style&index=0&id=09e9792a&lang=scss ***!
   \****************************************************************************************************************************************************************************************************************************************************************************************************************************************/
-.form-layout-form-field {
-  display: flex;
-  flex-direction: column;
-  row-gap: 10px;
-  background-color: #eee;
-  padding: 10px;
-  border-radius: 8px;
-}
 .form-layout-form-field > .title-row {
   font-weight: bold;
 }
 .form-layout-form-field > .form-field-body {
   padding: 10px;
-  background-color: white;
+  border: thin solid black;
+  border-radius: 10px;
 }
 .form-layout-form-field > .form-field-body > .form-value {
   font-size: larger;
@@ -525,7 +537,7 @@ div.center {
   !*** css ./node_modules/css-loader/dist/cjs.js??clonedRuleSet-2.use[1]!./node_modules/vue-loader/dist/stylePostLoader.js!./node_modules/sass-loader/dist/cjs.js??clonedRuleSet-2.use[2]!./node_modules/vue-loader/dist/index.js??ruleSet[1].rules[5].use[0]!./src/widgets/form-actions.vue?vue&type=style&index=0&id=8321bca6&lang=scss ***!
   \******************************************************************************************************************************************************************************************************************************************************************************************************************************************/
 .form-actions {
-  background-color: #eee;
   padding: 10px;
-  border-radius: 8px;
+  border: thin solid black;
+  border-radius: 10px;
 }

@@ -169,8 +169,7 @@ func LoadSubspaces(conn *sql.DB, auth *ajax.Auth,
 
 		case SpaceFilterModePinned:
 			filterModeClauseSql = `AND EXISTS (SELECT 1 FROM user_space_config
-				WHERE user_space_config.user_id = ` + db.Arg(&args, auth.UserID) + `
-				AND user_space_config.space_id = space.id)`
+				WHERE user_space_config.space_id = space.id)`
 			orderByClauseSql = `user_space_config.order_number ASC`
 
 		default:

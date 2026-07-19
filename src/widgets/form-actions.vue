@@ -5,9 +5,11 @@
 </template>
 
 <style lang="scss">
+@import '@/styles/vars.scss';
+
 .form-actions {
-	background-color: #eee;
 	padding: 10px;
-	border-radius: 8px;
+	border: thin solid black;
+	border-radius: $border-radius;
 }
 </style>

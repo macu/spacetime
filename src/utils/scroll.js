@@ -17,11 +17,13 @@ export function startAutoscroll(maxScrollSpeed = 8, container = window) {
 	function handleScroll() {
 		if (clientY !== null) {
 			let viewportHeight = isWindow ? window.innerHeight : container.clientHeight, delta = 0;
-			if (clientY < GUTTER_SIZE) { // Scroll up
-				let factor = (GUTTER_SIZE - clientY) / GUTTER_SIZE;
+			let clientYOffset = isWindow ? 0 : container.getBoundingClientRect().top;
+			let clientYFromContainerTop = clientY - clientYOffset;
+			if (clientYFromContainerTop < GUTTER_SIZE) { // Scroll up
+				let factor = (GUTTER_SIZE - clientYFromContainerTop) / GUTTER_SIZE;
 				delta = -((factor * maxScrollSpeed) + 1);
-			} else if (clientY > (viewportHeight - GUTTER_SIZE)) { // Scroll down
-				let factor = (clientY - (viewportHeight - GUTTER_SIZE)) / GUTTER_SIZE;
+			} else if (clientYFromContainerTop > (viewportHeight - GUTTER_SIZE)) { // Scroll down
+				let factor = (clientYFromContainerTop - (viewportHeight - GUTTER_SIZE)) / GUTTER_SIZE;
 				delta = (factor * maxScrollSpeed) + 1;
 			}
 			if (delta !== 0) {

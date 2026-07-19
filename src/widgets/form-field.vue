@@ -1,5 +1,5 @@
 <template>
-<div class="form-layout-form-field flex-column">
+<div class="form-layout-form-field flex-column-sm">
 	<div v-if="showTitle" class="flex-row title-row">
 		<h3 class="flex-1"><slot name="title">{{title}}</slot></h3>
 		<em v-if="required">Required</em>
@@ -39,21 +39,16 @@ export default {
 </script>
 
 <style lang="scss">
+@import '@/styles/vars.scss';
+
 .form-layout-form-field {
-	display: flex;
-	flex-direction: column;
-	row-gap: 10px;
-
-	background-color: #eee;
-	padding: 10px;
-	border-radius: 8px;
-
 	>.title-row {
 		font-weight: bold;
 	}
 	>.form-field-body {
 		padding: 10px;
-		background-color: white;
+		border: thin solid black;
+		border-radius: $border-radius;
 		>.form-value {
 			font-size: larger;
 		}

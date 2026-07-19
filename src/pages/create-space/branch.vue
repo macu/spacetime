@@ -16,13 +16,14 @@
 
 	</space-loader>
 
-	<form-fields
-		v-else
-		:posting="posting"
-		:context="rootContext"
-		:root="root"
-		@submit="submit"
-	/>
+	<div v-else class="root-portal">
+		<form-fields
+			:posting="posting"
+			:context="rootContext"
+			:root="root"
+			@submit="submit"
+		/>
+	</div>
 
 </div>
 </template>
@@ -83,3 +84,23 @@ export default {
 	},
 };
 </script>
+
+<style lang="scss">
+@import '@/styles/vars.scss';
+
+.create-branch-space-page {
+	.root-portal {
+		background-color: $space-bg-color;
+		border: thin solid darkblue;
+		border-radius: $border-radius;
+		padding: 40px;
+		border-radius: 12px;
+	}
+}
+
+.is-mobile .create-branch-space-page {
+	.root-portal {
+		padding: 20px 10px;
+	}
+}
+</style>

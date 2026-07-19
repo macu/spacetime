@@ -1,46 +1,59 @@
 <template>
 <div class="space-tag flex-row nowrap" :class="{'ellipsis': ellipsis}">
 
-	<material-icon v-if="actionsExpanded" :icon="icon"/>
-	<el-button v-else size="small" @click="actionsExpanded = true">
+	<template v-if="flat">
 		<material-icon :icon="icon"/>
-		<span v-if="space.checkinCount" v-text="space.checkinCount"/>
-	</el-button>
+		<span
+			@click="$emit('click-tag')"
+			class="text"
+			v-text="tagOutput"
+			/>
+	</template>
 
-	<template v-if="actionsExpanded">
+	<template v-else>
 
-		<el-button
-			v-if="showPinning"
-			:type="pinned ? 'success' : 'primary'"
-			size="small"
-			@click="togglePinned()">
-			<material-icon v-if="pinned" icon="keep"/>
-			<material-icon v-else icon="keep_off"/>
-			{{ pinned ? 'Unpin' : 'Pin' }}
+		<material-icon v-if="actionsExpanded" :icon="icon"/>
+		<el-button v-else size="small" @click="actionsExpanded = true">
+			<material-icon :icon="icon"/>
+			<span v-if="space.checkinCount" v-text="space.checkinCount"/>
 		</el-button>
+
+		<template v-if="actionsExpanded">
+
+			<el-button
+				v-if="showPinning"
+				:type="pinned ? 'success' : 'primary'"
+				size="small"
+				@click="togglePinned()">
+				<material-icon v-if="pinned" icon="keep"/>
+				<material-icon v-else icon="keep_off"/>
+				{{ pinned ? 'Unpin' : 'Pin' }}
+			</el-button>
+
+			<el-tooltip v-else-if="pinned" content="Pinned by author" placement="top">
+				<material-icon icon="keep" class="pinned"/>
+			</el-tooltip>
+
+			<checkin-button
+				v-if="showCheckin"
+				:space="space"
+				@check-in="$emit('check-in')"
+				size="small"
+				/>
+
+		</template>
 
 		<el-tooltip v-else-if="pinned" content="Pinned by author" placement="top">
 			<material-icon icon="keep" class="pinned"/>
 		</el-tooltip>
 
-		<checkin-button
-			v-if="showCheckin"
-			:space="space"
-			@check-in="$emit('check-in')"
-			size="small"
+		<span
+			@click="$emit('click-tag')"
+			class="text"
+			v-text="tagOutput"
 			/>
 
 	</template>
-
-	<el-tooltip v-else-if="pinned" content="Pinned by author" placement="top">
-		<material-icon icon="keep" class="pinned"/>
-	</el-tooltip>
-
-	<span
-		@click="$emit('click-tag')"
-		class="text"
-		v-text="tagOutput"
-		/>
 
 </div>
 </template>
@@ -71,6 +84,10 @@ export default {
 			default: true,
 		},
 		showPinning: {
+			type: Boolean,
+			default: false,
+		},
+		flat: {
 			type: Boolean,
 			default: false,
 		},

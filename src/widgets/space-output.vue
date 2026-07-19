@@ -58,8 +58,8 @@
 		<space-tag
 			v-if="space.spaceType === SPACE_TYPES.TAG"
 			:space="space"
-			:show-checkin="false"
-			show-pin
+			:show-actions="false"
+			flat
 			/>
 
 		<space-text
@@ -178,7 +178,7 @@ export default {
 		background-color: white;
 		border: thin solid darkblue;
 		border-radius: $border-radius;
-		padding: 20px 40px;
+		padding: 20px 20px;
 
 		.space-type {
 			cursor: pointer;
@@ -203,7 +203,7 @@ export default {
 			cursor: default;
 		}
 		>.space-text {
-			padding: 80px;
+			padding: 40px;
 			cursor: default;
 		}
 
@@ -234,7 +234,7 @@ export default {
 			padding: 20px;
 		}
 		>.portal {
-			padding: 20px;
+			padding: 20px 10px;
 		}
 	}
 }

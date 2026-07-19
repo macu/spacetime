@@ -70,13 +70,14 @@ export default {
 </script>
 
 <style lang="scss">
+@import '@/styles/vars.scss';
+
 .spacetime-app {
 
 	>header {
 		margin: 0;
 		padding: 20px;
-		background-color: #037dff;
-		border-bottom: 1px solid #ccc;
+		background-color: #1C3144;
 		color: white;
 		>h1 {
 			font-size: 2em;
@@ -88,6 +89,9 @@ export default {
 
 	>.body {
 		padding: 40px 40px 80px;
+
+		// gradient from $app-header-bg-color to transparent across 10 px
+		background: linear-gradient(to bottom, $app-header-bg-color, transparent 10px), transparent;
 	}
 
 	&.is-mobile {
@@ -98,7 +102,7 @@ export default {
 			}
 		}
 		>.body {
-			padding: 20px 20px 60px;
+			padding: 20px 10px 60px;
 		}
 	}
 

@@ -1,5 +1,9 @@
 $border-radius: 10px;
 
+$app-bg-color: #0db0ea;
+$app-header-bg-color: #093862;
+$actions-background-color: #006386;
+
 $space-bg-color: #d5f4ff;
 $space-drop-shadow: 0 0 10px 0 rgba(255, 255, 255);
 $space-inner-drop-shadow: inset 0 0 10px 0 rgba(255, 255, 255);
@@ -12,7 +16,7 @@ $tag-border: medium solid purple;
 $tag-bg-color: white;
 $tag-color: black;
 
-$text-border: thin solid gray;
+$text-border: thin dotted gray;
 $text-bg-color: white;
 $text-color: black;
 $text-inner-drop-shadow: inset 0 0 10px 0 rgba(0, 0, 0, 0.1);

@@ -67,19 +67,22 @@
 				</horizontal-controls>
 
 				<div ref="subspaces" class="subspaces flex-column-lg">
-					<subspace
-						v-for="s in uniqueSubspaces"
-						:key="s.id"
-						:subspace="s"
-						:context="context"
-						:show-reorder="showReorderSubs"
-						:filter-json="filterJson"
-						@toggle-pinned="togglePinned(s)"
-					/>
-					<el-button v-if="showLoadMoreSubspaces"
-						@click="loadSubspaces(true)" type="primary">
-						Load more
-					</el-button>
+					<template v-if="subspaces.length">
+						<subspace
+							v-for="s in uniqueSubspaces"
+							:key="s.id"
+							:subspace="s"
+							:context="context"
+							:show-reorder="showReorderSubs"
+							:filter-json="filterJson"
+							@toggle-pinned="togglePinned(s)"
+						/>
+						<el-button v-if="showLoadMoreSubspaces"
+							@click="loadSubspaces(true)" type="primary">
+							Load more
+						</el-button>
+					</template>
+					<em v-else>No subspaces matching the current filter.</em>
 				</div>
 
 				<el-alert v-if="showPinnedNotSupported" type="warning" :closable="false">
@@ -268,6 +271,7 @@ export default {
 			this.loadingSubspaces = true;
 			ajaxGet('/ajax/space/reload', {
 				spaceId: this.spaceId,
+				includeTags: true,
 				filter: this.filterJson,
 			}).then(response => {
 				this.tags = response.tags || [];
