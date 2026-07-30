@@ -37,7 +37,8 @@ type Space struct {
 	AuthorHandle      **string `json:"authorHandle,omitempty"`
 	AuthorDisplayName *string  `json:"authorDisplayName,omitempty"`
 
-	UserBookmark *bool `json:"userBookmark,omitempty"`
+	UserBookmark      *bool      `json:"userBookmark,omitempty"`
+	BookmarkCreatedAt *time.Time `json:"bookmarkCreatedAt,omitempty"`
 
 	Tags      *[]*Space `json:"tags,omitempty"`
 	Subspaces *[]*Space `json:"subspaces,omitempty"`

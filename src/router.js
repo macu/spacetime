@@ -11,6 +11,8 @@ import SignupPage from '@/pages/user-account/signup.vue';
 import SignupVerifyPage from '@/pages/user-account/signup-verify.vue';
 
 import UserPage from './pages/user.vue';
+import BookmarksPage from '@/pages/bookmarks.vue';
+
 import SpacePage from './pages/space/index.vue';
 import CreateBranchSpacePage from './pages/create-space/branch.vue';
 import CreateTagSpacePage from './pages/create-space/tag.vue';
@@ -43,6 +45,11 @@ const router = createRouter({
 			path: '/user/:id',
 			name: 'user',
 			component: UserPage,
+		},
+		{
+			path: '/bookmarks',
+			name: 'bookmarks',
+			component: BookmarksPage,
 		},
 		{
 			path: '/space/:spaceId',

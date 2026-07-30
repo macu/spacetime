@@ -13,6 +13,10 @@ import {
 import bus from '@/utils/bus.js';
 
 export default {
+	emits: [
+		'bookmark-added',
+		'bookmark-removed',
+	],
 	props: {
 		space: {
 			type: Object,
@@ -42,15 +46,36 @@ export default {
 	methods: {
 		toggleBookmark() {
 			let newState = !this.isBookmarked;
-			ajaxPost('/ajax/bookmark', {
-				spaceId: this.space.id,
-				bookmark: newState,
-			}).then(() => {
-				bus.emit('bookmark', {
+			let update = () => {
+				ajaxPost('/ajax/bookmark', {
 					spaceId: this.space.id,
-					newState,
+					bookmark: newState,
+				}).then(() => {
+					if (newState) {
+						this.$emit('bookmark-added');
+					} else {
+						this.$emit('bookmark-removed');
+					}
+					bus.emit('bookmark', {
+						spaceId: this.space.id,
+						newState,
+					});
 				});
-			});
+			};
+			if (newState) {
+				update();
+			} else {
+				this.$confirm('Are you sure you want to remove this bookmark?',
+					'Confirm remove bookmark', {
+					type: 'warning',
+					confirmButtonText: 'Yes',
+					cancelButtonText: 'No',
+				}).then(() => {
+					update();
+				}).catch(() => {
+					// Cancelled
+				});
+			}
 		},
 		setBookmarked({spaceId, newState}) {
 			if (this.space.id === spaceId) {

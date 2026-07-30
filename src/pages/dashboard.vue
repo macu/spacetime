@@ -4,14 +4,24 @@
 	<return-to-top/>
 
 	<horizontal-controls>
+
+		<el-button
+			v-if="authenticated"
+			type="primary"
+			@click="gotoBookmarks()">
+			Bookmarks
+		</el-button>
+
 		<create-dropdown
 			:disabled="$store.getters.createDisabled"
 			sticky
 		/>
+
 		<subspaces-filter
 			v-model="filter"
 			:allow-pinned="false"
 		/>
+
 	</horizontal-controls>
 
 	<div class="flex-column-lg">
@@ -73,6 +83,11 @@ export default {
 			filter: getFilter(false),
 		};
 	},
+	computed: {
+		authenticated() {
+			return this.$store.getters.authenticated;
+		},
+	},
 	watch: {
 		filter: {
 			handler() {
@@ -112,6 +127,12 @@ export default {
 				this.spaces = this.spaces.concat(response);
 			}).finally((error) => {
 				this.loading = false;
+			});
+		},
+
+		gotoBookmarks() {
+			this.$router.push({
+				name: 'bookmarks',
 			});
 		},
 	},

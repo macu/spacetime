@@ -42,6 +42,33 @@ func AjaxBookmark(db *sql.DB, auth ajax.Auth,
 
 }
 
+func AjaxBookmarks(db *sql.DB, auth ajax.Auth,
+	w http.ResponseWriter, r *http.Request,
+) (interface{}, int) {
+
+	offset, err := types.AtoUint(r.FormValue("offset"))
+	if err != nil {
+		return nil, http.StatusBadRequest
+	}
+
+	limit, err := types.AtoUint(r.FormValue("limit"))
+	if err != nil {
+		return nil, http.StatusBadRequest
+	}
+
+	includeParentPath := types.AtoBool(r.FormValue("includeParentPath"))
+	includeTags := types.AtoBool(r.FormValue("includeTags"))
+
+	bookmarks, err := user.GetBookmarkedSpaces(db, auth, offset, limit, includeParentPath, includeTags)
+	if err != nil {
+		logging.LogError(r, &auth, err)
+		return nil, http.StatusInternalServerError
+	}
+
+	return bookmarks, http.StatusOK
+
+}
+
 func AjaxPinSpace(db *sql.DB, auth ajax.Auth,
 	w http.ResponseWriter, r *http.Request,
 ) (interface{}, int) {
