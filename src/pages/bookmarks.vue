@@ -82,7 +82,7 @@ export default {
 	},
 	data() {
 		return {
-			loading: true,
+			loading: false,
 			loadingMore: false,
 			bookmarks: [],
 			showLoadMore: false,

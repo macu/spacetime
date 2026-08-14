@@ -14,11 +14,20 @@ const DefaultTitlesLimit = 5
 const DefaultTagsLimit = 10
 
 func LoadSpace(conn *sql.DB, auth *ajax.Auth, id uint) (*Space, error) {
+	spaces, err := LoadSpaces(conn, auth, []uint{id})
+	if err != nil {
+		return nil, fmt.Errorf("loading space: %w", err)
+	}
+	if len(spaces) == 0 {
+		return nil, nil
+	}
+	return spaces[0], nil
+}
+
+func LoadSpaces(conn *sql.DB, auth *ajax.Auth, ids []uint) ([]*Space, error) {
 	// Load a single space (header details) and its associated content
 
-	var space = Space{
-		ID: id,
-	}
+	var spaces = []*Space{}
 
 	var args = []interface{}{}
 
@@ -32,7 +41,7 @@ func LoadSpace(conn *sql.DB, auth *ajax.Auth, id uint) (*Space, error) {
 		bookmarkFieldSql = `FALSE AS user_bookmark`
 	}
 
-	err := conn.QueryRow(`SELECT space.parent_id, space.space_type,
+	rows, err := conn.Query(`SELECT space.id, space.parent_id, space.space_type,
 		space.created_at, space.created_by,
 		unique_text.text_value AS label,
 		user_account.handle, user_account.display_name,
@@ -46,30 +55,39 @@ func LoadSpace(conn *sql.DB, auth *ajax.Auth, id uint) (*Space, error) {
 		LEFT JOIN unique_text ON unique_text.id = branch_space.label_text_id
 		LEFT JOIN user_account ON user_account.id = space.created_by
 		LEFT JOIN user_space_config ON user_space_config.space_id = space.id
-		WHERE space.id = `+db.Arg(&args, id)+`
-		LIMIT 1`,
+			WHERE `+db.In("space.id", &args, ids),
 		args...,
-	).Scan(&space.ParentID, &space.SpaceType,
-		&space.CreatedAt, &space.CreatedBy,
-		&space.Label,
-		&space.AuthorHandle, &space.AuthorDisplayName,
-		&space.IsPinned,
-		&space.UserBookmark,
-		&space.LinkSpaceID,
 	)
-
-	if err == sql.ErrNoRows {
-		return nil, nil
-	} else if err != nil {
+	if err != nil {
 		return nil, fmt.Errorf("loading space details: %w", err)
 	}
+	defer rows.Close()
 
-	err = LoadSpaceContent(conn, auth, []*Space{&space}, true)
+	for rows.Next() {
+		var space = &Space{}
+		err = rows.Scan(&space.ID, &space.ParentID, &space.SpaceType,
+			&space.CreatedAt, &space.CreatedBy,
+			&space.Label,
+			&space.AuthorHandle, &space.AuthorDisplayName,
+			&space.IsPinned,
+			&space.UserBookmark,
+			&space.LinkSpaceID,
+		)
+		if err != nil {
+			return nil, fmt.Errorf("loading space details: %w", err)
+		}
+		spaces = append(spaces, space)
+	}
+	if len(spaces) == 0 {
+		return nil, nil
+	}
+
+	err = LoadSpaceContent(conn, auth, spaces, true)
 	if err != nil {
 		return nil, fmt.Errorf("loading space content: %w", err)
 	}
 
-	return &space, nil
+	return spaces, nil
 
 }
 
@@ -80,26 +98,58 @@ func LoadParentPath(conn *sql.DB, auth *ajax.Auth, id uint) ([]*Space, error) {
 
 	// return array has root space first
 
-	// TODO Use recusive query
-
 	var spaces = []*Space{}
 
-	for {
-		space, err := LoadSpace(conn, auth, id)
+	var args = []interface{}{}
+
+	rows, err := conn.Query(`WITH RECURSIVE parent_spaces AS (
+		SELECT space.id, space.parent_id, space.space_type,
+			space.created_at, space.created_by,
+			unique_text.text_value AS label,
+			user_account.handle, user_account.display_name,
+			CASE WHEN user_space_config.space_id IS NULL THEN FALSE ELSE TRUE END AS user_pinned
+		FROM space
+		LEFT JOIN branch_space ON space.id = branch_space.space_id
+		LEFT JOIN unique_text ON unique_text.id = branch_space.label_text_id
+		LEFT JOIN user_account ON user_account.id = space.created_by
+		LEFT JOIN user_space_config ON user_space_config.space_id = space.id
+		WHERE space.id = `+db.Arg(&args, id)+`
+		UNION ALL
+		SELECT space.id, space.parent_id, space.space_type,
+			space.created_at, space.created_by,
+			unique_text.text_value AS label,
+			user_account.handle, user_account.display_name,
+			CASE WHEN user_space_config.space_id IS NULL THEN FALSE ELSE TRUE END AS user_pinned
+		FROM space
+		INNER JOIN parent_spaces ON parent_spaces.parent_id = space.id
+		LEFT JOIN branch_space ON space.id = branch_space.space_id
+		LEFT JOIN unique_text ON unique_text.id = branch_space.label_text_id
+		LEFT JOIN user_account ON user_account.id = space.created_by
+		LEFT JOIN user_space_config ON user_space_config.space_id = space.id
+	)
+	SELECT * FROM parent_spaces`, args...)
+	if err != nil {
+		return nil, fmt.Errorf("loading parent path: %w", err)
+	}
+	defer rows.Close()
+
+	for rows.Next() {
+		var space = &Space{}
+		err = rows.Scan(&space.ID, &space.ParentID, &space.SpaceType,
+			&space.CreatedAt, &space.CreatedBy,
+			&space.Label,
+			&space.AuthorHandle, &space.AuthorDisplayName,
+			&space.IsPinned,
+		)
 		if err != nil {
 			return nil, fmt.Errorf("loading parent path: %w", err)
 		}
-		if space == nil {
-			break
-		}
+		spaces = append(spaces, space)
+	}
 
-		spaces = append([]*Space{space}, spaces...)
-
-		if space.ParentID == nil {
-			break
-		}
-
-		id = *space.ParentID
+	// reverse the order of spaces to have root space first
+	for i, j := 0, len(spaces)-1; i < j; i, j = i+1, j-1 {
+		spaces[i], spaces[j] = spaces[j], spaces[i]
 	}
 
 	if hasSpacesOfType(spaces, SpaceTypeTag) {
@@ -401,20 +451,28 @@ func LoadSpaceContent(conn *sql.DB, auth *ajax.Auth,
 
 	if loadLinkedSpaces && hasSpacesOfType(spaces, SpaceTypeLink) {
 		linkSpaces := extractSpacesByType(spaces, SpaceTypeLink)
+		var linkedSpaceIds []uint
 		for _, space := range linkSpaces {
-			if space.LinkSpaceID != nil {
-				linkedSpace, err := LoadSpace(conn, auth, **space.LinkSpaceID)
-				if err != nil {
-					return err
-				}
-				space.LinkSpace = &linkedSpace
+			linkedSpaceIds = append(linkedSpaceIds, **space.LinkSpaceID)
+		}
+		linkedSpaces, err := LoadSpaces(conn, auth, linkedSpaceIds)
+		if err != nil {
+			return err
+		}
+		for _, space := range linkSpaces {
+			space.LinkSpace = nil
+			for _, linkedSpace := range linkedSpaces {
+				if **space.LinkSpaceID == linkedSpace.ID {
+					space.LinkSpace = &linkedSpace
 
-				// load parent path
-				parentPath, err := LoadParentPath(conn, auth, **space.LinkSpaceID)
-				if err != nil {
-					return err
+					parentPath, err := LoadParentPath(conn, auth, linkedSpace.ID)
+					if err != nil {
+						return err
+					}
+					linkedSpace.ParentPath = &parentPath
+
+					break
 				}
-				linkedSpace.ParentPath = &parentPath
 			}
 		}
 	}

@@ -11,7 +11,6 @@ import (
 	"spacetime/pkg/utils/types"
 
 	"spacetime/pkg/spacetime"
-	"spacetime/pkg/user"
 )
 
 func AjaxBookmark(db *sql.DB, auth ajax.Auth,
@@ -33,7 +32,7 @@ func AjaxBookmark(db *sql.DB, auth ajax.Auth,
 		return nil, http.StatusNotFound
 	}
 
-	if err = user.BookmarkSpace(db, auth.UserID, spaceID, bookmark); err != nil {
+	if err = spacetime.BookmarkSpace(db, auth.UserID, spaceID, bookmark); err != nil {
 		logging.LogError(r, &auth, err)
 		return nil, http.StatusInternalServerError
 	}
@@ -64,7 +63,7 @@ func AjaxBookmarks(db *sql.DB, auth ajax.Auth,
 		return nil, http.StatusBadRequest
 	}
 
-	bookmarks, err := user.GetBookmarkedSpaces(db, auth, offset, limit,
+	bookmarks, err := spacetime.GetBookmarkedSpaces(db, auth, offset, limit,
 		includeParentPath, includeTags, includeLinkedInParentId)
 	if err != nil {
 		logging.LogError(r, &auth, err)

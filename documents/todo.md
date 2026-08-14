@@ -15,8 +15,6 @@
 - [ ] record replayable text time started when submitting to stream
 - [ ] add search modes (top all time, top in time range, latest) and load more
 - [ ] add bookmarking, bookmarks list
-- [ ] add space links
-- [ ] show all tags view
 - [ ] add user settings page (update password, delete account)
 - [ ] add email login and email functionality
 - [ ] add recaptcha for every user action
@@ -30,3 +28,4 @@
 - [*] remove title type (branches have labels and text have titles)
 - [*] move check-ins to separate table
 - [*] add replayable text recording, validation/submission, and playback
+- [*] add space links
