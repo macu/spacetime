@@ -38,11 +38,12 @@
 				</template>
 			</space-output>
 
-			<loading-message v-if="loadingMore" message="Loading bookmarks..."/>
+			<loading-message v-if="loadingMore" message="Loading more..."/>
 
-			<el-button v-else-if="showLoadMore" @click="loadMore" type="primary">
+			<el-button v-else-if="showLoadMore" @click="loadMore()" type="primary">
 				Load more
 			</el-button>
+
 		</template>
 
 		<el-alert v-else
@@ -105,32 +106,27 @@ export default {
 	watch: {
 		authenticated(newVal, oldVal) {
 			if (newVal && !oldVal) {
-				this.loadBookmarks();
+				this.loadMore();
 			}
 		},
 	},
 	mounted() {
 		if (this.authenticated) {
-			this.loadBookmarks();
+			this.loadMore();
 		}
 	},
 	methods: {
-		loadBookmarks() {
-			this.loading = true;
-			ajaxGet('/ajax/bookmarks', {
-				offset: 0,
-				limit: this.$const.maxPageLimit,
-				includeParentPath: true,
-				includeTags: true,
-			}).then(response => {
-				this.bookmarks = response;
-				this.showLoadMore = response.length >= this.$const.maxPageLimit;
-			}).finally((error) => {
-				this.loading = false;
-			});
-		},
 		loadMore() {
-			this.loadingMore = true;
+			if (this.loading || this.loadingMore) {
+				return;
+			}
+
+			if (this.bookmarks.length) {
+				this.loadingMore = true;
+			} else {
+				this.loading = true;
+			}
+
 			ajaxGet('/ajax/bookmarks', {
 				offset: this.bookmarks.length,
 				limit: this.$const.maxPageLimit,
@@ -140,6 +136,7 @@ export default {
 				this.bookmarks = this.bookmarks.concat(response);
 				this.showLoadMore = response.length >= this.$const.maxPageLimit;
 			}).finally((error) => {
+				this.loading = false;
 				this.loadingMore = false;
 			});
 		},

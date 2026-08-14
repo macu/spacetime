@@ -11,13 +11,13 @@ brew install --cask docker
 ## Start up containers
 
 ```bash
-cd /treetime
+cd spacetime
 sh ./bin/restart-all.sh
 ```
 
 ## Init DB and access postgres interactive shell
 
-Run `sql/init.pgsql` by copying contents into shell.
+Run `sql/init.pgsql` by passing contents into psql.
 
 ```bash
 sh ./bin/psql-execute-script.sh < sql/init.pgsql

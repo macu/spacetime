@@ -59,7 +59,13 @@ func AjaxBookmarks(db *sql.DB, auth ajax.Auth,
 	includeParentPath := types.AtoBool(r.FormValue("includeParentPath"))
 	includeTags := types.AtoBool(r.FormValue("includeTags"))
 
-	bookmarks, err := user.GetBookmarkedSpaces(db, auth, offset, limit, includeParentPath, includeTags)
+	includeLinkedInParentId, err := types.AtoUintNilIfEmpty(r.FormValue("includeLinkedInParentId"))
+	if err != nil {
+		return nil, http.StatusBadRequest
+	}
+
+	bookmarks, err := user.GetBookmarkedSpaces(db, auth, offset, limit,
+		includeParentPath, includeTags, includeLinkedInParentId)
 	if err != nil {
 		logging.LogError(r, &auth, err)
 		return nil, http.StatusInternalServerError

@@ -140,6 +140,19 @@ func AjaxCreateLinkSpace(conn *sql.DB, auth ajax.Auth,
 		return nil, http.StatusBadRequest
 	}
 
+	// whether to pin to parent
+	pin := types.AtoBool(r.FormValue("pin"))
+	if pin && parentID == 0 {
+		// cannot pin if no parent
+		return nil, http.StatusBadRequest
+	}
+
+	formTags, err := spacetime.UnmarshalFormTags(r)
+	if err != nil {
+		logging.LogError(r, &auth, err)
+		return nil, http.StatusBadRequest
+	}
+
 	blocked, err := spacetime.CheckCreateSpaceThrottleBlock(conn, auth)
 	if err != nil {
 		logging.LogError(r, &auth, err)
@@ -157,16 +170,73 @@ func AjaxCreateLinkSpace(conn *sql.DB, auth ajax.Auth,
 		return nil, http.StatusNotFound
 	}
 
-	// check if link already exists
-	if exists, err := spacetime.CheckLinkSpaceExists(conn, parentID, spaceID); err != nil {
+	// check type of space to link
+	linkedSpace, err := spacetime.GetSpace(conn, spaceID)
+	if err != nil {
 		logging.LogError(r, &auth, err)
 		return nil, http.StatusInternalServerError
-	} else if exists {
+	}
+	if linkedSpace == nil {
+		return nil, http.StatusNotFound
+	}
+	if linkedSpace.SpaceType == spacetime.SpaceTypeLink {
+		return nil, http.StatusBadRequest
+	}
+
+	// check if link already exists
+	if allowed, err := spacetime.CheckAllowCreateLinkSpace(conn, parentID, spaceID); err != nil {
+		logging.LogError(r, &auth, err)
+		return nil, http.StatusInternalServerError
+	} else if !allowed {
 		// TODO Return the existing link
 		return nil, http.StatusConflict
 	}
 
-	space, err := spacetime.CreateSpaceLink(conn, auth, parentID, spaceID)
+	// check pinning permissions
+	if pin {
+		if allowed, err := spacetime.AllowsPinToParent(conn, auth, auth.UserID, parentID); err != nil {
+			logging.LogError(r, &auth, err)
+			return nil, http.StatusInternalServerError
+		} else if !allowed {
+			return nil, http.StatusForbidden
+		}
+	}
+	if len(formTags.PinnedTags) > 0 {
+		if allowed, err := spacetime.AllowsPinningUnderCreateSpace(conn, auth, auth.UserID, parentID, spacetime.SpaceTypeBranch); err != nil {
+			logging.LogError(r, &auth, err)
+			return nil, http.StatusInternalServerError
+		} else if !allowed {
+			return nil, http.StatusForbidden
+		}
+	}
+
+	var space *spacetime.Space
+
+	err = db.InTransaction(conn, func(tx *sql.Tx) error {
+
+		var err error
+
+		space, err = spacetime.CreateSpaceLink(tx, auth, parentID, spaceID)
+		if err != nil {
+			return fmt.Errorf("create space link: %w", err)
+		}
+
+		tags, err := spacetime.BatchCreateTags(tx, auth, space.ID, formTags)
+		if err != nil {
+			return fmt.Errorf("batch create tags: %w", err)
+		}
+		space.Tags = &tags
+
+		if pin {
+			if err := spacetime.PinSpace(tx, auth, space); err != nil {
+				return fmt.Errorf("pin space: %w", err)
+			}
+		}
+
+		return nil
+
+	})
+
 	if err != nil {
 		logging.LogError(r, &auth, err)
 		return nil, http.StatusInternalServerError

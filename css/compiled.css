@@ -387,6 +387,8 @@ div.center {
 }
 .space-output > .parent-path > div {
   padding: 10px 20px;
+}
+.space-output > .parent-path > div.clickable {
   cursor: pointer;
 }
 .space-output > .parent-path > div + div {
@@ -404,10 +406,7 @@ div.center {
   border-radius: 10px;
   padding: 20px 20px;
 }
-.space-output > .container .space-type {
-  cursor: pointer;
-}
-.space-output > .container > .space-header {
+.space-output > .container > .space-header.clickable {
   cursor: pointer;
 }
 .space-output > .container > .space-header .drag-handle {
@@ -494,6 +493,21 @@ div.center {
 }
 .is-mobile .create-branch-space-page .root-portal {
   padding: 20px 10px;
+}
+/*!**************************************************************************************************************************************************************************************************************************************************************************************************************************************************!*\
+  !*** css ./node_modules/css-loader/dist/cjs.js??clonedRuleSet-2.use[1]!./node_modules/vue-loader/dist/stylePostLoader.js!./node_modules/sass-loader/dist/cjs.js??clonedRuleSet-2.use[2]!./node_modules/vue-loader/dist/index.js??ruleSet[1].rules[5].use[0]!./src/pages/create-space/link-form.vue?vue&type=style&index=0&id=5a8949be&lang=scss ***!
+  \**************************************************************************************************************************************************************************************************************************************************************************************************************************************************/
+.create-link-form .selected-space {
+  border: thin solid var(--el-color-primary);
+  border-radius: 10px;
+  padding: 1rem;
+}
+.create-link-form .bookmarks {
+  border: thin solid var(--el-color-primary);
+  border-radius: 10px;
+  padding: 1rem;
+  max-height: 80vh;
+  overflow-y: auto;
 }
 /*!*******************************************************************************************************************************************************************************************************************************************************************************************************************************************!*\
   !*** css ./node_modules/css-loader/dist/cjs.js??clonedRuleSet-2.use[1]!./node_modules/vue-loader/dist/stylePostLoader.js!./node_modules/sass-loader/dist/cjs.js??clonedRuleSet-2.use[2]!./node_modules/vue-loader/dist/index.js??ruleSet[1].rules[5].use[0]!./src/widgets/material-icon.vue?vue&type=style&index=0&id=55e49714&lang=scss ***!

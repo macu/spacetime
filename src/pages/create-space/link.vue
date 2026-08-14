@@ -1,5 +1,5 @@
 <template>
-<div class="create-tag-page flex-column-lg page-width-md">
+<div class="create-link-page flex-column-lg page-width-md">
 
 	<el-alert v-if="!authenticated" type="warning" :closable="false">
 		<p>You must be logged in to create content.</p>
@@ -10,6 +10,7 @@
 		<template #default="{context}">
 
 			<form-fields
+				:parent-id="parentId"
 				:posting="posting"
 				:context="context"
 				@submit="submit"
@@ -20,7 +21,7 @@
 	</space-loader>
 
 	<el-alert v-else type="error" :closable="false">
-		<p>A parent space is required to create a tag.</p>
+		<p>A parent space is required to create a link.</p>
 	</el-alert>
 
 </div>
@@ -28,7 +29,7 @@
 
 <script>
 import SpaceLoader from '@/widgets/space-loader.vue';
-import FormFields from './tag-form.vue';
+import FormFields from './link-form.vue';
 
 import {
 	ajaxPost,
@@ -46,7 +47,7 @@ export default {
 	},
 	computed: {
 		parentId() {
-			return this.$route.query.parentId || null;
+			return this.$route.query.parentId ? parseInt(this.$route.query.parentId) : null;
 		},
 		authenticated() {
 			return this.$store.getters.authenticated;
@@ -55,7 +56,7 @@ export default {
 	methods: {
 		submit(payload) {
 			this.posting = true;
-			ajaxPost('/ajax/space/create/tag', {
+			ajaxPost('/ajax/space/create/link', {
 				parentId: this.parentId,
 				...payload,
 			}).then(response => {
@@ -67,7 +68,7 @@ export default {
 				});
 			}).catch(() => {
 				this.posting = false;
-			})
+			});
 		},
 	},
 };

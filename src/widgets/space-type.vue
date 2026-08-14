@@ -30,6 +30,8 @@ export default {
 					return 'Tag';
 				case SPACE_TYPES.TEXT:
 					return 'Text';
+				case SPACE_TYPES.LINK:
+					return 'Link';
 				case SPACE_TYPES.STREAM_OC:
 					return 'Stream of consciousness';
 				case SPACE_TYPES.JSON_AR:

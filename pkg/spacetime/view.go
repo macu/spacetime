@@ -37,7 +37,10 @@ func LoadSpace(conn *sql.DB, auth *ajax.Auth, id uint) (*Space, error) {
 		unique_text.text_value AS label,
 		user_account.handle, user_account.display_name,
 		CASE WHEN user_space_config.space_id IS NULL THEN FALSE ELSE TRUE END AS user_pinned,
-		`+bookmarkFieldSql+`
+		`+bookmarkFieldSql+`,
+		(SELECT link_space.link_space_id FROM link_space
+			WHERE link_space.space_id = space.id
+			LIMIT 1) AS link_space_id
 		FROM space
 		LEFT JOIN branch_space ON space.id = branch_space.space_id
 		LEFT JOIN unique_text ON unique_text.id = branch_space.label_text_id
@@ -52,6 +55,7 @@ func LoadSpace(conn *sql.DB, auth *ajax.Auth, id uint) (*Space, error) {
 		&space.AuthorHandle, &space.AuthorDisplayName,
 		&space.IsPinned,
 		&space.UserBookmark,
+		&space.LinkSpaceID,
 	)
 
 	if err == sql.ErrNoRows {
@@ -216,7 +220,10 @@ func LoadSubspaces(conn *sql.DB, auth *ajax.Auth,
 			WHERE user_space_config.space_id = space.id
 		) AS is_pinned,
 		(SELECT COUNT(*) FROM checkin
-			WHERE checkin.space_id = space.id) AS checkin_count
+			WHERE checkin.space_id = space.id) AS checkin_count,
+		(SELECT link_space.link_space_id FROM link_space
+			WHERE link_space.space_id = space.id
+			LIMIT 1) AS link_space_id
 		FROM space
 		LEFT JOIN branch_space ON branch_space.space_id = space.id
 		LEFT JOIN unique_text ON unique_text.id = branch_space.label_text_id
@@ -246,6 +253,7 @@ func LoadSubspaces(conn *sql.DB, auth *ajax.Auth,
 			&space.UserBookmark,
 			&space.IsPinned,
 			&space.CheckinCount,
+			&space.LinkSpaceID,
 		)
 		if err != nil {
 			return nil, fmt.Errorf("loading top spaces: %w", err)
@@ -392,10 +400,22 @@ func LoadSpaceContent(conn *sql.DB, auth *ajax.Auth,
 	}
 
 	if loadLinkedSpaces && hasSpacesOfType(spaces, SpaceTypeLink) {
-		err := loadLinkSpaceDetails(conn, auth,
-			extractSpacesByType(spaces, SpaceTypeLink))
-		if err != nil {
-			return err
+		linkSpaces := extractSpacesByType(spaces, SpaceTypeLink)
+		for _, space := range linkSpaces {
+			if space.LinkSpaceID != nil {
+				linkedSpace, err := LoadSpace(conn, auth, **space.LinkSpaceID)
+				if err != nil {
+					return err
+				}
+				space.LinkSpace = &linkedSpace
+
+				// load parent path
+				parentPath, err := LoadParentPath(conn, auth, **space.LinkSpaceID)
+				if err != nil {
+					return err
+				}
+				linkedSpace.ParentPath = &parentPath
+			}
 		}
 	}
 
@@ -436,57 +456,6 @@ func extractSpacesByType(spaces []*Space, spaceType string) []*Space {
 	}
 
 	return extractedSpaces
-
-}
-
-func loadTitleSpacesContent(conn *sql.DB, spaces []*Space) error {
-	// Load title content for multiple spaces
-
-	if len(spaces) == 0 {
-		return nil
-	}
-
-	var args = []interface{}{}
-
-	var inClauseSql string
-
-	for i, space := range spaces {
-		if i > 0 {
-			inClauseSql += `, `
-		}
-		inClauseSql += db.Arg(&args, space.ID)
-	}
-
-	rows, err := conn.Query(`SELECT
-		space.id, unique_text.text_value
-		FROM space
-		INNER JOIN title_space ON title_space.space_id = space.id
-		INNER JOIN unique_text ON unique_text.id = title_space.text_id
-		WHERE space.id IN (`+inClauseSql+`)`,
-		args...,
-	)
-
-	if err != nil {
-		return fmt.Errorf("loading title spaces content: %w", err)
-	}
-
-	defer rows.Close()
-
-	for rows.Next() {
-		var spaceID uint
-		var text string
-		err = rows.Scan(&spaceID, &text)
-		if err != nil {
-			return fmt.Errorf("loading title spaces content: %w", err)
-		}
-		for _, space := range spaces {
-			if space.ID == spaceID {
-				space.Text = &text
-			}
-		}
-	}
-
-	return nil
 
 }
 
@@ -592,95 +561,6 @@ func loadTextSpacesContent(conn *sql.DB, spaces []*Space) error {
 				space.HasRecording = &hasRecording
 			}
 		}
-	}
-
-	return nil
-
-}
-
-func loadLinkSpaceDetails(conn *sql.DB, auth *ajax.Auth, spaces []*Space) error {
-	// Load link content for multiple spaces
-
-	if len(spaces) == 0 {
-		return nil
-	}
-
-	var args = []interface{}{}
-
-	var inClauseSql string
-
-	for i, space := range spaces {
-		if i > 0 {
-			inClauseSql += `, `
-		}
-		inClauseSql += db.Arg(&args, space.ID)
-
-		// Set link space to nil for direct check-ins
-		var nullId *uint = nil
-		var nullSpace *Space = nil
-		space.LinkSpaceID = &nullId
-		space.LinkSpace = &nullSpace
-	}
-
-	var bookmarkFieldSql string
-	if auth != nil {
-		bookmarkFieldSql = `EXISTS(SELECT * FROM user_bookmark
-			WHERE linked_space.id IS NOT NULL
-			AND user_bookmark.space_id = linked_space.id
-			AND user_bookmark.user_id = ` + db.Arg(&args, auth.UserID) + `
-		) AS user_bookmark`
-	} else {
-		bookmarkFieldSql = `FALSE AS user_bookmark`
-	}
-
-	rows, err := conn.Query(`SELECT space.id,
-		link_space.link_space_id,
-		linked_space.space_type, linked_space.created_at, linked_space.created_by,
-		user_account.handle, user_account.display_name,
-		`+bookmarkFieldSql+`
-		FROM space
-		INNER JOIN link_space ON link_space.space_id = space.id
-		LEFT JOIN space AS linked_space ON linked_space.id = link_space.link_space_id
-		LEFT JOIN user_account ON user_account.id = linked_space.created_by
-		WHERE space.id IN (`+inClauseSql+`)`,
-		args...,
-	)
-
-	if err != nil {
-		return fmt.Errorf("loading link space details: %w", err)
-	}
-
-	defer rows.Close()
-
-	var linkSpaces = []*Space{}
-
-	for rows.Next() {
-		var spaceID uint
-		var linkSpace = &Space{}
-		err = rows.Scan(&spaceID,
-			&linkSpace.ID, &linkSpace.SpaceType,
-			&linkSpace.CreatedAt, &linkSpace.CreatedBy,
-			&linkSpace.AuthorHandle, &linkSpace.AuthorDisplayName,
-			&linkSpace.UserBookmark,
-		)
-		if err != nil {
-			return fmt.Errorf("loading link space details: %w", err)
-		}
-		for _, space := range spaces {
-			if space.ID == spaceID {
-				if linkSpace.ID != 0 {
-					var id = &linkSpace.ID
-					space.LinkSpaceID = &id
-					space.LinkSpace = &linkSpace
-					linkSpaces = append(linkSpaces, linkSpace)
-				}
-			}
-		}
-	}
-
-	err = LoadSpaceContent(conn, auth, linkSpaces, false)
-	if err != nil {
-		return fmt.Errorf("loading link space details: %w", err)
 	}
 
 	return nil

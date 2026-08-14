@@ -17,6 +17,7 @@ import SpacePage from './pages/space/index.vue';
 import CreateBranchSpacePage from './pages/create-space/branch.vue';
 import CreateTagSpacePage from './pages/create-space/tag.vue';
 import CreateTextSpacePage from './pages/create-space/text.vue';
+import CreateLinkSpacePage from './pages/create-space/link.vue';
 
 const router = createRouter({
 	history: createWebHistory(),
@@ -70,6 +71,11 @@ const router = createRouter({
 			path: '/space/create/text',
 			name: 'create-text',
 			component: CreateTextSpacePage,
+		},
+		{
+			path: '/space/create/link',
+			name: 'create-space-link',
+			component: CreateLinkSpacePage,
 		},
 	],
 });

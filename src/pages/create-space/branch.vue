@@ -1,7 +1,11 @@
 <template>
 <div class="create-branch-space-page flex-column-lg page-width-md">
 
-	<space-loader v-if="parentId" :space-id="parentId" include-parent-path>
+	<el-alert v-if="!authenticated" type="warning" :closable="false">
+		<p>You must be logged in to create content.</p>
+	</el-alert>
+
+	<space-loader v-else-if="parentId" :space-id="parentId" include-parent-path>
 
 		<template #default="{context}">
 
@@ -60,6 +64,9 @@ export default {
 				userAllowPinSubs: false,
 				userAllowPinSubsOnCreate: (createType) => false,
 			};
+		},
+		authenticated() {
+			return this.$store.getters.authenticated;
 		},
 	},
 	methods: {

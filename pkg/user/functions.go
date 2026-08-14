@@ -43,13 +43,24 @@ func BookmarkSpace(db db.DBConn, userID uint, spaceID uint, bookmark bool) error
 func GetBookmarkedSpaces(conn *sql.DB, auth ajax.Auth,
 	offset uint, limit uint,
 	includeParentPath bool, includeTags bool,
+	includeLinkedInParentId *uint,
 ) ([]*spacetime.Space, error) {
 
 	var args []interface{}
 	var spaces = []*spacetime.Space{}
 
-	rows, err := conn.Query(`SELECT space.id,
-		space.space_type, space.created_at, space.created_by,
+	var includedInParentIdField string
+	if includeLinkedInParentId != nil {
+		includedInParentIdField = `EXISTS(SELECT 1 FROM link_space
+			WHERE link_space.parent_id = ` + db.Arg(&args, *includeLinkedInParentId) + `
+			AND link_space.link_space_id = space.id
+		) AS included_in_parent_id`
+	} else {
+		includedInParentIdField = `NULL AS included_in_parent_id`
+	}
+
+	rows, err := conn.Query(`SELECT space.id, space.parent_id, space.space_type,
+		space.created_at, space.created_by,
 		unique_text.text_value AS label,
 		user_account.handle, user_account.display_name,
 		TRUE AS bookmarked,
@@ -58,7 +69,12 @@ func GetBookmarkedSpaces(conn *sql.DB, auth ajax.Auth,
 			WHERE user_space_config.space_id = space.id
 		) AS is_pinned,
 		(SELECT COUNT(*) FROM checkin
-			WHERE checkin.space_id = space.id) AS checkin_count
+			) AS checkin_count,
+		`+includedInParentIdField+`,
+		(SELECT link_space.link_space_id FROM link_space
+			WHERE link_space.space_id = space.id
+			LIMIT 1
+		) AS link_space_id
 		FROM space
 		INNER JOIN user_bookmark ON user_bookmark.space_id = space.id
 		LEFT JOIN branch_space ON branch_space.space_id = space.id
@@ -80,13 +96,15 @@ func GetBookmarkedSpaces(conn *sql.DB, auth ajax.Auth,
 
 	for rows.Next() {
 		var space = &spacetime.Space{}
-		err = rows.Scan(&space.ID, &space.SpaceType,
+		err = rows.Scan(&space.ID, &space.ParentID, &space.SpaceType,
 			&space.CreatedAt, &space.CreatedBy,
 			&space.Label,
 			&space.AuthorHandle, &space.AuthorDisplayName,
 			&space.UserBookmark, &space.BookmarkCreatedAt,
 			&space.IsPinned,
 			&space.CheckinCount,
+			&space.IncludedInParent,
+			&space.LinkSpaceID,
 		)
 		if err != nil {
 			return nil, fmt.Errorf("loading bookmarks: %w", err)

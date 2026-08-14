@@ -8,7 +8,8 @@
   - [ ] freedom to rename, delete, and move items within personal space (but not public)
   - [ ] conflict detection when moving branches within personal space (can't merge)
 
-- [ ] allow backdating text spaces
+- [ ] allow backdating text spaces (maybe just let user write date in text?)
+- [ ] include title edits in recorded text
 - [ ] allow editing and extending text recordings
 - [ ] add stream of consciousness (container for replayable texts; press enter to submit to stream)
 - [ ] record replayable text time started when submitting to stream

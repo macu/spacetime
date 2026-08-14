@@ -39,6 +39,7 @@ type Space struct {
 
 	UserBookmark      *bool      `json:"userBookmark,omitempty"`
 	BookmarkCreatedAt *time.Time `json:"bookmarkCreatedAt,omitempty"`
+	IncludedInParent  *bool      `json:"includedInParent,omitempty"`
 
 	Tags      *[]*Space `json:"tags,omitempty"`
 	Subspaces *[]*Space `json:"subspaces,omitempty"`

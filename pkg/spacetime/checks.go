@@ -64,24 +64,27 @@ func CheckBranchLabelExists(conn *sql.DB, parentId *uint, label string) (bool, e
 
 }
 
-func CheckLinkSpaceExists(conn *sql.DB, parentID, linkSpaceID uint) (bool, error) {
+func CheckAllowCreateLinkSpace(conn *sql.DB, parentID, linkSpaceID uint) (bool, error) {
 
-	var exists bool
+	var found bool
 
 	var err = conn.QueryRow(`SELECT EXISTS (
-		SELECT 1
-		FROM space
+		SELECT 1 FROM space
+		WHERE space.parent_id = $1
+		AND space.id = $2
+		UNION ALL
+		SELECT 1 FROM space
 		INNER JOIN link_space
 			ON space.id = link_space.space_id
 		WHERE space.parent_id = $1
 		AND link_space.link_space_id = $2
-	)`, parentID, linkSpaceID).Scan(&exists)
+	)`, parentID, linkSpaceID).Scan(&found)
 
 	if err != nil {
-		return false, fmt.Errorf("check link space exists: %w", err)
+		return false, fmt.Errorf("check allow create link space: %w", err)
 	}
 
-	return exists, nil
+	return !found, nil
 
 }
 

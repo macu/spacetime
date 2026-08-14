@@ -35,13 +35,13 @@ func LoadExistingSpaceLink(conn db.DBConn,
 
 }
 
-func CreateSpaceLink(conn *sql.DB, auth ajax.Auth, parentID, spaceID uint) (*Space, error) {
+func CreateSpaceLink(tx *sql.Tx, auth ajax.Auth, parentID, spaceID uint) (*Space, error) {
 
 	// Create new space link
 	// If space itself belongs to parent space, create checkin under the space
 
 	// Get details about space to check in
-	linkedSpace, err := GetSpace(conn, spaceID)
+	linkedSpace, err := GetSpace(tx, spaceID)
 	if err != nil {
 		return nil, fmt.Errorf("get space: %w", err)
 	}
@@ -54,7 +54,7 @@ func CreateSpaceLink(conn *sql.DB, auth ajax.Auth, parentID, spaceID uint) (*Spa
 	}
 
 	// Check if this link already exists
-	existingSpaceLink, err := LoadExistingSpaceLink(conn, parentID, spaceID)
+	existingSpaceLink, err := LoadExistingSpaceLink(tx, parentID, spaceID)
 	if err != nil {
 		return nil, err
 	}
@@ -66,38 +66,28 @@ func CreateSpaceLink(conn *sql.DB, auth ajax.Auth, parentID, spaceID uint) (*Spa
 			SpaceType: SpaceTypeLink,
 		}
 
-		err = db.InTransaction(conn, func(tx *sql.Tx) error {
+		// Create space link
+		err = CreateSpace(tx, auth, &space, &parentID, SpaceTypeLink)
+		if err != nil {
+			return nil, fmt.Errorf("insert space: %w", err)
+		}
 
-			// Create space link
-			err = CreateSpace(tx, auth, &space, &parentID, SpaceTypeLink)
-			if err != nil {
-				return fmt.Errorf("insert space: %w", err)
-			}
-
-			// Create associated data
-			_, err = tx.Exec(`INSERT INTO link_space
+		// Create associated data
+		_, err = tx.Exec(`INSERT INTO link_space
 				(space_id, parent_id, link_space_id)
 				VALUES ($1, $2, $3)`,
-				space.ID, parentID, spaceID,
-			)
-
-			if err != nil {
-				return fmt.Errorf("insert space_link_space: %w", err)
-			}
-
-			var linkSpaceID = &spaceID
-			space.LinkSpaceID = &linkSpaceID
-
-			var linkSpace *Space = nil
-			space.LinkSpace = &linkSpace // not loaded
-
-			return nil
-
-		})
+			space.ID, parentID, spaceID,
+		)
 
 		if err != nil {
-			return nil, err
+			return nil, fmt.Errorf("insert space_link_space: %w", err)
 		}
+
+		var linkSpaceID = &spaceID
+		space.LinkSpaceID = &linkSpaceID
+
+		var linkSpace *Space = nil
+		space.LinkSpace = &linkSpace // not loaded
 
 		return &space, nil
 

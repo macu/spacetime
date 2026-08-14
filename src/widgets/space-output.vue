@@ -5,8 +5,8 @@
 		<div
 			v-for="p in space.parentPath"
 			:key="p.id"
-			@click.stop="gotoSpace(p)"
-			class="flex-row-md">
+			@click.stop="gotoSpace(p, true)"
+			class="flex-row-md" :class="{'clickable': gotoPathOnClick}">
 
 			<material-icon icon="arrow_right_alt"/>
 
@@ -36,7 +36,9 @@
 
 	<div class="container flex-column-md">
 
-		<div class="space-header flex-row-md nowrap" @click.stop="gotoSpace()">
+		<div class="space-header flex-row-md nowrap"
+			:class="{'clickable': gotoSpaceOnClick}"
+			@click.stop="gotoSpace()">
 			<div class="flex-row-md">
 				<el-tooltip v-if="space.isPinned" content="Pinned by author" placement="top">
 					<material-icon icon="keep"/>
@@ -66,6 +68,19 @@
 			v-else-if="space.spaceType === SPACE_TYPES.TEXT"
 			:space="space"
 			/>
+
+		<template v-else-if="space.spaceType === SPACE_TYPES.LINK">
+			<space-output
+				v-if="space.linkSpace"
+				:space="space.linkSpace"
+				show-path
+				:goto-space-on-click="gotoSpaceOnClick"
+				:goto-path-on-click="gotoPathOnClick"
+			/>
+			<el-alert v-else type="error" :closable="false">
+				<p>This link points to a space that no longer exists.</p>
+			</el-alert>
+		</template>
 
 		<div v-if="$slots.default" class="portal" @click.stop>
 			<slot :context="context"/>
@@ -114,6 +129,14 @@ export default {
 			type: Boolean,
 			default: false,
 		},
+		gotoSpaceOnClick: {
+			type: Boolean,
+			default: true,
+		},
+		gotoPathOnClick: {
+			type: Boolean,
+			default: true,
+		},
 		context: {
 			type: Object,
 			required: false,
@@ -136,13 +159,18 @@ export default {
 		},
 	},
 	methods: {
-		gotoSpace(s = null) {
-			this.$router.push({
-				name: 'space',
-				params: {
-					spaceId: s ? s.id : this.space.id,
-				},
-			});
+		gotoSpace(s = null, path = false) {
+			if (!this.gotoSpaceOnClick) {
+				return;
+			}
+			if (!path || this.gotoPathOnClick) {
+				this.$router.push({
+					name: 'space',
+					params: {
+						spaceId: s ? s.id : this.space.id,
+					},
+				});
+			}
 		},
 	},
 };
@@ -161,7 +189,9 @@ export default {
 		background-color: lightsteelblue;
 		>div {
 			padding: 10px 20px;
-			cursor: pointer;
+			&.clickable {
+				cursor: pointer;
+			}
 		}
 		>div+div {
 			border-top: thin solid black;
@@ -180,12 +210,10 @@ export default {
 		border-radius: $border-radius;
 		padding: 20px 20px;
 
-		.space-type {
-			cursor: pointer;
-		}
-
 		>.space-header {
-			cursor: pointer; // clickable spaces
+			&.clickable {
+				cursor: pointer;
+			}
 
 			.drag-handle {
 				cursor: ns-resize;
