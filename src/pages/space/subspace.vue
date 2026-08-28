@@ -19,7 +19,7 @@
 				{{ subspace.isPinned ? 'Unpin' : 'Pin' }}
 			</el-button>
 
-			<checkin-button :space="subspace"/>
+			<vote-actions :space="subspace"/>
 
 			<bookmark-button :space="subspace"/>
 
@@ -49,7 +49,7 @@
 
 <script>
 import SpaceOutput from '@/widgets/space-output.vue';
-import CheckinButton from '@/widgets/checkin-button.vue';
+import VoteActions from '@/widgets/vote-actions.vue';
 import BookmarkButton from '@/widgets/bookmark-button.vue';
 import SpaceTag from '@/widgets/space-tag.vue';
 import AddTagButton from '@/widgets/add-tag-button.vue';
@@ -65,7 +65,7 @@ export default {
 	],
 	components: {
 		SpaceOutput,
-		CheckinButton,
+		VoteActions,
 		BookmarkButton,
 		SpaceTag,
 		AddTagButton,

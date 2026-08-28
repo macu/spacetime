@@ -32,13 +32,20 @@ func LoadSpaces(conn *sql.DB, auth *ajax.Auth, ids []uint) ([]*Space, error) {
 	var args = []interface{}{}
 
 	var bookmarkFieldSql string
+	var lastVoteField string
 	if auth != nil {
 		bookmarkFieldSql = `EXISTS(SELECT * FROM user_bookmark
 			WHERE user_bookmark.space_id=space.id
 			AND user_bookmark.user_id = ` + db.Arg(&args, auth.UserID) + `
 			) AS user_bookmark`
+		lastVoteField = `(SELECT vote_value FROM space_vote
+			WHERE space_vote.space_id = space.id
+			AND space_vote.user_id = ` + db.Arg(&args, auth.UserID) + `
+			ORDER BY created_at DESC
+			LIMIT 1) AS current_vote`
 	} else {
 		bookmarkFieldSql = `FALSE AS user_bookmark`
+		lastVoteField = `NULL AS current_vote`
 	}
 
 	rows, err := conn.Query(`SELECT space.id, space.parent_id, space.space_type,
@@ -47,6 +54,9 @@ func LoadSpaces(conn *sql.DB, auth *ajax.Auth, ids []uint) ([]*Space, error) {
 		user_account.handle, user_account.display_name,
 		CASE WHEN user_space_config.space_id IS NULL THEN FALSE ELSE TRUE END AS user_pinned,
 		`+bookmarkFieldSql+`,
+		`+lastVoteField+`,
+		COALESCE((SELECT SUM(vote_value) FROM space_vote
+			WHERE space_vote.space_id = space.id), 0) AS vote_sum,
 		(SELECT link_space.link_space_id FROM link_space
 			WHERE link_space.space_id = space.id
 			LIMIT 1) AS link_space_id
@@ -71,6 +81,8 @@ func LoadSpaces(conn *sql.DB, auth *ajax.Auth, ids []uint) ([]*Space, error) {
 			&space.AuthorHandle, &space.AuthorDisplayName,
 			&space.IsPinned,
 			&space.UserBookmark,
+			&space.CurrentVote,
+			&space.VoteSum,
 			&space.LinkSpaceID,
 		)
 		if err != nil {
@@ -91,7 +103,7 @@ func LoadSpaces(conn *sql.DB, auth *ajax.Auth, ids []uint) ([]*Space, error) {
 
 }
 
-func LoadParentPath(conn *sql.DB, auth *ajax.Auth, id uint) ([]*Space, error) {
+func LoadParentPath(conn *sql.DB, auth *ajax.Auth, firstParentID uint) ([]*Space, error) {
 
 	// recursively load space details following parent_id of space with given id
 	// until reaching the root space
@@ -113,7 +125,7 @@ func LoadParentPath(conn *sql.DB, auth *ajax.Auth, id uint) ([]*Space, error) {
 		LEFT JOIN unique_text ON unique_text.id = branch_space.label_text_id
 		LEFT JOIN user_account ON user_account.id = space.created_by
 		LEFT JOIN user_space_config ON user_space_config.space_id = space.id
-		WHERE space.id = `+db.Arg(&args, id)+`
+		WHERE space.id = `+db.Arg(&args, firstParentID)+`
 		UNION ALL
 		SELECT space.id, space.parent_id, space.space_type,
 			space.created_at, space.created_by,
@@ -176,12 +188,22 @@ func LoadSubspaces(conn *sql.DB, auth *ajax.Auth,
 	var args = []interface{}{}
 
 	var bookmarkFieldSql string
+	var currentVoteFieldSql string
 	if auth != nil {
 		bookmarkFieldSql = `EXISTS(SELECT 1 FROM user_bookmark
 			WHERE user_bookmark.user_id = ` + db.Arg(&args, auth.UserID) + `
 			AND user_bookmark.space_id = space.id) AS user_bookmark`
+		currentVoteFieldSql = `COALESCE((
+			SELECT vote_value FROM space_vote
+			WHERE space_vote.user_id = ` + db.Arg(&args, auth.UserID) + `
+			AND space_vote.space_id = space.id
+			AND created_at >= ` + db.Arg(&args, time.Now().Add(-VoteWindow)) + `
+			ORDER BY created_at DESC
+			LIMIT 1
+		), 0) AS current_vote`
 	} else {
 		bookmarkFieldSql = `FALSE AS user_bookmark`
+		currentVoteFieldSql = `0 AS current_vote`
 	}
 
 	var parentClauseSql string
@@ -211,12 +233,13 @@ func LoadSubspaces(conn *sql.DB, auth *ajax.Auth,
 
 	var filterModeClauseSql string
 	var orderByClauseSql string
+	var voteSumFieldSql string
 	if filter != nil {
 
 		switch filter.Mode {
 
 		case SpaceFilterModeTopSubspaces:
-			orderByClauseSql = `checkin_count DESC, space.created_at DESC`
+			orderByClauseSql = `vote_sum DESC, space.created_at DESC`
 
 		case SpaceFilterModeMostRecent:
 			orderByClauseSql = `space.created_at DESC`
@@ -235,13 +258,21 @@ func LoadSubspaces(conn *sql.DB, auth *ajax.Auth,
 				`user_space_config.order_number ASC, ` + orderByClauseSql
 		}
 
+		voteSumFieldSql = `(SELECT COALESCE(SUM(vote_value), 0) FROM space_vote
+			WHERE space_vote.space_id = space.id) AS vote_sum`
+
 		if filter.Date != nil {
 			// up to given date
 			filterModeClauseSql = `AND space.created_at <= ` + db.Arg(&args, *filter.Date)
+			voteSumFieldSql = `(SELECT COALESCE(SUM(vote_value), 0) FROM space_vote
+				WHERE space_vote.space_id = space.id
+				AND space_vote.created_at <= ` + db.Arg(&args, *filter.Date) + `
+			) AS vote_sum`
 		}
+
+		var windowDuration string
 		if filter.Window != nil {
 			// within given window
-			var windowDuration string
 			switch *filter.Window {
 			case "day":
 				windowDuration = "1 DAY"
@@ -255,10 +286,22 @@ func LoadSubspaces(conn *sql.DB, auth *ajax.Auth,
 				return nil, fmt.Errorf("invalid filter window: %s", *filter.Window)
 			}
 			filterModeClauseSql += ` AND space.created_at >= NOW() - INTERVAL '` + windowDuration + `'`
+			voteSumFieldSql = `(SELECT COALESCE(SUM(vote_value), 0) FROM space_vote
+				WHERE space_vote.space_id = space.id
+				AND space_vote.created_at >= NOW() - INTERVAL '` + windowDuration + `') AS vote_sum`
+		}
+
+		if filter.Date != nil && filter.Window != nil {
+			voteSumFieldSql = `(SELECT COALESCE(SUM(vote_value), 0) FROM space_vote
+				WHERE space_vote.space_id = space.id
+				AND space_vote.created_at <= ` + db.Arg(&args, *filter.Date) + `
+				AND space_vote.created_at >= ` + db.Arg(&args, *filter.Date) + ` - INTERVAL '` + windowDuration + `') AS vote_sum`
 		}
 
 	} else {
 		orderByClauseSql = `space.created_at DESC`
+		voteSumFieldSql = `(SELECT COALESCE(SUM(vote_value), 0) FROM space_vote
+			WHERE space_vote.space_id = space.id) AS vote_sum`
 	}
 
 	rows, err := conn.Query(`SELECT space.id,
@@ -266,11 +309,11 @@ func LoadSubspaces(conn *sql.DB, auth *ajax.Auth,
 		unique_text.text_value AS label,
 		user_account.handle, user_account.display_name,
 		`+bookmarkFieldSql+`,
+		`+currentVoteFieldSql+`,
+		`+voteSumFieldSql+`,
 		EXISTS(SELECT 1 FROM user_space_config
 			WHERE user_space_config.space_id = space.id
 		) AS is_pinned,
-		(SELECT COUNT(*) FROM checkin
-			WHERE checkin.space_id = space.id) AS checkin_count,
 		(SELECT link_space.link_space_id FROM link_space
 			WHERE link_space.space_id = space.id
 			LIMIT 1) AS link_space_id
@@ -301,8 +344,9 @@ func LoadSubspaces(conn *sql.DB, auth *ajax.Auth,
 			&space.Label,
 			&space.AuthorHandle, &space.AuthorDisplayName,
 			&space.UserBookmark,
+			&space.CurrentVote,
+			&space.VoteSum,
 			&space.IsPinned,
-			&space.CheckinCount,
 			&space.LinkSpaceID,
 		)
 		if err != nil {
@@ -322,56 +366,6 @@ func LoadSubspaces(conn *sql.DB, auth *ajax.Auth,
 
 // --------------------------------------------------
 // batch load functions
-
-func LoadCheckinCount(conn *sql.DB, spaces []*Space) error {
-
-	if len(spaces) == 0 {
-		return nil
-	}
-
-	var args = []interface{}{}
-
-	var inClauseSql string
-
-	for i, space := range spaces {
-		if i > 0 {
-			inClauseSql += `, `
-		}
-		inClauseSql += db.Arg(&args, space.ID)
-	}
-
-	rows, err := conn.Query(`SELECT space.id,
-		(SELECT COUNT(*) FROM checkin
-			WHERE checkin.space_id = space.id) AS checkin_count
-		FROM space
-		WHERE space.id IN (`+inClauseSql+`)`,
-		args...,
-	)
-
-	if err != nil {
-		return fmt.Errorf("loading check-in count: %w", err)
-	}
-
-	defer rows.Close()
-
-	for rows.Next() {
-		var spaceID uint
-		var checkinCount uint
-		err = rows.Scan(&spaceID, &checkinCount)
-		if err != nil {
-			return fmt.Errorf("loading check-in count: %w", err)
-		}
-		for _, space := range spaces {
-			if space.ID == spaceID {
-				space.CheckinCount = checkinCount
-				break
-			}
-		}
-	}
-
-	return nil
-
-}
 
 /*
 func LoadSubspaceCount(conn *sql.DB, spaces []*Space, filter *SpaceFilter) error {

@@ -35,13 +35,6 @@ func AjaxLoadSpace(db *sql.DB, auth *ajax.Auth,
 		return nil, http.StatusInternalServerError
 	}
 
-	err = spacetime.LoadCheckinCount(db,
-		[]*spacetime.Space{space})
-	if err != nil {
-		logging.LogError(r, auth, err)
-		return nil, http.StatusInternalServerError
-	}
-
 	var subspacesTypesFilter *spacetime.TypesFilter
 	if filter.Mode != spacetime.SpaceFilterModePinned {
 		// include tags when viewing pinned mode
@@ -61,7 +54,7 @@ func AjaxLoadSpace(db *sql.DB, auth *ajax.Auth,
 
 	if includeTags {
 		// include tags on parent and subspaces
-		err = spacetime.LoadTags(db,
+		err = spacetime.LoadTags(db, auth,
 			append([]*spacetime.Space{space}, subspaces...),
 			0, spacetime.DefaultTagsLimit, filter)
 		if err != nil {
@@ -146,7 +139,7 @@ func AjaxReloadSpace(db *sql.DB, auth *ajax.Auth,
 
 	if includeTags {
 		// load tags on subspaces
-		err = spacetime.LoadTags(db, subspaces, 0,
+		err = spacetime.LoadTags(db, auth, subspaces, 0,
 			spacetime.DefaultTagsLimit, filter)
 		if err != nil {
 			logging.LogError(r, auth, err)
@@ -209,7 +202,8 @@ func AjaxLoadSubspaces(db *sql.DB, auth *ajax.Auth,
 	}
 
 	if includeTags {
-		err = spacetime.LoadTags(db, subspaces, 0, spacetime.DefaultTagsLimit, filter)
+		err = spacetime.LoadTags(db, auth,
+			subspaces, 0, spacetime.DefaultTagsLimit, filter)
 		if err != nil {
 			logging.LogError(r, auth, err)
 			return nil, http.StatusInternalServerError

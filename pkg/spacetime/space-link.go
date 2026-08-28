@@ -38,7 +38,6 @@ func LoadExistingSpaceLink(conn db.DBConn,
 func CreateSpaceLink(tx *sql.Tx, auth ajax.Auth, parentID, spaceID uint) (*Space, error) {
 
 	// Create new space link
-	// If space itself belongs to parent space, create checkin under the space
 
 	// Get details about space to check in
 	linkedSpace, err := GetSpace(tx, spaceID)

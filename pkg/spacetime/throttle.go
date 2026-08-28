@@ -28,25 +28,3 @@ func CheckCreateSpaceThrottleBlock(db *sql.DB, auth ajax.Auth) (bool, error) {
 	return block, nil
 
 }
-
-func CheckCreateCheckinThrottleBlock(db *sql.DB, auth ajax.Auth, parentID uint) (bool, error) {
-
-	// Allow 1 check-in per minute per parent space
-
-	var block bool
-
-	err := db.QueryRow(`SELECT COUNT(*) >= 1 FROM checkin
-		WHERE user_id = $1
-		AND space_id = $2
-		AND created_at > NOW() - INTERVAL '1 MINUTE'`,
-		auth.UserID,
-		parentID,
-	).Scan(&block)
-
-	if err != nil {
-		return true, fmt.Errorf("throttle create check-in: %w", err)
-	}
-
-	return block, nil
-
-}

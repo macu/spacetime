@@ -23,7 +23,7 @@
 				show-path>
 				<template #actions-area>
 					<div class="flex-row-md">
-						<checkin-button :space="space"/>
+						<vote-actions :space="space"/>
 						<bookmark-button
 							:space="space"
 							@bookmark-removed="removeBookmark(space)"
@@ -61,7 +61,7 @@
 
 <script>
 import SpaceOutput from '@/widgets/space-output.vue';
-import CheckinButton from '@/widgets/checkin-button.vue';
+import VoteActions from '@/widgets/vote-actions.vue';
 import BookmarkButton from '@/widgets/bookmark-button.vue';
 import SpaceTag from '@/widgets/space-tag.vue';
 
@@ -76,7 +76,7 @@ import {
 export default {
 	components: {
 		SpaceOutput,
-		CheckinButton,
+		VoteActions,
 		BookmarkButton,
 		SpaceTag,
 	},

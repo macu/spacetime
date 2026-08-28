@@ -58,9 +58,17 @@ func GetBookmarkedSpaces(conn *sql.DB, auth ajax.Auth,
 		EXISTS(SELECT 1 FROM user_space_config
 			WHERE user_space_config.space_id = space.id
 		) AS is_pinned,
-		(SELECT COUNT(*) FROM checkin
-			WHERE checkin.space_id = space.id
-		) AS checkin_count,
+		COALESCE((
+			SELECT vote_value FROM space_vote
+			WHERE space_vote.user_id = `+db.Arg(&args, auth.UserID)+`
+			AND space_vote.space_id = space.id
+			AND created_at >= `+db.Arg(&args, time.Now().Add(-VoteWindow))+`
+			ORDER BY created_at DESC
+			LIMIT 1
+		), 0) AS current_vote,
+		(SELECT SUM(vote_value) FROM space_vote
+			WHERE space_vote.space_id = space.id
+		) AS vote_sum,
 		`+includedInParentIdField+`,
 		(SELECT link_space.link_space_id FROM link_space
 			WHERE link_space.space_id = space.id
@@ -93,7 +101,8 @@ func GetBookmarkedSpaces(conn *sql.DB, auth ajax.Auth,
 			&space.AuthorHandle, &space.AuthorDisplayName,
 			&space.UserBookmark, &space.BookmarkCreatedAt,
 			&space.IsPinned,
-			&space.CheckinCount,
+			&space.CurrentVote,
+			&space.VoteSum,
 			&space.IncludedInParent,
 			&space.LinkSpaceID,
 		)
@@ -105,6 +114,10 @@ func GetBookmarkedSpaces(conn *sql.DB, auth ajax.Auth,
 
 	if includeParentPath {
 		for _, space := range spaces {
+			if space.ParentID == nil {
+				space.ParentPath = &[]*Space{}
+				continue
+			}
 			parentPath, err := LoadParentPath(conn, &auth, *space.ParentID)
 			if err != nil {
 				return nil, fmt.Errorf("loading parent path for space %d: %w", space.ID, err)
@@ -114,7 +127,7 @@ func GetBookmarkedSpaces(conn *sql.DB, auth ajax.Auth,
 	}
 
 	if includeTags {
-		err := LoadTags(conn, spaces,
+		err := LoadTags(conn, &auth, spaces,
 			0, DefaultTagsLimit,
 			&SpaceFilter{
 				Mode: SpaceFilterModeTopSubspaces,

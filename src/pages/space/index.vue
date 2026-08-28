@@ -23,7 +23,7 @@
 					{{ space.isPinned ? 'Unpin' : 'Pin' }}
 				</el-button>
 
-				<checkin-button :space="space"/>
+				<vote-actions :space="space"/>
 
 				<bookmark-button :space="space"/>
 
@@ -103,7 +103,7 @@ import SpaceLoader from '@/widgets/space-loader.vue';
 import SpaceOutput from '@/widgets/space-output.vue';
 import SpaceTag from '@/widgets/space-tag.vue';
 import CreateDropdown from '@/widgets/create-dropdown.vue';
-import CheckinButton from '@/widgets/checkin-button.vue';
+import VoteActions from '@/widgets/vote-actions.vue';
 import BookmarkButton from '@/widgets/bookmark-button.vue';
 import AddTagButton from '@/widgets/add-tag-button.vue';
 import Subspace from './subspace.vue';
@@ -141,7 +141,7 @@ export default {
 		SpaceTag,
 		CreateDropdown,
 		SubspacesFilter,
-		CheckinButton,
+		VoteActions,
 		BookmarkButton,
 		AddTagButton,
 		Subspace,

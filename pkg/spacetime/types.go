@@ -13,10 +13,10 @@ type Space struct {
 	CreatedAt time.Time `json:"createdAt"`
 	CreatedBy uint      `json:"createdBy"`
 
-	IsPinned bool `json:"isPinned"`
+	CurrentVote *int `json:"currentVote"`
+	VoteSum     *int `json:"voteSum,omitempty"`
 
-	// TotalSubspaces uint `json:"totalSubspaces"`
-	CheckinCount uint `json:"checkinCount"`
+	IsPinned bool `json:"isPinned"`
 
 	Text  *string  `json:"text,omitempty"` // tag, text
 	Title **string `json:"title,omitempty"`

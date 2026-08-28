@@ -135,7 +135,6 @@ func CreateTag(tx *sql.Tx, auth ajax.Auth, parentID uint, tag string) (*Space, e
 	// Load unique_text ID
 	// Check for existing tag space under parent
 	// Create tag space if not exists
-	// Check-in on tag space
 
 	if !ValidateTag(tag) {
 		return nil, fmt.Errorf("invalid tag: %s", tag)
@@ -174,7 +173,7 @@ func CreateTag(tx *sql.Tx, auth ajax.Auth, parentID uint, tag string) (*Space, e
 
 }
 
-func LoadTags(conn *sql.DB, spaces []*Space,
+func LoadTags(conn *sql.DB, auth *ajax.Auth, spaces []*Space,
 	offset uint, limit uint, filter *SpaceFilter,
 ) error {
 	// Load top tags for multiple spaces
@@ -189,7 +188,7 @@ func LoadTags(conn *sql.DB, spaces []*Space,
 
 	for _, space := range spaces {
 
-		tags, err := LoadSubspaces(conn, nil,
+		tags, err := LoadSubspaces(conn, auth,
 			&space.ID, offset, limit,
 			filter, &TypesFilter{Types: []string{SpaceTypeTag}})
 		if err != nil {

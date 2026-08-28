@@ -31,7 +31,7 @@
 			:space="s">
 			<template #actions-area>
 				<div class="flex-row-md">
-					<checkin-button :space="s"/>
+					<vote-actions :space="s"/>
 					<bookmark-button :space="s"/>
 					<space-tag
 						v-for="t in s.tags"
@@ -56,7 +56,7 @@
 <script>
 import CreateDropdown from '@/widgets/create-dropdown.vue';
 import SpaceOutput from '@/widgets/space-output.vue';
-import CheckinButton from '@/widgets/checkin-button.vue';
+import VoteActions from '@/widgets/vote-actions.vue';
 import BookmarkButton from '@/widgets/bookmark-button.vue';
 import SpaceTag from '@/widgets/space-tag.vue';
 import SubspacesFilter, {
@@ -71,7 +71,7 @@ export default {
 	components: {
 		CreateDropdown,
 		SpaceOutput,
-		CheckinButton,
+		VoteActions,
 		BookmarkButton,
 		SpaceTag,
 		SubspacesFilter,

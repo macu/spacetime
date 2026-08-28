@@ -13,6 +13,46 @@ import (
 	"spacetime/pkg/spacetime"
 )
 
+func AjaxVote(db *sql.DB, auth ajax.Auth,
+	w http.ResponseWriter, r *http.Request,
+) (interface{}, int) {
+
+	spaceID, err := types.AtoUint(r.FormValue("spaceId"))
+	if err != nil {
+		return nil, http.StatusBadRequest
+	}
+
+	voteValue, err := types.AtoInt(r.FormValue("voteValue"))
+	if err != nil {
+		return nil, http.StatusBadRequest
+	}
+
+	if voteValue < -1 || voteValue > 1 {
+		return nil, http.StatusBadRequest
+	}
+
+	// check if space exists
+	if exists, err := spacetime.CheckSpaceExists(db, spaceID); err != nil {
+		logging.LogError(r, &auth, err)
+		return nil, http.StatusInternalServerError
+	} else if !exists {
+		return nil, http.StatusNotFound
+	}
+
+	voteSum, err := spacetime.AddVote(db, auth.UserID, spaceID, voteValue)
+	if err != nil {
+		logging.LogError(r, &auth, err)
+		return nil, http.StatusInternalServerError
+	}
+
+	return struct {
+		VoteSum int `json:"voteSum"`
+	}{
+		VoteSum: voteSum,
+	}, http.StatusOK
+
+}
+
 func AjaxBookmark(db *sql.DB, auth ajax.Auth,
 	w http.ResponseWriter, r *http.Request,
 ) (interface{}, int) {

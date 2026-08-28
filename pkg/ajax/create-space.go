@@ -246,42 +246,6 @@ func AjaxCreateLinkSpace(conn *sql.DB, auth ajax.Auth,
 
 }
 
-func AjaxCreateCheckin(conn *sql.DB, auth ajax.Auth,
-	w http.ResponseWriter, r *http.Request,
-) (interface{}, int) {
-
-	// parent required
-	parentID, err := types.AtoUint(r.FormValue("parentId"))
-	if err != nil {
-		return nil, http.StatusBadRequest
-	}
-
-	// check throttle
-	if blocked, err := spacetime.CheckCreateCheckinThrottleBlock(conn, auth, parentID); err != nil {
-		logging.LogError(r, &auth, err)
-		return nil, http.StatusInternalServerError
-	} else if blocked {
-		return nil, http.StatusTooManyRequests
-	}
-
-	// check if parent exists
-	if exists, err := spacetime.CheckSpaceExists(conn, parentID); err != nil {
-		logging.LogError(r, &auth, err)
-		return nil, http.StatusInternalServerError
-	} else if !exists {
-		return nil, http.StatusNotFound
-	}
-
-	err = spacetime.CreateCheckin(conn, auth, parentID)
-	if err != nil {
-		logging.LogError(r, &auth, err)
-		return nil, http.StatusInternalServerError
-	}
-
-	return nil, http.StatusCreated
-
-}
-
 func AjaxCreateTagSpace(conn *sql.DB, auth ajax.Auth,
 	w http.ResponseWriter, r *http.Request,
 ) (interface{}, int) {

@@ -23,9 +23,11 @@
 - [ ] add content imports into user spaces
 - [ ] undo a checkin within a timespan
 - [ ] to think about: master list of tags with translations liked and key values for special function
+- [ ] "Branches first" checkbox in filter, limited by sum of votes > 0
 
 - [*] rename "subspace" to "branch"
 - [*] remove title type (branches have labels and text have titles)
 - [*] move check-ins to separate table
 - [*] add replayable text recording, validation/submission, and playback
 - [*] add space links
+- [*] replace check-ins with votes - allow changing vote within 12-hour window, and voting again after

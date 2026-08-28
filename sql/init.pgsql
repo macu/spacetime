@@ -3,6 +3,8 @@
 DROP INDEX IF EXISTS space_time_idx;
 DROP INDEX IF EXISTS space_type_time_idx;
 DROP INDEX IF EXISTS space_user_throttle;
+DROP INDEX IF EXISTS space_votes_idx;
+DROP INDEX IF EXISTS space_votes_user_idx;
 DROP TABLE IF EXISTS user_bookmark CASCADE;
 DROP TABLE IF EXISTS user_space CASCADE;
 DROP TABLE IF EXISTS user_space_config CASCADE;
@@ -13,7 +15,7 @@ DROP TABLE IF EXISTS text_space CASCADE;
 DROP TABLE IF EXISTS tag_space CASCADE;
 DROP TABLE IF EXISTS link_space CASCADE;
 DROP TABLE IF EXISTS branch_space CASCADE;
-DROP TABLE IF EXISTS checkin CASCADE;
+DROP TABLE IF EXISTS space_vote CASCADE;
 DROP TABLE IF EXISTS space CASCADE;
 DROP TABLE IF EXISTS unique_text CASCADE;
 DROP TYPE IF EXISTS space_type;
@@ -127,12 +129,23 @@ CREATE INDEX space_time_idx ON space (parent_id, created_at); -- for top queries
 CREATE INDEX space_type_time_idx ON space (parent_id, space_type, created_at);
 CREATE INDEX space_user_throttle ON space (created_by, created_at);
 
-CREATE TABLE checkin (
+-- CREATE TABLE checkin (
+-- 	id SERIAL PRIMARY KEY,
+-- 	space_id INTEGER NOT NULL REFERENCES space (id) ON DELETE CASCADE,
+-- 	user_id INTEGER NOT NULL REFERENCES user_account (id),
+-- 	created_at TIMESTAMPTZ NOT NULL
+-- );
+
+CREATE TABLE space_vote (
 	id SERIAL PRIMARY KEY,
 	space_id INTEGER NOT NULL REFERENCES space (id) ON DELETE CASCADE,
 	user_id INTEGER NOT NULL REFERENCES user_account (id),
+	vote_value SMALLINT NOT NULL, -- 1 for upvote, -1 for downvote
 	created_at TIMESTAMPTZ NOT NULL
 );
+
+CREATE INDEX space_votes_idx ON space_vote (space_id, created_at) INCLUDE (vote_value);
+CREATE INDEX space_votes_user_idx ON space_vote (space_id, user_id, created_at);
 
 CREATE TABLE user_space ( -- a user's personal space (always at root)
 	space_id INTEGER PRIMARY KEY REFERENCES space (id) ON DELETE CASCADE,
@@ -174,8 +187,7 @@ CREATE TABLE text_space (
 	title_id INTEGER REFERENCES unique_text (id), -- optional title for text space
 	text_id INTEGER NOT NULL REFERENCES unique_text (id),
 	recording TEXT, -- optional recording of text changes as JSON
-	started_at TIMESTAMPTZ, -- null if no recording
-	backdated_at TIMESTAMPTZ, -- null if no backdating
+	started_at TIMESTAMPTZ -- null if no recording
 );
 
 -- record history of changes

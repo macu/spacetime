@@ -15,7 +15,7 @@
 		<material-icon v-if="actionsExpanded" :icon="icon"/>
 		<el-button v-else size="small" @click="actionsExpanded = true">
 			<material-icon :icon="icon"/>
-			<span v-if="space.checkinCount" v-text="space.checkinCount"/>
+			<span v-text="space.voteSum"/>
 		</el-button>
 
 		<template v-if="actionsExpanded">
@@ -34,10 +34,10 @@
 				<material-icon icon="keep" class="pinned"/>
 			</el-tooltip>
 
-			<checkin-button
-				v-if="showCheckin"
+			<vote-actions
+				v-if="showVoteActions"
 				:space="space"
-				@check-in="$emit('check-in')"
+				@vote="$emit('vote')"
 				size="small"
 				/>
 
@@ -59,7 +59,7 @@
 </template>
 
 <script>
-import CheckinButton from './checkin-button.vue';
+import VoteActions from './vote-actions.vue';
 
 import {
 	SPACE_TYPE_ICONS,
@@ -67,19 +67,19 @@ import {
 
 export default {
 	emits: [
-		'check-in',
+		'vote',
 		'click-tag',
 		'toggle-pinned',
 	],
 	components: {
-		CheckinButton,
+		VoteActions,
 	},
 	props: {
 		space: {
 			type: Object,
 			required: true,
 		},
-		showCheckin: {
+		showVoteActions: {
 			type: Boolean,
 			default: true,
 		},

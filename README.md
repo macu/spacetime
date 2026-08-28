@@ -37,7 +37,7 @@ sh ./bin/restart-web.sh
 Run the following command to re-compile the frontend web bundle.
 
 ```bash
-npm run dev
+sh rebuild.sh
 ```
 
 ## Test in browser

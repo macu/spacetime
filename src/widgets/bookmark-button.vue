@@ -1,5 +1,5 @@
 <template>
-<el-button @click.stop="toggleBookmark()" :type="buttonType" :size="size">
+<el-button v-if="show" @click.stop="toggleBookmark()" :type="buttonType" :size="size">
 	<material-icon v-if="isBookmarked" icon="bookmark_border"/>
 	<material-icon v-else icon="bookmark"/>
 </el-button>
@@ -33,6 +33,9 @@ export default {
 		};
 	},
 	computed: {
+		show() {
+			return this.$store.getters.authenticated;
+		},
 		buttonType() {
 			return this.isBookmarked ? 'success' : 'default';
 		},
